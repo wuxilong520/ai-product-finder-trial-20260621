@@ -17,8 +17,8 @@ export function AnalyzePanel({ initialLang }: { initialLang: Language }) {
   const [result, setResult] = useState<AnalyzeFullResponse | null>(null);
 
   const text = t(initialLang);
-  const okResult = result?.status === "OK" ? result : null;
-  const blockedResult = result?.status === "BLOCKED" ? result : null;
+  const okResult = result && "status" in result && result.status === "OK" ? result : null;
+  const blockedResult = result && "status" in result && result.status === "BLOCKED" ? result : null;
 
   const scoreTone = useMemo(() => {
     const score = okResult?.score ?? 0;

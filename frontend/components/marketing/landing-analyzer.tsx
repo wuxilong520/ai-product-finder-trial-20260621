@@ -33,8 +33,8 @@ export function LandingAnalyzer({ initialLang }: { initialLang: Language }) {
     }
   }
 
-  const okResult = result?.status === "OK" ? result : null;
-  const blockedResult = result?.status === "BLOCKED" ? result : null;
+  const okResult = result && "status" in result && result.status === "OK" ? result : null;
+  const blockedResult = result && "status" in result && result.status === "BLOCKED" ? result : null;
 
   return (
     <div className="mt-12 grid gap-8 lg:grid-cols-[1.08fr_0.92fr]">

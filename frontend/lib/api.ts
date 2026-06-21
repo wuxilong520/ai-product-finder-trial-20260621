@@ -1,12 +1,25 @@
-import { AnalyzeFullResponse, AnalyzeResponse, CrawlResult, LoginResponse, Product, ProductListResponse, PublicExtractResult, User } from "./types";
+import { AnalyzeFullResponse, AnalyzeResponse, CrawlResult, HealthResponse, LoginResponse, Product, ProductListResponse, PublicExtractResult, TaskStatusResponse, User } from "./types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  (process.env.NODE_ENV === "development" ? "http://127.0.0.1:8000" : "");
 const API_V1 = `${API_BASE}/api/v1`;
+export const WS_URL =
+  process.env.NEXT_PUBLIC_WS_URL ||
+  (process.env.NODE_ENV === "development" ? "ws://127.0.0.1:8000/ws" : "");
 
 function ensureApiBase() {
   if (!API_BASE) {
     throw new Error("缺少 NEXT_PUBLIC_API_BASE_URL，当前前端还没连上公网后端");
   }
+}
+
+export function getApiBaseUrl() {
+  return API_BASE;
+}
+
+export function getWsBaseUrl() {
+  return WS_URL;
 }
 
 function buildAuthHeaders(token?: string) {
@@ -178,15 +191,46 @@ export async function analyzeFull(url: string, lang: "zh" | "en", token?: string
 
 export async function analyzeFullPublic(url: string, lang: "zh" | "en"): Promise<AnalyzeFullResponse> {
   ensureApiBase();
-  const response = await fetch(`${API_V1}/analyze/full/public`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ url, lang }),
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20000);
+  try {
+    const response = await fetch(`${API_V1}/analyze/full/public`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ url, lang }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(await readErrorMessage(response, "分析失败"));
+    }
+
+    return response.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export async function getSystemHealth(): Promise<HealthResponse> {
+  ensureApiBase();
+  const response = await fetch(`${API_BASE}/health`, {
+    cache: "no-store",
   });
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, "分析失败"));
+    throw new Error(await readErrorMessage(response, "系统状态读取失败"));
+  }
+  return response.json();
+}
+
+export async function getTaskStatus(taskName: "crawl" | "analyze"): Promise<TaskStatusResponse> {
+  ensureApiBase();
+  const response = await fetch(`${API_BASE}/task-status/${taskName}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "任务状态读取失败"));
   }
   return response.json();
 }

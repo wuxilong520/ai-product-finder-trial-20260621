@@ -3,6 +3,7 @@ import { ArrowRight, BarChart3, Globe2, SearchCheck, Sparkles, TrendingUp } from
 
 import { Button, Card, CardContent, CardTitle, LanguageToggle, MetricTile, StatusBadge } from "@/design-system/components";
 import { LandingAnalyzer } from "@/components/marketing/landing-analyzer";
+import { SystemStatusPanel } from "@/components/system/system-status-panel";
 import { t } from "@/lib/i18n";
 import { getServerLanguage } from "@/lib/i18n-server";
 
@@ -170,6 +171,10 @@ export default async function HomePage() {
         </section>
 
         <LandingAnalyzer initialLang={lang} />
+
+        <div className="mt-8">
+          <SystemStatusPanel lang={lang} />
+        </div>
       </div>
     </main>
   );

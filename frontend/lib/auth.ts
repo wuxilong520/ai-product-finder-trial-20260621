@@ -1,5 +1,10 @@
 export const TOKEN_KEY = "cbp_access_token";
 
+function buildCookieOptions(maxAge: number) {
+  const secure = typeof window !== "undefined" && window.location.protocol === "https:" ? "; secure" : "";
+  return `path=/; max-age=${maxAge}; samesite=lax${secure}`;
+}
+
 export function getToken() {
   if (typeof document === "undefined") return "";
   const cookies = document.cookie.split(";").map((item) => item.trim());
@@ -9,12 +14,12 @@ export function getToken() {
 
 export function setToken(token: string) {
   if (typeof document === "undefined") return;
-  document.cookie = `${TOKEN_KEY}=${encodeURIComponent(token)}; path=/; max-age=${60 * 60 * 24 * 7}`;
+  document.cookie = `${TOKEN_KEY}=${encodeURIComponent(token)}; ${buildCookieOptions(60 * 60 * 24 * 7)}`;
 }
 
 export function clearToken() {
   if (typeof document === "undefined") return;
-  document.cookie = `${TOKEN_KEY}=; path=/; max-age=0`;
+  document.cookie = `${TOKEN_KEY}=; ${buildCookieOptions(0)}`;
 }
 
 export function isLoggedIn() {

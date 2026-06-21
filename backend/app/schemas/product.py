@@ -305,14 +305,8 @@ class AnalyzeFullBlockedResponse(BaseModel):
     message: str
 
 
-class AnalyzeFullTrialFallbackResponse(BaseModel):
-    product_score: Literal["N/A"]
-    recommendation: Literal["TRY_LATER"]
-    reason: Literal["system_busy"]
-
-
 class AnalyzeFullResponse(BaseModel):
-    status: Literal["OK"]
+    status: Literal["OK", "FALLBACK"]
     lang: Literal["zh", "en"]
     platform: Literal["amazon", "aliexpress", "shopify"]
     title: str
@@ -330,6 +324,8 @@ class AnalyzeFullResponse(BaseModel):
     core_keywords: list[str]
     selling_points: list[str]
     reason: list[str]
+    fallback_score: int | None = None
+    ai_unavailable: bool = False
 
 
 class CrawlPreview(BaseModel):

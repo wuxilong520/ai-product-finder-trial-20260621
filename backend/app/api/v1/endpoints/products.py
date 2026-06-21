@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
+import asyncio
 
 from app.api.deps import db_session, get_current_user
 from app.core.runtime import AppError, error_response
@@ -16,6 +17,7 @@ from app.schemas.product import (
 )
 from app.services.product import product_service
 from app.services.product_extractor import extract_public_product_page
+from app.services.task_status import task_status_service
 
 
 router = APIRouter()
@@ -26,7 +28,12 @@ router = APIRouter()
     response_model=PublicProductExtractResponse | PublicProductExtractBlocked,
 )
 async def extract_public_product(payload: PublicProductExtractRequest):
-    result = await extract_public_product_page(payload.url)
+    try:
+        result = await extract_public_product_page(payload.url)
+    except AppError as exc:
+        return error_response(exc.error_code, exc.message, exc.stage, exc.status_code)
+    except Exception as exc:
+        return error_response("PUBLIC_EXTRACT_FAILED", str(exc), "scrape", status.HTTP_500_INTERNAL_SERVER_ERROR)
     return result
 
 
@@ -51,12 +58,40 @@ def analyze_product(
     db: Session = Depends(db_session),
     current_user=Depends(get_current_user),
 ):
+    asyncio.run(task_status_service.update("analyze", "pending", "分析任务已创建", {"product_id": payload.product_id, "title": payload.title}))
+    asyncio.run(task_status_service.update("analyze", "running", "正在调用 AI 分析", {"product_id": payload.product_id, "title": payload.title}))
     try:
         product, analysis, intelligence = product_service.analyze_product(db, payload, current_user.id)
     except AppError as exc:
+        asyncio.run(
+            task_status_service.update(
+                "analyze",
+                "error",
+                "分析失败",
+                {"product_id": payload.product_id, "title": payload.title, "stage": exc.stage},
+                exc.message,
+            )
+        )
         return error_response(exc.error_code, exc.message, exc.stage, exc.status_code)
     except Exception as exc:
+        asyncio.run(
+            task_status_service.update(
+                "analyze",
+                "error",
+                "分析失败",
+                {"product_id": payload.product_id, "title": payload.title},
+                str(exc),
+            )
+        )
         return error_response("AI_CALL_FAILED", str(exc), "ai", status.HTTP_502_BAD_GATEWAY)
+    asyncio.run(
+        task_status_service.update(
+            "analyze",
+            "success",
+            "分析完成",
+            {"product_id": product.id, "title": product.title},
+        )
+    )
     return AnalyzeResponse(product=ProductRead.model_validate(product), analysis=analysis, intelligence=intelligence)
 
 
@@ -80,7 +115,7 @@ def get_product(
 ):
     product = product_service.get_product(db, product_id)
     if not product:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="商品不存在")
+        return error_response("PRODUCT_NOT_FOUND", "商品不存在", "db", status.HTTP_404_NOT_FOUND)
     return ProductRead.model_validate(product)
 
 
@@ -92,5 +127,5 @@ def delete_product(
 ):
     ok = product_service.delete_product(db, product_id)
     if not ok:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="商品不存在")
+        return error_response("PRODUCT_NOT_FOUND", "商品不存在", "db", status.HTTP_404_NOT_FOUND)
     return {"ok": True}

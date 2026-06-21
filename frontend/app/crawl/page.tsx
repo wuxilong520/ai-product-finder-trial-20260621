@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 import { AppShell } from "@/components/app-shell";
 import { CrawlPanel } from "@/components/products/crawl-panel";
+import { SystemStatusPanel } from "@/components/system/system-status-panel";
 import { PageHero } from "@/design-system/components";
 import { TOKEN_KEY } from "@/lib/auth";
 import { t } from "@/lib/i18n";
@@ -20,6 +21,9 @@ export default async function CrawlPage() {
   return (
     <AppShell lang={lang}>
       <PageHero eyebrow={text.crawlEyebrow} title={text.crawlTitle} description={text.crawlDesc} />
+      <div className="mb-6">
+        <SystemStatusPanel lang={lang} />
+      </div>
       <CrawlPanel lang={lang} />
     </AppShell>
   );

@@ -1,9 +1,9 @@
 from datetime import timedelta
 
-from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.runtime import AppError
 from app.core.security import create_access_token, get_password_hash, verify_password
 from app.repositories.user import user_repository
 from app.schemas.auth import UserCreate
@@ -13,7 +13,7 @@ class AuthService:
     def register_user(self, db: Session, payload: UserCreate):
         existing = user_repository.get_by_email(db, payload.email)
         if existing:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="邮箱已经注册过了")
+            raise AppError("EMAIL_EXISTS", "邮箱已经注册过了", "auth", 400)
 
         return user_repository.create(
             db,

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Button, MinimalField, StatusAlert } from "@/design-system/components";
 import { login } from "@/lib/api";
-import { TOKEN_KEY, setToken } from "@/lib/auth";
+import { setToken } from "@/lib/auth";
 import { Language, t } from "@/lib/i18n";
 
 export function LoginForm({ lang }: { lang: Language }) {
@@ -23,7 +23,6 @@ export function LoginForm({ lang }: { lang: Language }) {
     try {
       const result = await login(email, password);
       setToken(result.access_token);
-      document.cookie = `${TOKEN_KEY}=${result.access_token}; path=/; max-age=${60 * 60 * 24 * 7}`;
       router.push("/dashboard");
       router.refresh();
     } catch (err) {

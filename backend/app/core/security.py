@@ -1,10 +1,10 @@
 from datetime import UTC, datetime, timedelta
 
 import jwt
-from fastapi import HTTPException, status
 from passlib.context import CryptContext
 
 from app.core.config import settings
+from app.core.runtime import AppError
 
 
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
@@ -28,4 +28,4 @@ def decode_access_token(token: str) -> dict:
     try:
         return jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
     except jwt.PyJWTError as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token 已失效或无效") from exc
+        raise AppError("TOKEN_INVALID", "Token 已失效或无效", "auth", 401) from exc

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 import { AppShell } from "@/components/app-shell";
 import { ProductList } from "@/components/products/product-list";
+import { SystemStatusPanel } from "@/components/system/system-status-panel";
 import { PageHero } from "@/design-system/components";
 import { getProducts } from "@/lib/api";
 import { TOKEN_KEY } from "@/lib/auth";
@@ -34,6 +35,9 @@ export default async function DashboardPage({
         description={text.dashboardDesc}
         action={<div className="rounded-full border border-app-border bg-white/8 px-4 py-2 text-sm text-app-text-secondary shadow-app-soft">{text.dashboardCount.replace("{count}", String(data.total))}</div>}
       />
+      <div className="mb-6">
+        <SystemStatusPanel lang={lang} />
+      </div>
       <ProductList products={data.items} total={data.total} lang={lang} />
     </AppShell>
   );

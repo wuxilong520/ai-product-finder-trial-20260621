@@ -5,6 +5,7 @@ import { Loader2, SearchCheck, Sparkles } from "lucide-react";
 
 import { Badge, Button, Card, EmptyState, InfoTile, Input, LinkTile, MetricTile, ReasonList, StatusAlert } from "@/design-system/components";
 import { analyzeFullPublic } from "@/lib/api";
+import { useTaskStatus } from "@/hooks/use-task-status";
 import { Language, t } from "@/lib/i18n";
 import { AnalyzeFullResponse } from "@/lib/types";
 
@@ -15,17 +16,20 @@ export function AnalyzePanel({ initialLang }: { initialLang: Language }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<AnalyzeFullResponse | null>(null);
+  const { state, transport } = useTaskStatus("analyze");
 
   const text = t(initialLang);
   const okResult = result && "status" in result && result.status === "OK" ? result : null;
+  const fallbackResult = result && "status" in result && result.status === "FALLBACK" ? result : null;
   const blockedResult = result && "status" in result && result.status === "BLOCKED" ? result : null;
+  const displayResult = okResult || fallbackResult;
 
   const scoreTone = useMemo(() => {
-    const score = okResult?.score ?? 0;
+    const score = displayResult?.score ?? 0;
     if (score >= 70) return "success";
     if (score >= 40) return "warning";
     return "error";
-  }, [okResult]);
+  }, [displayResult]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -52,6 +56,17 @@ export function AnalyzePanel({ initialLang }: { initialLang: Language }) {
               <Sparkles className="h-4 w-4" />
               {text.analyzeBadge}
             </Badge>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <Badge variant={transport === "ws" ? "success" : "warning"} className="px-4 py-2 text-sm">
+                {transport === "ws" ? "WS 已连接" : "轮询模式"}
+              </Badge>
+              <Badge
+                variant={state.status === "success" ? "success" : state.status === "error" ? "error" : state.status === "blocked" ? "blocked" : "running"}
+                className="px-4 py-2 text-sm"
+              >
+                {state.error_reason ? `${state.message}：${state.error_reason}` : state.message}
+              </Badge>
+            </div>
             <h1 className="gradient-text mt-5 text-4xl font-semibold tracking-tight md:text-5xl">{text.analyzeTitle}</h1>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-app-text-secondary">{text.analyzeDesc}</p>
 
@@ -84,35 +99,38 @@ export function AnalyzePanel({ initialLang }: { initialLang: Language }) {
             {blockedResult ? (
               <StatusAlert status="blocked" title={text.analyzeBlockedTitle} message={blockedResult.message || text.analyzeBlockedHint} />
             ) : null}
+            {fallbackResult ? (
+              <StatusAlert status="warning" title={text.aiFallbackTitle} message={text.aiFallbackMessage} />
+            ) : null}
           </div>
 
           <Card variant="panel" className="p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm text-app-text-muted">{text.analyzeResultTitle}</p>
-                <h3 className="mt-2 text-2xl font-semibold text-white">{okResult?.title || text.waitingResult}</h3>
+                <h3 className="mt-2 text-2xl font-semibold text-white">{displayResult?.title || text.waitingResult}</h3>
               </div>
-              <div className={`rounded-2xl border px-4 py-3 text-right ${okResult ? (scoreTone === "success" ? "border-emerald-400/20 bg-emerald-400/12 text-emerald-300" : scoreTone === "warning" ? "border-amber-400/20 bg-amber-400/12 text-amber-300" : "border-rose-400/20 bg-rose-400/12 text-rose-300") : "border-app-border bg-white/5 text-app-text-muted"}`}>
+              <div className={`rounded-2xl border px-4 py-3 text-right ${displayResult ? (scoreTone === "success" ? "border-emerald-400/20 bg-emerald-400/12 text-emerald-300" : scoreTone === "warning" ? "border-amber-400/20 bg-amber-400/12 text-amber-300" : "border-rose-400/20 bg-rose-400/12 text-rose-300") : "border-app-border bg-white/5 text-app-text-muted"}`}>
                 <p className="text-xs uppercase tracking-[0.18em]">{text.detailScore}</p>
-                <p className="mt-2 text-4xl font-semibold">{okResult?.score ?? "--"}</p>
+                <p className="mt-2 text-4xl font-semibold">{displayResult?.score ?? "--"}</p>
               </div>
             </div>
 
             <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <InfoTile label={text.title} value={okResult?.title || "—"} />
-              <InfoTile label={text.detailTitleZh} value={okResult?.title_zh || "—"} />
-              <InfoTile label={text.price} value={okResult?.price || "—"} />
-              <InfoTile label={text.detailCompetition} value={okResult?.competition_level || "—"} />
+              <InfoTile label={text.title} value={displayResult?.title || "—"} />
+              <InfoTile label={text.detailTitleZh} value={displayResult?.title_zh || "—"} />
+              <InfoTile label={text.price} value={displayResult?.price || "—"} />
+              <InfoTile label={text.detailCompetition} value={displayResult?.competition_level || "—"} />
             </div>
 
             <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <InfoTile label={text.detailRecommendation} value={okResult?.recommendation || "—"} />
-              <InfoTile label={text.detailProfit} value={okResult?.profit_estimate || "—"} />
+              <InfoTile label={text.detailRecommendation} value={displayResult?.recommendation || "—"} />
+              <InfoTile label={text.detailProfit} value={displayResult?.profit_estimate || "—"} />
             </div>
 
-            {okResult?.image ? (
+            {displayResult?.image ? (
               <div className="mt-5 overflow-hidden rounded-2xl border border-app-border bg-white/5">
-                <img src={okResult.image} alt={okResult.title} className="h-64 w-full object-cover" />
+                <img src={displayResult.image} alt={displayResult.title} className="h-64 w-full object-cover" />
               </div>
             ) : null}
           </Card>
@@ -121,10 +139,10 @@ export function AnalyzePanel({ initialLang }: { initialLang: Language }) {
 
       <section className="grid gap-6 xl:grid-cols-3">
         <CardBlock title={text.analyzeSource}>
-          {okResult ? (
+          {displayResult ? (
             <div className="space-y-3">
-              <LinkTile href={okResult.source_links["1688_url"]} label={text.open1688} />
-              <LinkTile href={okResult.source_links["pdd_url"]} label={text.openPdd} />
+              <LinkTile href={displayResult.source_links["1688_url"]} label={text.open1688} />
+              <LinkTile href={displayResult.source_links["pdd_url"]} label={text.openPdd} />
             </div>
           ) : (
             <EmptyState text={text.waitingResult} />
@@ -132,16 +150,16 @@ export function AnalyzePanel({ initialLang }: { initialLang: Language }) {
         </CardBlock>
 
         <CardBlock title={text.detailKeywords}>
-          {okResult ? <TagList items={okResult.core_keywords} /> : <EmptyState text={text.waitingResult} />}
+          {displayResult ? <TagList items={displayResult.core_keywords} /> : <EmptyState text={text.waitingResult} />}
         </CardBlock>
 
         <CardBlock title={text.detailSellingPoints}>
-          {okResult ? <ReasonList items={okResult.selling_points} /> : <EmptyState text={text.waitingResult} />}
+          {displayResult ? <ReasonList items={displayResult.selling_points} /> : <EmptyState text={text.waitingResult} />}
         </CardBlock>
       </section>
 
       <CardBlock title={text.analyzeReasons}>
-        {okResult ? <ReasonList items={okResult.reason} /> : <EmptyState text={text.waitingResult} />}
+        {displayResult ? <ReasonList items={displayResult.reason} /> : <EmptyState text={text.waitingResult} />}
       </CardBlock>
     </div>
   );

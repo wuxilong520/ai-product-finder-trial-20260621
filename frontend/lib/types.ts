@@ -105,7 +105,7 @@ export type AnalyzeResponse = {
 
 export type AnalyzeFullResponse =
   | {
-      status: "OK";
+      status: "OK" | "FALLBACK";
       lang: "zh" | "en";
       platform: "amazon" | "aliexpress" | "shopify";
       title: string;
@@ -126,14 +126,39 @@ export type AnalyzeFullResponse =
       core_keywords: string[];
       selling_points: string[];
       reason: string[];
+      fallback_score?: number | null;
+      ai_unavailable?: boolean;
     }
   | {
       status: "BLOCKED";
       lang: "zh" | "en";
       message: string;
-    }
-  | {
-      product_score: "N/A";
-      recommendation: "TRY_LATER";
-      reason: "system_busy";
     };
+
+export type HealthResponse = {
+  status: "ok" | "degraded" | "fail";
+  version: string;
+  env_status: {
+    app_env: string;
+    backend_url: boolean;
+    frontend_url: boolean;
+    frontend_origin: boolean;
+    ws_url: boolean;
+    next_public_api_base_url: boolean;
+    next_public_ws_url: boolean;
+  };
+  services: {
+    database: "ok" | "fail";
+    ai: "ok" | "fail";
+    crawler: "ok" | "fail";
+  };
+};
+
+export type TaskStatusResponse = {
+  success: boolean;
+  status: "pending" | "running" | "success" | "error" | "blocked" | "unknown";
+  message: string;
+  detail: Record<string, unknown>;
+  error_reason?: string | null;
+  updated_at: string;
+};

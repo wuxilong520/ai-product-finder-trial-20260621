@@ -34,7 +34,9 @@ export function LandingAnalyzer({ initialLang }: { initialLang: Language }) {
   }
 
   const okResult = result && "status" in result && result.status === "OK" ? result : null;
+  const fallbackResult = result && "status" in result && result.status === "FALLBACK" ? result : null;
   const blockedResult = result && "status" in result && result.status === "BLOCKED" ? result : null;
+  const displayResult = okResult || fallbackResult;
 
   return (
     <div className="mt-12 grid gap-8 lg:grid-cols-[1.08fr_0.92fr]">
@@ -75,12 +77,13 @@ export function LandingAnalyzer({ initialLang }: { initialLang: Language }) {
 
             {error ? <StatusAlert status="error" message={error} /> : null}
             {blockedResult ? <StatusAlert status="warning" message={blockedResult.message} /> : null}
+            {fallbackResult ? <StatusAlert status="warning" title={text.aiFallbackTitle} message={text.aiFallbackMessage} /> : null}
           </form>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <MetricTile label="Extract" value={okResult ? "OK" : text.statWaiting} />
-            <MetricTile label="AI" value={okResult ? text.statReady : loading ? text.statRunning : text.statWaiting} />
-            <MetricTile label="UI" value={okResult ? text.statCard : text.statWaiting} />
+            <MetricTile label="Extract" value={displayResult ? "OK" : text.statWaiting} />
+            <MetricTile label="AI" value={okResult ? text.statReady : fallbackResult ? text.aiFallbackTitle : loading ? text.statRunning : text.statWaiting} />
+            <MetricTile label="UI" value={displayResult ? text.statCard : text.statWaiting} />
           </div>
         </div>
       </Card>
@@ -90,25 +93,25 @@ export function LandingAnalyzer({ initialLang }: { initialLang: Language }) {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm text-app-text-muted">{text.analyzeResultTitle}</p>
-              <h3 className="mt-2 text-2xl font-semibold tracking-tight text-white">{okResult?.title || "Product result card"}</h3>
+              <h3 className="mt-2 text-2xl font-semibold tracking-tight text-white">{displayResult?.title || "Product result card"}</h3>
             </div>
             <div className="rounded-[20px] border border-app-border bg-white/6 px-4 py-3 text-right">
               <p className="text-xs uppercase tracking-[0.18em] text-app-text-muted">{text.detailScore}</p>
-              <p className="mt-2 text-4xl font-semibold text-white">{okResult?.score ?? "--"}</p>
+              <p className="mt-2 text-4xl font-semibold text-white">{displayResult?.score ?? "--"}</p>
             </div>
           </div>
 
           <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <InfoTile label={text.price} value={okResult?.price || text.waitingResult} />
-            <InfoTile label={text.detailRecommendation} value={okResult?.recommendation || text.waitingResult} />
+            <InfoTile label={text.price} value={displayResult?.price || text.waitingResult} />
+            <InfoTile label={text.detailRecommendation} value={displayResult?.recommendation || text.waitingResult} />
           </div>
 
           <div className="mt-5">
             <p className="text-sm text-app-text-muted">{text.supplierLinks}</p>
-            {okResult ? (
+            {displayResult ? (
               <div className="mt-3 grid gap-3">
-                <LinkTile href={okResult.source_links["1688_url"]} label="1688" />
-                <LinkTile href={okResult.source_links["pdd_url"]} label="Pinduoduo" />
+                <LinkTile href={displayResult.source_links["1688_url"]} label="1688" />
+                <LinkTile href={displayResult.source_links["pdd_url"]} label="Pinduoduo" />
               </div>
             ) : (
               <p className="mt-3 text-sm text-app-text-muted">{initialLang === "zh" ? "分析完成后这里会变成可点链接。" : "Links appear after analysis."}</p>

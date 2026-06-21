@@ -112,6 +112,8 @@ export const messages = {
     analyzeFriendlyError: "这次没有分析成功，你可以换一个公开商品页再试。",
     analyzeBlockedTitle: "这个页面暂时不能直接分析",
     analyzeBlockedHint: "可能是登录页、验证码页，或者不是有效商品页。",
+    aiFallbackTitle: "AI 暂不可用",
+    aiFallbackMessage: "当前结果来自规则模型，适合先做初步判断，稍后可以再试一次 AI 分析。",
     analyzeResultTitle: "分析结果",
     analyzeSource: "采购链接",
     analyzeReasons: "判断原因",
@@ -153,6 +155,7 @@ export const messages = {
     trialDemoReason: "判断原因",
     trialDemoTryLater: "系统正忙，稍后再试",
     trialDemoBusy: "当前 AI 服务忙不过来，稍后再试一次。",
+    betaPublicReady: "对外试用模式",
   },
   en: {
     siteTitle: "Cross-border Product Finder",
@@ -263,6 +266,8 @@ export const messages = {
     analyzeFriendlyError: "This analysis did not finish successfully. Please try another public product page.",
     analyzeBlockedTitle: "This page cannot be analyzed directly",
     analyzeBlockedHint: "It may be a login page, captcha page, or not a valid product page.",
+    aiFallbackTitle: "AI temporarily unavailable",
+    aiFallbackMessage: "This result is coming from the rule-based model for now. It is fine for a first pass, and you can try AI again later.",
     analyzeResultTitle: "Analysis Result",
     analyzeSource: "Sourcing Links",
     analyzeReasons: "Reasons",
@@ -304,6 +309,7 @@ export const messages = {
     trialDemoReason: "Reasons",
     trialDemoTryLater: "System busy, try again later",
     trialDemoBusy: "The AI service is busy right now. Please try again in a moment.",
+    betaPublicReady: "Public beta mode",
   },
 } as const;
 

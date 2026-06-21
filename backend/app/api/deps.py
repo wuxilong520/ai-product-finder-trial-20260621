@@ -1,10 +1,11 @@
 from collections.abc import Generator
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.runtime import AppError
 from app.core.security import decode_access_token
 from app.models.user import User
 from app.repositories.user import user_repository
@@ -24,10 +25,9 @@ def get_current_user(
     payload = decode_access_token(token)
     user_id = payload.get("sub")
     if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="登录信息无效")
+        raise AppError("AUTH_INVALID", "登录信息无效", "auth", 401)
 
     user = user_repository.get_by_id(db, int(user_id))
     if not user or not user.is_active:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="用户不存在或已停用")
+        raise AppError("AUTH_USER_INVALID", "用户不存在或已停用", "auth", 401)
     return user
-

@@ -20,15 +20,16 @@ export function ProductDemoPanel({ initialLang }: { initialLang: Language }) {
   const text = t(initialLang);
 
   const okResult = result && "status" in result && result.status === "OK" ? result : null;
+  const fallbackResult = result && "status" in result && result.status === "FALLBACK" ? result : null;
   const blockedResult = result && "status" in result && result.status === "BLOCKED" ? result : null;
-  const busyResult = result && "product_score" in result && result.product_score === "N/A" ? result : null;
+  const displayResult = okResult || fallbackResult;
 
   const scoreTone = useMemo(() => {
-    const score = okResult?.product_score ?? 0;
+    const score = displayResult?.product_score ?? 0;
     if (score >= 70) return "text-emerald-300 border-emerald-400/20 bg-emerald-400/12";
     if (score >= 40) return "text-amber-300 border-amber-400/20 bg-amber-400/12";
     return "text-rose-300 border-rose-400/20 bg-rose-400/12";
-  }, [okResult]);
+  }, [displayResult]);
 
   async function handleAnalyze(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -99,7 +100,7 @@ export function ProductDemoPanel({ initialLang }: { initialLang: Language }) {
           <div className="mt-5 space-y-3">
             {error ? <StatusAlert status="error" message={error} /> : null}
             {blockedResult ? <StatusAlert status="blocked" title={text.analyzeBlockedTitle} message={blockedResult.message} /> : null}
-            {busyResult ? <StatusAlert status="warning" title={text.trialDemoTryLater} message={text.trialDemoBusy} /> : null}
+            {fallbackResult ? <StatusAlert status="warning" title={text.aiFallbackTitle} message={text.aiFallbackMessage} /> : null}
           </div>
         </div>
       </Card>
@@ -109,28 +110,24 @@ export function ProductDemoPanel({ initialLang }: { initialLang: Language }) {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm text-app-text-muted">{text.analyzeResultTitle}</p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">{okResult?.title || text.waitingResult}</h2>
+              <h2 className="mt-2 text-2xl font-semibold text-white">{displayResult?.title || text.waitingResult}</h2>
             </div>
-            <div className={`rounded-2xl border px-4 py-3 text-right ${okResult ? scoreTone : "border-app-border bg-white/5 text-app-text-muted"}`}>
+            <div className={`rounded-2xl border px-4 py-3 text-right ${displayResult ? scoreTone : "border-app-border bg-white/5 text-app-text-muted"}`}>
               <p className="text-xs uppercase tracking-[0.18em]">{text.detailScore}</p>
-              <p className="mt-2 text-4xl font-semibold">{okResult?.product_score ?? busyResult?.product_score ?? "--"}</p>
+              <p className="mt-2 text-4xl font-semibold">{displayResult?.product_score ?? "--"}</p>
             </div>
           </div>
 
           <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <InfoTile label={text.detailRecommendation} value={okResult?.recommendation || busyResult?.recommendation || "—"} />
-            <InfoTile label={text.price} value={okResult?.price || "—"} />
+            <InfoTile label={text.detailRecommendation} value={displayResult?.recommendation || "—"} />
+            <InfoTile label={text.price} value={displayResult?.price || "—"} />
           </div>
 
           <div className="mt-5">
             <p className="text-sm text-app-text-muted">{text.trialDemoReason}</p>
             <div className="mt-3">
-              {okResult ? (
-                <ReasonList items={okResult.reason} />
-              ) : busyResult ? (
-                <Card variant="subtle" className="px-4 py-3 text-sm leading-7 text-app-text-secondary">
-                  {text.trialDemoBusy}
-                </Card>
+              {displayResult ? (
+                <ReasonList items={displayResult.reason} />
               ) : (
                 <EmptyState text={text.waitingResult} />
               )}

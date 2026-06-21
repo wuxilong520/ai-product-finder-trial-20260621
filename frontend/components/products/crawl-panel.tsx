@@ -7,6 +7,7 @@ import { Link2, Loader2, ScanSearch, Sparkles } from "lucide-react";
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, InfoTile, Input, Label, StatusAlert } from "@/design-system/components";
 import { crawlProduct } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { useTaskStatus } from "@/hooks/use-task-status";
 import { Language, t } from "@/lib/i18n";
 import { CrawlResult } from "@/lib/types";
 
@@ -16,6 +17,7 @@ export function CrawlPanel({ lang }: { lang: Language }) {
   const [error, setError] = useState("");
   const [result, setResult] = useState<CrawlResult | null>(null);
   const text = t(lang);
+  const { state, transport } = useTaskStatus("crawl");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -48,6 +50,9 @@ export function CrawlPanel({ lang }: { lang: Language }) {
               <Sparkles className="h-4 w-4 text-app-brand-secondary" />
               {text.crawlUnified}
             </Badge>
+            <Badge variant={transport === "ws" ? "success" : "warning"} className="px-4 py-2 text-sm">
+              {transport === "ws" ? "WS 已连接" : "轮询模式"}
+            </Badge>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -57,6 +62,11 @@ export function CrawlPanel({ lang }: { lang: Language }) {
                 <Input id="crawl-url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder={text.analyzePlaceholder} className="pl-9" />
               </div>
             </div>
+            <StatusAlert
+              status={state.status === "success" ? "success" : state.status === "error" ? "error" : state.status === "blocked" ? "blocked" : "running"}
+              title="任务状态"
+              message={state.error_reason ? `${state.message}：${state.error_reason}` : state.message}
+            />
             {error ? <StatusAlert status="error" message={error} /> : null}
             <Button type="submit" disabled={loading} className="w-full sm:w-auto">
               {loading ? (

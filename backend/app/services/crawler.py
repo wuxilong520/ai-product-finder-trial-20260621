@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import random
 import re
 from urllib.parse import quote, urlparse
@@ -144,6 +145,30 @@ async def _get_images(page, selectors: list[str], attr: str = "src", limit: int 
     return images
 
 
+async def _extract_shopify_schema(page) -> dict:
+    script_locators = [
+        "script[type='application/ld+json']",
+        "script[data-product-json]",
+        "script[id*='ProductJson']",
+    ]
+
+    for selector in script_locators:
+        locator = page.locator(selector)
+        count = await locator.count()
+        for index in range(count):
+            raw_text = (await locator.nth(index).text_content() or "").strip()
+            if not raw_text:
+                continue
+            try:
+                payload = json.loads(raw_text)
+            except Exception:
+                continue
+            parsed = _parse_schema_payload(payload)
+            if parsed.get("title") or parsed.get("price_text"):
+                return parsed
+    return {}
+
+
 async def _parse_amazon(page, url: str) -> CrawlPreview:
     title = await _get_first_text(page, ["#productTitle", "span#productTitle", "h1 span", "#title span"])
     price = await _get_first_text(
@@ -211,10 +236,15 @@ async def _parse_aliexpress(page, url: str) -> CrawlPreview:
 
 
 async def _parse_shopify(page, url: str) -> CrawlPreview:
-    title = await _get_first_text(page, ["h1", "[data-product-title]", "title"])
+    schema = await _extract_shopify_schema(page)
+    title = await _get_first_text(page, ["h1", "[data-product-title]"])
     price = await _get_first_text(
         page,
         [
+            "[data-product-price] .money",
+            ".price .money",
+            ".price__current",
+            ".product-price .money",
             "[class*='price']",
             "[data-product-price]",
             ".price-item--sale",
@@ -222,25 +252,30 @@ async def _parse_shopify(page, url: str) -> CrawlPreview:
             "[data-sale-price]",
         ],
     )
-    rating = await _get_first_text(page, ["[data-rating]", ".jdgm-prev-badge__stars", ".spr-starrating", "[class*='rating']"])
-    reviews = await _get_first_text(page, ["[data-review-count]", ".jdgm-prev-badge__text", ".spr-badge-caption", "[class*='review']"])
+    rating = await _get_first_text(page, ["[data-rating]", ".jdgm-prev-badge__text", ".spr-badge-caption"])
+    reviews = await _get_first_text(page, ["[data-review-count]", ".jdgm-prev-badge__text", ".spr-badge-caption"])
     images = await _get_images(page, ["img[src*='cdn.shopify.com']", ".product__media img", ".product-gallery img", "[data-product-media] img"])
+
+    clean_title = _clean_title(title or schema.get("title") or "")
+    clean_price = _normalize_currency_text(price or schema.get("price_text") or "")
+    clean_rating = _normalize_rating_value(rating or schema.get("rating_text") or "")
+    clean_reviews = _normalize_review_count(reviews or schema.get("review_count_text") or "")
 
     return CrawlPreview(
         source_platform="shopify",
         source_url=url,
-        title=title or "未识别标题",
+        title=clean_title or "未识别标题",
         image_url=images[0] if images else None,
         image_urls=images,
-        price=_to_float(price),
+        price=_to_float(clean_price),
         original_price=None,
         currency="USD",
-        review_count=int(_to_float(reviews) or 0) or None,
-        rating=_to_float(rating),
+        review_count=int(clean_reviews.replace(",", "")) if clean_reviews else None,
+        rating=float(clean_rating) if clean_rating else None,
         category=None,
-        raw_price=price,
-        raw_rating=rating,
-        raw_reviews=reviews,
+        raw_price=clean_price,
+        raw_rating=clean_rating,
+        raw_reviews=clean_reviews,
     )
 
 
@@ -286,3 +321,79 @@ async def _apply_stealth(page) -> None:
         window.chrome = { runtime: {} };
         """
     )
+
+
+def _parse_schema_payload(payload: object) -> dict:
+    result = {
+        "title": "",
+        "price_text": "",
+        "rating_text": "",
+        "review_count_text": "",
+    }
+
+    def visit(item: object) -> None:
+        if isinstance(item, list):
+            for child in item:
+                visit(child)
+            return
+        if not isinstance(item, dict):
+            return
+        item_type = str(item.get("@type", "")).lower()
+        if "product" in item_type:
+            result["title"] = result["title"] or str(item.get("name") or "")
+            offers = item.get("offers")
+            if isinstance(offers, dict):
+                price = offers.get("price")
+                currency = offers.get("priceCurrency")
+                if price:
+                    result["price_text"] = _normalize_currency_text(f"{currency or '$'} {price}")
+            aggregate = item.get("aggregateRating")
+            if isinstance(aggregate, dict):
+                result["rating_text"] = _normalize_rating_value(str(aggregate.get("ratingValue") or ""))
+                result["review_count_text"] = _normalize_review_count(
+                    str(aggregate.get("reviewCount") or aggregate.get("ratingCount") or "")
+                )
+        if "@graph" in item:
+            visit(item["@graph"])
+
+    visit(payload)
+    return result
+
+
+def _clean_title(value: str) -> str:
+    return " ".join(value.split()).strip()
+
+
+def _normalize_currency_text(value: str | None) -> str:
+    text = " ".join((value or "").split()).strip()
+    if not text:
+        return ""
+    for pattern in [
+        r"([$€£]\s?\d[\d,]*(?:\.\d{1,2})?)",
+        r"(\d[\d,]*(?:\.\d{1,2})?\s?(?:USD|EUR|GBP))",
+    ]:
+        match = re.search(pattern, text, flags=re.IGNORECASE)
+        if match:
+            return match.group(1).strip()
+    return ""
+
+
+def _normalize_rating_value(value: str | None) -> str:
+    text = " ".join((value or "").split()).strip()
+    if not text:
+        return ""
+    match = re.search(r"(\d(?:\.\d+)?)", text)
+    if not match:
+        return ""
+    rating = float(match.group(1))
+    if 0 <= rating <= 5:
+        return f"{rating:.1f}".rstrip("0").rstrip(".")
+    return ""
+
+
+def _normalize_review_count(value: str | None) -> str:
+    text = " ".join((value or "").split()).strip()
+    if not text:
+        return ""
+    match = re.search(r"([\d,]+)", text)
+    return match.group(1) if match else ""

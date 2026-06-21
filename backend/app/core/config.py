@@ -1,5 +1,5 @@
-from pathlib import Path
 import os
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     frontend_origin: str = os.getenv("FRONTEND_ORIGIN", os.getenv("FRONTEND_URL", ""))
     backend_url: str = os.getenv("BACKEND_URL", "")
     frontend_url: str = os.getenv("FRONTEND_URL", "")
+    ws_url: str = os.getenv("WS_URL", "")
+    next_public_api_base_url: str = os.getenv("NEXT_PUBLIC_API_BASE_URL", "")
+    next_public_ws_url: str = os.getenv("NEXT_PUBLIC_WS_URL", "")
     first_superuser_email: str = os.getenv("FIRST_SUPERUSER_EMAIL", "admin@example.com")
     first_superuser_password: str = os.getenv("FIRST_SUPERUSER_PASSWORD", "change_this_password")
 
@@ -36,6 +39,30 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    def is_production(self) -> bool:
+        return self.app_env.lower() == "production"
+
+    def required_backend_env(self) -> list[str]:
+        return [
+            "BACKEND_URL",
+            "FRONTEND_URL",
+            "FRONTEND_ORIGIN",
+            "WS_URL",
+            "NEXT_PUBLIC_API_BASE_URL",
+            "NEXT_PUBLIC_WS_URL",
+        ]
+
+    def missing_backend_env(self) -> list[str]:
+        env_map = {
+            "BACKEND_URL": self.backend_url,
+            "FRONTEND_URL": self.frontend_url,
+            "FRONTEND_ORIGIN": self.frontend_origin,
+            "WS_URL": self.ws_url,
+            "NEXT_PUBLIC_API_BASE_URL": self.next_public_api_base_url,
+            "NEXT_PUBLIC_WS_URL": self.next_public_ws_url,
+        }
+        return [key for key, value in env_map.items() if not str(value or "").strip()]
 
 
 settings = Settings()

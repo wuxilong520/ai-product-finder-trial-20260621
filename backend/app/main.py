@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_router
@@ -12,23 +12,44 @@ from app.core.runtime import (
     app_error_handler,
     ensure_log_dir,
     http_exception_handler,
+    log_info,
     unhandled_exception_handler,
 )
+from app.core.startup_checks import collect_runtime_summary, validate_startup_env
 from app.repositories.platform import platform_repository
 from app.services.auth import auth_service
+from app.services.task_status import task_status_service
 from app.models import analysis, category, crawl_run, platform, product, user  # noqa: F401
+from app.ws_manager import task_ws_manager
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _ensure_sqlite_path()
     ensure_log_dir()
+    runtime_env = validate_startup_env()
+    log_info(
+        "STARTUP_ENV | "
+        f"env={runtime_env['app_env']} | "
+        f"backend={runtime_env['backend_url']} | "
+        f"frontend={runtime_env['frontend_url']} | "
+        f"origin={runtime_env['frontend_origin']} | "
+        f"ws={runtime_env['ws_url']}"
+    )
     db = SessionLocal()
     try:
         _seed_platforms(db)
         auth_service.ensure_default_admin(db)
     finally:
         db.close()
+    runtime_summary = collect_runtime_summary()
+    log_info(
+        "STARTUP_HEALTH | "
+        f"status={runtime_summary['status']} | "
+        f"db={runtime_summary['services']['database']} | "
+        f"ai={runtime_summary['services']['ai']} | "
+        f"crawler={runtime_summary['services']['crawler']}"
+    )
     yield
 
 
@@ -50,7 +71,23 @@ app.include_router(api_router)
 
 @app.get("/health")
 def health():
-    return {"ok": True}
+    return collect_runtime_summary()
+
+
+@app.get("/task-status/{task_name}")
+def get_task_status(task_name: str):
+    return task_status_service.get(task_name)
+
+
+@app.websocket("/ws/{task_name}")
+async def task_status_ws(websocket: WebSocket, task_name: str):
+    await task_ws_manager.connect(task_name, websocket)
+    try:
+        await websocket.send_json(task_status_service.get(task_name))
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        task_ws_manager.disconnect(task_name, websocket)
 
 
 def _seed_platforms(db):

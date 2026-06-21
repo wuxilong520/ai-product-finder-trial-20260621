@@ -2,11 +2,15 @@ import { AnalyzeFullResponse, AnalyzeResponse, CrawlResult, HealthResponse, Logi
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
-  (process.env.NODE_ENV === "development" ? "http://127.0.0.1:8000" : "");
+  (process.env.NODE_ENV === "development"
+    ? "http://127.0.0.1:8000"
+    : "https://wuxilong0310-ai-product-finder-backend.hf.space");
 const API_V1 = `${API_BASE}/api/v1`;
 export const WS_URL =
   process.env.NEXT_PUBLIC_WS_URL ||
-  (process.env.NODE_ENV === "development" ? "ws://127.0.0.1:8000/ws" : "");
+  (process.env.NODE_ENV === "development"
+    ? "ws://127.0.0.1:8000/ws"
+    : "wss://wuxilong0310-ai-product-finder-backend.hf.space/ws");
 
 function ensureApiBase() {
   if (!API_BASE) {

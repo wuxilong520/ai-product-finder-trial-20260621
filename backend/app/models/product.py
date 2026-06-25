@@ -34,6 +34,7 @@ class Product(TimestampMixin, Base):
     analysis_results = relationship("AIAnalysisResult", back_populates="product", cascade="all, delete-orphan")
     keywords = relationship("ProductKeyword", back_populates="product", cascade="all, delete-orphan")
     sourcing_links = relationship("SourcingLink", back_populates="product", cascade="all, delete-orphan")
+    intelligence_record = relationship("ProductIntelligence", back_populates="product", cascade="all, delete-orphan", uselist=False)
 
 
 class ProductImage(Base):

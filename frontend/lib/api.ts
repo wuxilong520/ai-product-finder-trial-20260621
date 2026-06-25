@@ -1,16 +1,30 @@
-import { AnalyzeFullResponse, AnalyzeResponse, CrawlResult, HealthResponse, LoginResponse, Product, ProductListResponse, PublicExtractResult, TaskStatusResponse, User } from "./types";
+import {
+  AnalyzeFullResponse,
+  AnalyzeResponse,
+  CrawlResult,
+  DecisionRecommendResponse,
+  DashboardSourcesResponse,
+  DashboardSummaryResponse,
+  DashboardTasksResponse,
+  DashboardTrendsResponse,
+  HealthResponse,
+  LoginResponse,
+  MarketAnalyzeResponse,
+  Product,
+  ProductBatchDeleteResponse,
+  ProductIntelligenceEngineResponse,
+  ProductListResponse,
+  PublicExtractResult,
+  SupplierMatchResponse,
+  TaskStatusResponse,
+  User,
+} from "./types";
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  (process.env.NODE_ENV === "development"
-    ? "http://127.0.0.1:8000"
-    : "https://wuxilong0310-ai-product-finder-backend.hf.space");
+  process.env.NEXT_PUBLIC_API_BASE_URL || "";
 const API_V1 = `${API_BASE}/api/v1`;
 export const WS_URL =
-  process.env.NEXT_PUBLIC_WS_URL ||
-  (process.env.NODE_ENV === "development"
-    ? "ws://127.0.0.1:8000/ws"
-    : "wss://wuxilong0310-ai-product-finder-backend.hf.space/ws");
+  process.env.NEXT_PUBLIC_WS_URL || "";
 
 function ensureApiBase() {
   if (!API_BASE) {
@@ -26,12 +40,44 @@ export function getWsBaseUrl() {
   return WS_URL;
 }
 
+export function isNewDashboardEnabled() {
+  return process.env.NEXT_PUBLIC_ENABLE_NEW_DASHBOARD === "true";
+}
+
+export function isAuthError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+  return /token|登录|认证|unauthorized|401|未登录|失效|无效/i.test(error.message);
+}
+
 function buildAuthHeaders(token?: string) {
   const headers: Record<string, string> = {};
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
   return headers;
+}
+
+async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}, timeoutMs = 15000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("请求超时，请确认前端和后端服务都已启动");
+    }
+    if (error instanceof Error) {
+      throw new Error(`网络连接失败：${error.message}`);
+    }
+    throw new Error("网络连接失败，请稍后重试");
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function readErrorMessage(response: Response, fallback: string) {
@@ -49,13 +95,13 @@ export async function login(email: string, password: string): Promise<LoginRespo
   body.set("username", email);
   body.set("password", password);
 
-  const response = await fetch(`${API_V1}/auth/login`, {
+  const response = await fetchWithTimeout(`${API_V1}/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: body.toString(),
-  });
+  }, 15000);
 
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "登录失败，请检查账号和密码"));
@@ -112,6 +158,20 @@ export async function getProduct(id: string, token?: string): Promise<Product> {
   return response.json();
 }
 
+export async function getProductIntelligence(id: string | number, token?: string): Promise<ProductIntelligenceEngineResponse> {
+  ensureApiBase();
+  const response = await fetch(`${API_V1}/products/${id}/intelligence`, {
+    cache: "no-store",
+    headers: {
+      ...buildAuthHeaders(token),
+    },
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "读取商品情报失败"));
+  }
+  return response.json();
+}
+
 export async function crawlProduct(url: string, token?: string): Promise<CrawlResult> {
   ensureApiBase();
   const response = await fetch(`${API_V1}/products/crawl`, {
@@ -161,6 +221,54 @@ export async function analyzeProduct(productId: number, token?: string): Promise
   return response.json();
 }
 
+export async function analyzeMarketKeyword(keyword: string, token?: string): Promise<MarketAnalyzeResponse> {
+  ensureApiBase();
+  const response = await fetch(`${API_V1}/market/analyze`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...buildAuthHeaders(token),
+    },
+    body: JSON.stringify({ keyword }),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "市场分析失败"));
+  }
+  return response.json();
+}
+
+export async function matchSuppliers(keyword: string, token?: string): Promise<SupplierMatchResponse> {
+  ensureApiBase();
+  const response = await fetch(`${API_V1}/suppliers/match`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...buildAuthHeaders(token),
+    },
+    body: JSON.stringify({ keyword }),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "供应链匹配失败"));
+  }
+  return response.json();
+}
+
+export async function recommendDecision(productId: number, token?: string): Promise<DecisionRecommendResponse> {
+  ensureApiBase();
+  const response = await fetch(`${API_V1}/decision/recommend`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...buildAuthHeaders(token),
+    },
+    body: JSON.stringify({ product_id: productId }),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "决策推荐失败"));
+  }
+  return response.json();
+}
+
 export async function analyzeTitle(title: string, token?: string): Promise<AnalyzeResponse> {
   ensureApiBase();
   const response = await fetch(`${API_V1}/products/analyze`, {
@@ -196,7 +304,7 @@ export async function analyzeFull(url: string, lang: "zh" | "en", token?: string
 export async function analyzeFullPublic(url: string, lang: "zh" | "en"): Promise<AnalyzeFullResponse> {
   ensureApiBase();
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 20000);
+  const timer = setTimeout(() => controller.abort(), 180000);
   try {
     const response = await fetch(`${API_V1}/analyze/full/public`, {
       method: "POST",
@@ -212,6 +320,14 @@ export async function analyzeFullPublic(url: string, lang: "zh" | "en"): Promise
     }
 
     return response.json();
+  } catch (error) {
+    if (error instanceof Error && (error.name === "AbortError" || /aborted/i.test(error.message))) {
+      throw new Error("分析时间太长，当前请求已超时。请稍等一下再试，或者换一个更容易打开的公开商品页。");
+    }
+    if (error instanceof Error) {
+      throw new Error(`分析请求失败：${error.message}`);
+    }
+    throw new Error("分析请求失败，请稍后重试");
   } finally {
     clearTimeout(timer);
   }
@@ -250,4 +366,76 @@ export async function deleteProduct(id: number, token?: string): Promise<void> {
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "删除失败"));
   }
+}
+
+export async function getDashboardSummary(token?: string): Promise<DashboardSummaryResponse> {
+  ensureApiBase();
+  const response = await fetch(`${API_V1}/dashboard/summary`, {
+    cache: "no-store",
+    headers: {
+      ...buildAuthHeaders(token),
+    },
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "读取看板概览失败"));
+  }
+  return response.json();
+}
+
+export async function getDashboardTrends(token?: string): Promise<DashboardTrendsResponse> {
+  ensureApiBase();
+  const response = await fetch(`${API_V1}/dashboard/trends`, {
+    cache: "no-store",
+    headers: {
+      ...buildAuthHeaders(token),
+    },
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "读取趋势失败"));
+  }
+  return response.json();
+}
+
+export async function getDashboardTasks(token?: string): Promise<DashboardTasksResponse> {
+  ensureApiBase();
+  const response = await fetch(`${API_V1}/dashboard/tasks`, {
+    cache: "no-store",
+    headers: {
+      ...buildAuthHeaders(token),
+    },
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "读取任务状态失败"));
+  }
+  return response.json();
+}
+
+export async function getDashboardSources(token?: string): Promise<DashboardSourcesResponse> {
+  ensureApiBase();
+  const response = await fetch(`${API_V1}/dashboard/sources`, {
+    cache: "no-store",
+    headers: {
+      ...buildAuthHeaders(token),
+    },
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "读取数据源状态失败"));
+  }
+  return response.json();
+}
+
+export async function batchDeleteProducts(productIds: number[], token?: string): Promise<ProductBatchDeleteResponse> {
+  ensureApiBase();
+  const response = await fetch(`${API_V1}/products/batch-delete`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      ...buildAuthHeaders(token),
+    },
+    body: JSON.stringify({ product_ids: productIds }),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "批量删除失败"));
+  }
+  return response.json();
 }

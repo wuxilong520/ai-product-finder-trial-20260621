@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { ArrowRight, BarChart3, Globe2, SearchCheck, Sparkles, TrendingUp } from "lucide-react";
 
+import { ROUTES } from "@/config/routes";
 import { Button, Card, CardContent, CardTitle, LanguageToggle, MetricTile, StatusBadge } from "@/design-system/components";
 import { LandingAnalyzer } from "@/components/marketing/landing-analyzer";
-import { SystemStatusPanel } from "@/components/system/system-status-panel";
 import { t } from "@/lib/i18n";
 import { getServerLanguage } from "@/lib/i18n-server";
 
@@ -52,11 +52,11 @@ export default async function HomePage() {
 
           <div className="flex items-center gap-3">
             <Button asChild variant="secondary" className="px-4 py-2 text-sm">
-              <Link href="/login">{text.login}</Link>
+              <Link href={ROUTES.login}>{text.login}</Link>
             </Button>
             <LanguageToggle lang={lang} />
             <Button asChild size="lg">
-              <Link href="/analyze">
+              <Link href={ROUTES.analyze}>
                 {text.startAnalyzing}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
@@ -79,16 +79,16 @@ export default async function HomePage() {
 
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
               <Button asChild size="lg" className="h-14 px-8 text-base">
-                <Link href="/analyze">
+                <Link href={ROUTES.analyze}>
                   {text.startAnalyzing}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
               <Button asChild variant="secondary" size="lg" className="h-14 px-8 text-base">
-                <Link href="/product-demo">{text.trialDemoButton}</Link>
+                <Link href={ROUTES.productDemo}>{text.trialDemoButton}</Link>
               </Button>
               <Button asChild variant="secondary" size="lg" className="h-14 px-8 text-base">
-                <Link href="/login">{text.openDashboard}</Link>
+                <Link href={ROUTES.login}>{text.openDashboard}</Link>
               </Button>
             </div>
 
@@ -116,7 +116,7 @@ export default async function HomePage() {
                     <div className="mt-2 flex items-end gap-3">
                       <span className="text-5xl font-semibold text-white">82</span>
                       <span className="rounded-full border border-emerald-400/18 bg-emerald-400/10 px-3 py-1 text-sm text-emerald-300">
-                        {lang === "zh" ? "🔥 推荐销售" : "🔥 Good to Sell"}
+                        {text.recSell}
                       </span>
                     </div>
                   </div>
@@ -130,7 +130,7 @@ export default async function HomePage() {
                   <div>
                     <div className="mb-2 flex items-center justify-between text-sm text-app-text-secondary">
                       <span>{text.detailCompetition}</span>
-                      <span>{lang === "zh" ? "中竞争" : "Medium"}</span>
+                      <span>{text.competitionMedium}</span>
                     </div>
                     <div className="h-2 rounded-full bg-white/8">
                       <div className="h-2 w-[56%] rounded-full bg-[linear-gradient(90deg,#00D2FF,#6C5CE7)]" />
@@ -171,10 +171,6 @@ export default async function HomePage() {
         </section>
 
         <LandingAnalyzer initialLang={lang} />
-
-        <div className="mt-8">
-          <SystemStatusPanel lang={lang} />
-        </div>
       </div>
     </main>
   );

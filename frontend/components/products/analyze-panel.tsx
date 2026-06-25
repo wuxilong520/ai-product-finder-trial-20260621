@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Loader2, SearchCheck, Sparkles } from "lucide-react";
+import { Loader2, SearchCheck } from "lucide-react";
 
 import { Badge, Button, Card, EmptyState, InfoTile, Input, LinkTile, MetricTile, ReasonList, StatusAlert } from "@/design-system/components";
 import { analyzeFullPublic } from "@/lib/api";
@@ -11,8 +11,8 @@ import { AnalyzeFullResponse } from "@/lib/types";
 
 const DEFAULT_URL = "https://kyliecosmetics.com/products/matte-lip-kit";
 
-export function AnalyzePanel({ initialLang }: { initialLang: Language }) {
-  const [url, setUrl] = useState(DEFAULT_URL);
+export function AnalyzePanel({ initialLang, initialUrl }: { initialLang: Language; initialUrl?: string }) {
+  const [url, setUrl] = useState(initialUrl || DEFAULT_URL);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<AnalyzeFullResponse | null>(null);
@@ -48,17 +48,13 @@ export function AnalyzePanel({ initialLang }: { initialLang: Language }) {
   }
 
   return (
-    <div className="space-y-6">
-      <section className="section-card overflow-hidden">
-        <div className="grid gap-8 xl:grid-cols-[1.05fr_0.95fr]">
+    <div className="space-y-5">
+      <section className="overflow-hidden rounded-[28px] border border-white/8 bg-[#121c2c] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+        <div className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
           <div>
-            <Badge variant="brand" className="px-4 py-2 text-sm font-medium">
-              <Sparkles className="h-4 w-4" />
-              {text.analyzeBadge}
-            </Badge>
             <div className="mt-3 flex flex-wrap gap-3">
               <Badge variant={transport === "ws" ? "success" : "warning"} className="px-4 py-2 text-sm">
-                {transport === "ws" ? "WS 已连接" : "轮询模式"}
+                {transport === "ws" ? text.wsConnected : text.pollingMode}
               </Badge>
               <Badge
                 variant={state.status === "success" ? "success" : state.status === "error" ? "error" : state.status === "blocked" ? "blocked" : "running"}
@@ -67,10 +63,7 @@ export function AnalyzePanel({ initialLang }: { initialLang: Language }) {
                 {state.error_reason ? `${state.message}：${state.error_reason}` : state.message}
               </Badge>
             </div>
-            <h1 className="gradient-text mt-5 text-4xl font-semibold tracking-tight md:text-5xl">{text.analyzeTitle}</h1>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-app-text-secondary">{text.analyzeDesc}</p>
-
-            <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               <Card className="flex flex-col gap-3 p-3 md:flex-row md:items-center">
                 <div className="flex h-12 flex-1 items-center rounded-2xl bg-white/5 px-4">
                   <SearchCheck className="mr-3 h-5 w-5 text-app-brand-secondary" />
@@ -104,7 +97,7 @@ export function AnalyzePanel({ initialLang }: { initialLang: Language }) {
             ) : null}
           </div>
 
-          <Card variant="panel" className="p-6">
+          <Card variant="panel" className="p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm text-app-text-muted">{text.analyzeResultTitle}</p>
@@ -116,20 +109,20 @@ export function AnalyzePanel({ initialLang }: { initialLang: Language }) {
               </div>
             </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
               <InfoTile label={text.title} value={displayResult?.title || "—"} />
               <InfoTile label={text.detailTitleZh} value={displayResult?.title_zh || "—"} />
               <InfoTile label={text.price} value={displayResult?.price || "—"} />
               <InfoTile label={text.detailCompetition} value={displayResult?.competition_level || "—"} />
             </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
               <InfoTile label={text.detailRecommendation} value={displayResult?.recommendation || "—"} />
               <InfoTile label={text.detailProfit} value={displayResult?.profit_estimate || "—"} />
             </div>
 
             {displayResult?.image ? (
-              <div className="mt-5 overflow-hidden rounded-2xl border border-app-border bg-white/5">
+              <div className="mt-4 overflow-hidden rounded-2xl border border-app-border bg-white/5">
                 <img src={displayResult.image} alt={displayResult.title} className="h-64 w-full object-cover" />
               </div>
             ) : null}

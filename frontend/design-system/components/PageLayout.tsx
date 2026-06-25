@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Activity, BarChart3, Brain, ChevronRight, LayoutDashboard, LogOut, ScanSearch, Sparkles } from "lucide-react";
 
+import { ROUTES } from "@/config/routes";
 import { Badge, StatusBadge } from "@/design-system/components/Badge";
 import { Button } from "@/design-system/components/Button";
 import { Card } from "@/design-system/components/Card";
@@ -20,15 +21,15 @@ export function PageLayout({ children, lang }: { children: React.ReactNode; lang
   const text = t(lang);
 
   const navItems = [
-    { href: "/dashboard", label: text.navProducts, icon: LayoutDashboard },
-    { href: "/crawl", label: text.navCrawl, icon: ScanSearch },
-    { href: "/analyze", label: text.navAnalyze, icon: Brain },
+    { href: ROUTES.dashboard, label: text.navProducts, icon: LayoutDashboard },
+    { href: ROUTES.crawl, label: text.navCrawl, icon: ScanSearch },
+    { href: ROUTES.analyze, label: text.navAnalyze, icon: Brain },
   ];
 
   function logout() {
     clearToken();
     document.cookie = `${TOKEN_KEY}=; path=/; max-age=0`;
-    router.push("/login");
+    router.push(ROUTES.login);
   }
 
   return (

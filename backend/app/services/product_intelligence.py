@@ -100,9 +100,9 @@ def analyze_product_intelligence(
 def _normalize_ai_intelligence_result(payload: dict[str, Any]) -> dict[str, Any]:
     product_score = int(max(0, min(100, int(payload.get("product_score") or 0))))
     profit_estimate = str(payload.get("profit_estimate") or "").strip()
-    competition_level = str(payload.get("competition_level") or "").strip().lower()
-    selling_potential = str(payload.get("selling_potential") or "").strip().lower()
-    recommendation = str(payload.get("recommendation") or "").strip().lower()
+    competition_level = _normalize_competition_level(payload.get("competition_level"))
+    selling_potential = _normalize_selling_potential(payload.get("selling_potential"))
+    recommendation = _normalize_recommendation(payload.get("recommendation"))
     reason = payload.get("reason")
 
     if competition_level not in {"low", "medium", "high"}:
@@ -126,6 +126,68 @@ def _normalize_ai_intelligence_result(payload: dict[str, Any]) -> dict[str, Any]
         "recommendation": recommendation,
         "reason": normalized_reasons,
     }
+
+
+def _normalize_competition_level(value: Any) -> str:
+    raw_value = str(value or "").strip().lower()
+    alias_map = {
+        "low": "low",
+        "weak": "low",
+        "small": "low",
+        "light": "low",
+        "medium": "medium",
+        "moderate": "medium",
+        "normal": "medium",
+        "average": "medium",
+        "ok": "medium",
+        "high": "high",
+        "strong": "high",
+        "heavy": "high",
+        "intense": "high",
+    }
+    return alias_map.get(raw_value, raw_value)
+
+
+def _normalize_selling_potential(value: Any) -> str:
+    raw_value = str(value or "").strip().lower()
+    alias_map = {
+        "weak": "weak",
+        "low": "weak",
+        "poor": "weak",
+        "limited": "weak",
+        "ok": "ok",
+        "medium": "ok",
+        "moderate": "ok",
+        "normal": "ok",
+        "average": "ok",
+        "considerable": "ok",
+        "strong": "strong",
+        "high": "strong",
+        "great": "strong",
+        "excellent": "strong",
+    }
+    return alias_map.get(raw_value, raw_value)
+
+
+def _normalize_recommendation(value: Any) -> str:
+    raw_value = str(value or "").strip().lower()
+    alias_map = {
+        "sell": "sell",
+        "launch": "sell",
+        "recommend": "sell",
+        "recommended": "sell",
+        "monitor": "monitor",
+        "watch": "monitor",
+        "observe": "monitor",
+        "consider": "monitor",
+        "hold": "monitor",
+        "ignore": "ignore",
+        "skip": "ignore",
+        "reject": "ignore",
+        "avoid": "ignore",
+        "not_recommended": "ignore",
+    }
+    return alias_map.get(raw_value, raw_value)
 
 
 def _normalize_reason_list(value: Any) -> list[str]:

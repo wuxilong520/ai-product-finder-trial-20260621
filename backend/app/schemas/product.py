@@ -28,6 +28,20 @@ class PublicProductExtractRequest(BaseModel):
     )
 
 
+class ProductBatchDeleteRequest(BaseModel):
+    product_ids: list[int] = Field(
+        ...,
+        min_length=1,
+        description="需要批量删除的商品 ID 列表",
+        examples=[[1, 2, 3]],
+    )
+
+
+class ProductBatchDeleteResponse(BaseModel):
+    ok: bool
+    deleted_ids: list[int]
+
+
 class PublicProductExtractBlocked(BaseModel):
     status: Literal["BLOCKED"]
     reason: Literal["captcha_or_login_or_invalid_page"]
@@ -133,6 +147,16 @@ class ProductIntelligenceResult(BaseModel):
     selling_potential: Literal["weak", "ok", "strong"]
     recommendation: Literal["sell", "monitor", "ignore"]
     reason: list[str]
+
+
+class ProductIntelligenceEngineResponse(BaseModel):
+    market_score: float
+    competition_score: float
+    profit_score: float
+    risk_score: float
+    recommendation_score: float
+    recommendation: Literal["推荐上架", "观察", "不推荐"]
+    reasons: list[str]
 
 
 class ProductImageRead(BaseModel):

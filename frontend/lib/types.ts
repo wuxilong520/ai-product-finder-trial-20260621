@@ -64,6 +64,56 @@ export type ProductIntelligenceResult = {
   reason: string[];
 };
 
+export type ProductIntelligenceEngineResponse = {
+  market_score: number;
+  competition_score: number;
+  profit_score: number;
+  risk_score: number;
+  recommendation_score: number;
+  recommendation: "推荐上架" | "观察" | "不推荐";
+  reasons: string[];
+};
+
+export type MarketAnalyzeResponse = {
+  trend_score: number;
+  demand_score: number;
+  competition_score: number;
+  opportunity_score: number;
+  recommendation_score: number;
+  recommendation: string;
+  reasons: string[];
+  category?: string | null;
+  source: string;
+};
+
+export type SupplierMatchItem = {
+  product_id?: number | null;
+  supplier_name?: string | null;
+  platform: string;
+  supplier_title: string;
+  supplier_url: string;
+  supplier_price?: number | null;
+  currency?: string | null;
+  match_score: number;
+  availability: string;
+};
+
+export type SupplierMatchResponse = {
+  suppliers: SupplierMatchItem[];
+};
+
+export type DecisionRecommendResponse = {
+  intelligence_score: number;
+  market_score: number;
+  supplier_score: number;
+  profit_score: number;
+  risk_score: number;
+  final_score: number;
+  recommendation: string;
+  recommendation_level: string;
+  reasons: string[];
+};
+
 export type ProductImage = {
   id: number;
   image_url: string;
@@ -95,6 +145,11 @@ export type Product = {
 export type ProductListResponse = {
   items: Product[];
   total: number;
+};
+
+export type ProductBatchDeleteResponse = {
+  ok: boolean;
+  deleted_ids: number[];
 };
 
 export type AnalyzeResponse = {
@@ -161,4 +216,88 @@ export type TaskStatusResponse = {
   detail: Record<string, unknown>;
   error_reason?: string | null;
   updated_at: string;
+};
+
+export type DashboardStatCard = {
+  key: string;
+  label: string;
+  value: number | string;
+  delta_text?: string | null;
+  trend: "up" | "down" | "flat";
+};
+
+export type DashboardLatestProduct = {
+  id: number;
+  title: string;
+  platform_name: string;
+  price: string;
+  category_name?: string | null;
+  created_at: string;
+};
+
+export type DashboardCategorySnapshot = {
+  name: string;
+  product_count: number;
+};
+
+export type DashboardSummaryResponse = {
+  cards: DashboardStatCard[];
+  latest_products: DashboardLatestProduct[];
+  top_categories: DashboardCategorySnapshot[];
+  generated_at: string;
+};
+
+export type DashboardTrendPoint = {
+  date: string;
+  product_count: number;
+};
+
+export type DashboardTrendsResponse = {
+  series: {
+    period: string;
+    points: DashboardTrendPoint[];
+    peak_value: number;
+  };
+  generated_at: string;
+};
+
+export type DashboardTaskState = {
+  key: string;
+  label: string;
+  status: "pending" | "running" | "success" | "error" | "blocked" | "unknown";
+  message: string;
+  error_reason?: string | null;
+  updated_at: string;
+};
+
+export type DashboardRecentRun = {
+  id: number;
+  request_url: string;
+  status: string;
+  platform_name: string;
+  crawled_at: string;
+};
+
+export type DashboardTasksResponse = {
+  states: DashboardTaskState[];
+  recent_runs: DashboardRecentRun[];
+  generated_at: string;
+};
+
+export type DashboardSourceState = {
+  platform_code: string;
+  platform_name: string;
+  health: "ok" | "warning" | "error";
+  last_activity_text: string;
+  product_count: number;
+};
+
+export type DashboardSourcesResponse = {
+  sources: DashboardSourceState[];
+  storage: {
+    used_percent: number;
+    total_products: number;
+    total_runs: number;
+  };
+  generated_at: string;
 };

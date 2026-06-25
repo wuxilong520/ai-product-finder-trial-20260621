@@ -9,12 +9,16 @@ from app.schemas.product import (
     AnalyzeResponse,
     CrawlRequest,
     CrawlResponse,
+    ProductIntelligenceEngineResponse,
+    ProductBatchDeleteRequest,
+    ProductBatchDeleteResponse,
     PublicProductExtractBlocked,
     PublicProductExtractRequest,
     PublicProductExtractResponse,
     ProductListResponse,
     ProductRead,
 )
+from app.services.product_intelligence_engine import product_intelligence_engine
 from app.services.product import product_service
 from app.services.product_extractor import extract_public_product_page
 from app.services.task_status import task_status_service
@@ -107,6 +111,18 @@ def list_products(
     return ProductListResponse(items=[ProductRead.model_validate(item) for item in items], total=total)
 
 
+@router.delete("/batch-delete", response_model=ProductBatchDeleteResponse)
+def batch_delete_products(
+    payload: ProductBatchDeleteRequest,
+    db: Session = Depends(db_session),
+    current_user=Depends(get_current_user),
+):
+    deleted_ids = product_service.batch_delete_products(db, payload.product_ids)
+    if not deleted_ids:
+        return error_response("PRODUCT_NOT_FOUND", "商品不存在", "db", status.HTTP_404_NOT_FOUND)
+    return ProductBatchDeleteResponse(ok=True, deleted_ids=deleted_ids)
+
+
 @router.get("/{product_id}", response_model=ProductRead)
 def get_product(
     product_id: int,
@@ -117,6 +133,21 @@ def get_product(
     if not product:
         return error_response("PRODUCT_NOT_FOUND", "商品不存在", "db", status.HTTP_404_NOT_FOUND)
     return ProductRead.model_validate(product)
+
+
+@router.get("/{product_id}/intelligence", response_model=ProductIntelligenceEngineResponse)
+def get_product_intelligence(
+    product_id: int,
+    db: Session = Depends(db_session),
+    current_user=Depends(get_current_user),
+):
+    try:
+        payload = product_intelligence_engine.get_or_create_intelligence(db, product_id)
+    except AppError as exc:
+        return error_response(exc.error_code, exc.message, exc.stage, exc.status_code)
+    except Exception as exc:
+        return error_response("PRODUCT_INTELLIGENCE_FAILED", str(exc), "intelligence", status.HTTP_500_INTERNAL_SERVER_ERROR)
+    return ProductIntelligenceEngineResponse(**payload)
 
 
 @router.delete("/{product_id}")

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState, InfoTile, LinkTile, StatusBadge, TagList } from "@/design-system/components";
 import { Language, t } from "@/lib/i18n";
 import { AnalyzeResponse, Product } from "@/lib/types";
+import { DecisionCard } from "@/components/decision/decision-card";
+import { ProductIntelligencePanel } from "@/components/products/product-intelligence-panel";
 
 export function ProductDetail({
   product,
@@ -39,7 +41,7 @@ export function ProductDetail({
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             <InfoTile label={text.price} value={product.current_price ? `${product.currency_code || ""} ${product.current_price}` : "—"} />
-            <InfoTile label={lang === "zh" ? "原价" : "Original Price"} value={product.original_price ? `${product.currency_code || ""} ${product.original_price}` : "—"} />
+            <InfoTile label={text.originalPrice} value={product.original_price ? `${product.currency_code || ""} ${product.original_price}` : "—"} />
             <InfoTile label={`${text.rating} / ${text.reviews}`} value={`${product.rating ?? "—"} / ${product.review_count ?? 0}`} />
           </div>
         </CardContent>
@@ -107,6 +109,9 @@ export function ProductDetail({
         </CardContent>
       </Card>
 
+      <ProductIntelligencePanel productId={product.id} lang={lang} />
+      <DecisionCard productId={product.id} lang={lang} />
+
       <Card>
         <CardHeader>
           <CardTitle>{text.detailImages}</CardTitle>
@@ -128,55 +133,45 @@ export function ProductDetail({
 }
 
 function TagGroup({ title, items, lang }: { title: string; items: string[]; lang: Language }) {
+  const text = t(lang);
   return (
     <div>
       <p className="text-sm text-app-text-muted">{title}</p>
       <div className="mt-2">
-        <TagList items={items} emptyText={lang === "zh" ? "暂无" : "Empty"} />
+        <TagList items={items} emptyText={text.emptyState} />
       </div>
     </div>
   );
 }
 
 function toRecommendationLabel(value: "sell" | "monitor" | "ignore", lang: Language) {
-  if (lang === "en") {
-    if (value === "sell") return "Good to sell";
-    if (value === "monitor") return "Monitor";
-    return "Ignore for now";
-  }
-  if (value === "sell") return "值得卖";
-  if (value === "monitor") return "继续观察";
-  return "先忽略";
+  const text = t(lang);
+  if (value === "sell") return text.productRecSell;
+  if (value === "monitor") return text.productRecMonitor;
+  return text.productRecIgnore;
 }
 
 function toCompetitionLabel(value: "low" | "medium" | "high", lang: Language) {
-  if (lang === "en") {
-    if (value === "low") return "Low competition";
-    if (value === "medium") return "Medium competition";
-    return "High competition";
-  }
-  if (value === "low") return "低竞争";
-  if (value === "medium") return "中竞争";
-  return "高竞争";
+  const text = t(lang);
+  if (value === "low") return text.productCompetitionLow;
+  if (value === "medium") return text.productCompetitionMedium;
+  return text.productCompetitionHigh;
 }
 
 function toPotentialLabel(value: "weak" | "ok" | "strong", lang: Language) {
-  if (lang === "en") {
-    if (value === "strong") return "Strong";
-    if (value === "ok") return "Okay";
-    return "Weak";
-  }
-  if (value === "strong") return "强";
-  if (value === "ok") return "中";
-  return "弱";
+  const text = t(lang);
+  if (value === "strong") return text.productPotentialStrong;
+  if (value === "ok") return text.productPotentialOk;
+  return text.productPotentialWeak;
 }
 
 function getRecommendationMeta(value: "sell" | "monitor" | "ignore", lang: Language) {
+  const text = t(lang);
   if (value === "sell") {
-    return { label: lang === "zh" ? "🔥 推荐销售" : "🔥 Good to Sell", color: "linear-gradient(90deg, #34d399, #10b981)" };
+    return { label: text.productMetaSell, color: "linear-gradient(90deg, #34d399, #10b981)" };
   }
   if (value === "monitor") {
-    return { label: lang === "zh" ? "⚠️ 继续观察" : "⚠️ Medium", color: "linear-gradient(90deg, #fbbf24, #f59e0b)" };
+    return { label: text.productMetaMonitor, color: "linear-gradient(90deg, #fbbf24, #f59e0b)" };
   }
-  return { label: lang === "zh" ? "❌ 先别做" : "❌ Avoid", color: "linear-gradient(90deg, #fb7185, #ef4444)" };
+  return { label: text.productMetaIgnore, color: "linear-gradient(90deg, #fb7185, #ef4444)" };
 }

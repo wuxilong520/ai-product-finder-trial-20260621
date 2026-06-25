@@ -302,6 +302,16 @@ class ProductService:
         product_repository.delete(db, product)
         return True
 
+    def batch_delete_products(self, db: Session, product_ids: list[int]) -> list[int]:
+        existing_products = []
+        for product_id in product_ids:
+            product = product_repository.get_by_id(db, product_id)
+            if product:
+                existing_products.append(product)
+        if not existing_products:
+            return []
+        return product_repository.delete_many(db, existing_products)
+
     def _translate_recommendation(self, value: str, lang: str) -> str:
         if lang == "en":
             mapping = {

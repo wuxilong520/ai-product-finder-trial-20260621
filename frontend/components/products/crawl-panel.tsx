@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Link2, Loader2, ScanSearch, Sparkles } from "lucide-react";
+import { Link2, Loader2, ScanSearch } from "lucide-react";
 
+import { analyzeWithProductRoute, productDetailRoute } from "@/config/routes";
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, InfoTile, Input, Label, StatusAlert } from "@/design-system/components";
 import { crawlProduct } from "@/lib/api";
 import { getToken } from "@/lib/auth";
@@ -34,24 +35,17 @@ export function CrawlPanel({ lang }: { lang: Language }) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+    <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
       <Card className="glow-border">
         <CardHeader>
-          <CardTitle>{text.crawlTitleShort}</CardTitle>
-          <CardDescription>{text.crawlDescShort}</CardDescription>
+          <CardTitle>{text.startCrawl}</CardTitle>
+          <CardDescription>{text.realExtract}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="mb-5 flex flex-wrap gap-3">
             <Badge variant="brand" className="px-4 py-2 text-sm font-medium">
               <ScanSearch className="h-4 w-4" />
               {text.realExtract}
-            </Badge>
-            <Badge variant="neutral" className="px-4 py-2 text-sm text-app-text-secondary">
-              <Sparkles className="h-4 w-4 text-app-brand-secondary" />
-              {text.crawlUnified}
-            </Badge>
-            <Badge variant={transport === "ws" ? "success" : "warning"} className="px-4 py-2 text-sm">
-              {transport === "ws" ? "WS 已连接" : "轮询模式"}
             </Badge>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -64,8 +58,8 @@ export function CrawlPanel({ lang }: { lang: Language }) {
             </div>
             <StatusAlert
               status={state.status === "success" ? "success" : state.status === "error" ? "error" : state.status === "blocked" ? "blocked" : "running"}
-              title="任务状态"
-              message={state.error_reason ? `${state.message}：${state.error_reason}` : state.message}
+              title={text.taskStatus}
+              message={state.message}
             />
             {error ? <StatusAlert status="error" message={error} /> : null}
             <Button type="submit" disabled={loading} className="w-full sm:w-auto">
@@ -108,12 +102,12 @@ export function CrawlPanel({ lang }: { lang: Language }) {
               <div className="flex flex-wrap gap-3">
                 {result.product_id ? (
                   <Button asChild variant="outline">
-                    <Link href={`/products/${result.product_id}`}>{text.viewProductDetail}</Link>
+                    <Link href={productDetailRoute(result.product_id)}>{text.viewProductDetail}</Link>
                   </Button>
                 ) : null}
                 {result.product_id ? (
                   <Button asChild>
-                    <Link href={`/analyze?productId=${result.product_id}`}>{text.continueAi}</Link>
+                    <Link href={analyzeWithProductRoute(result.product_id)}>{text.continueAi}</Link>
                   </Button>
                 ) : null}
               </div>

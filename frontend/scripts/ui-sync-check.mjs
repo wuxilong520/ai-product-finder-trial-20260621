@@ -16,6 +16,10 @@ const requiredLayoutPages = [
   "app/products/[id]/page.tsx",
 ];
 
+const pageDelegatedLayoutMarkers = {
+  "app/dashboard/page.tsx": ["NewDashboard", "OldDashboard"],
+};
+
 const forbiddenImport = "@/components/ui/";
 const forbiddenPatterns = [
   /text-slate-\d+/g,
@@ -79,13 +83,18 @@ for (const file of scanTargets) {
   }
 }
 
+const allowedLayoutMarkers = ["AppShell", "PageLayout", "NewDashboardLayout", "XBorderLayout"];
+
 for (const page of requiredLayoutPages) {
   const fullPath = path.join(root, page);
   const content = fs.readFileSync(fullPath, "utf8");
-  if (!content.includes("AppShell") && !content.includes("PageLayout")) {
+  const delegatedMarkers = pageDelegatedLayoutMarkers[page] || [];
+  const hasDirectLayout = allowedLayoutMarkers.some((marker) => content.includes(marker));
+  const hasDelegatedLayout = delegatedMarkers.some((marker) => content.includes(marker));
+  if (!hasDirectLayout && !hasDelegatedLayout) {
     violations.push({
       file: page,
-      reason: "这个页面没有接入统一布局 `AppShell / PageLayout`。",
+      reason: "这个页面没有接入统一布局 `AppShell / PageLayout / NewDashboardLayout`。",
     });
   }
 }
@@ -102,7 +111,7 @@ const lines = [
   "",
   "## 当前统一规则",
   "",
-  "- 业务页面必须使用 `AppShell` 或 `PageLayout`。",
+  "- 业务页面必须使用 `AppShell`、`PageLayout`、`NewDashboardLayout` 或 `XBorderLayout`。",
   "- 页面与组件禁止直接引用旧 UI 目录，统一走 `@/design-system/components`。",
   "- 页面与业务组件禁止继续使用旧的 `slate / gray / blue-600` 这一套零散浅色风格类名。",
   "- 新页面默认继承深色主题、玻璃卡片、统一按钮、统一输入框和统一语言切换。",

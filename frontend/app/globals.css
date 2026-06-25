@@ -49,6 +49,35 @@
     font: inherit;
   }
 
+  input,
+  textarea,
+  select {
+    color: #f8fafc;
+    caret-color: #f8fafc;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+    opacity: 1;
+  }
+
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    -webkit-text-fill-color: #f8fafc;
+    transition: background-color 9999s ease-in-out 0s;
+    box-shadow: 0 0 0px 1000px rgba(15, 23, 42, 0.82) inset;
+    caret-color: #f8fafc;
+  }
+
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none;
+  }
+
   ::selection {
     background: rgba(108, 92, 231, 0.32);
     color: white;

@@ -1,10 +1,13 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
-import { AppShell } from "@/components/app-shell";
+import { TaskPanel } from "@/components/dashboard/task-panel";
+import { XBorderLayout } from "@/components/layouts/xborder-layout";
 import { ProductDetail } from "@/components/products/product-detail";
-import { analyzeProduct, getProduct } from "@/lib/api";
+import { ROUTES } from "@/config/routes";
+import { getDashboardSources, getDashboardTasks, getProduct, isAuthError } from "@/lib/api";
 import { TOKEN_KEY } from "@/lib/auth";
+import { EMPTY_DASHBOARD_SOURCES, EMPTY_DASHBOARD_TASKS, safeLoad } from "@/lib/dashboard-fallback";
 import { getServerLanguage } from "@/lib/i18n-server";
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -12,21 +15,32 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const cookieStore = await cookies();
   const token = cookieStore.get(TOKEN_KEY)?.value || "";
   if (!token) {
-    redirect("/login");
+    redirect(ROUTES.login);
   }
+  const [tasks, sources] = await Promise.all([
+    safeLoad(() => getDashboardTasks(token), EMPTY_DASHBOARD_TASKS),
+    safeLoad(() => getDashboardSources(token), EMPTY_DASHBOARD_SOURCES),
+  ]);
 
   const resolvedParams = await params;
-  const product = await getProduct(resolvedParams.id, token);
-  let analysisReport = null;
+  let product;
   try {
-    analysisReport = await analyzeProduct(Number(resolvedParams.id), token);
-  } catch {
-    analysisReport = null;
+    product = await getProduct(resolvedParams.id, token);
+  } catch (error) {
+    if (isAuthError(error)) {
+      redirect(ROUTES.login);
+    }
+    throw error;
   }
-
   return (
-    <AppShell lang={lang}>
-      <ProductDetail product={product} analysisReport={analysisReport} lang={lang} />
-    </AppShell>
+    <XBorderLayout
+      lang={lang}
+      activePath="products"
+      rightRail={<TaskPanel token={token} initialTasks={tasks} initialSources={sources} lang={lang} />}
+    >
+      <div className="space-y-6">
+        <ProductDetail product={product} analysisReport={null} lang={lang} />
+      </div>
+    </XBorderLayout>
   );
 }

@@ -48,6 +48,13 @@ class ProductRepository:
         db.delete(product)
         db.commit()
 
+    def delete_many(self, db: Session, products: list[Product]) -> list[int]:
+        deleted_ids = [product.id for product in products]
+        for product in products:
+            db.delete(product)
+        db.commit()
+        return deleted_ids
+
     def replace_images(self, db: Session, product: Product, image_urls: list[str]) -> None:
         for image in list(product.images):
             db.delete(image)

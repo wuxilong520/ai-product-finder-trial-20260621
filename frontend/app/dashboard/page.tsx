@@ -1,11 +1,10 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
-import { AppShell } from "@/components/app-shell";
-import { ProductList } from "@/components/products/product-list";
-import { SystemStatusPanel } from "@/components/system/system-status-panel";
-import { PageHero } from "@/design-system/components";
-import { getProducts } from "@/lib/api";
+import { ROUTES } from "@/config/routes";
+import { NewDashboard } from "@/modules/dashboard/new-dashboard";
+import { OldDashboard } from "@/modules/dashboard/old-dashboard";
+import { getProducts, isAuthError, isNewDashboardEnabled } from "@/lib/api";
 import { TOKEN_KEY } from "@/lib/auth";
 import { t } from "@/lib/i18n";
 import { getServerLanguage } from "@/lib/i18n-server";
@@ -15,30 +14,39 @@ export default async function DashboardPage({
 }: {
   searchParams?: Promise<{ search?: string }>;
 }) {
+  console.log("[dashboard] start");
   const lang = await getServerLanguage();
+  console.log("[dashboard] lang", lang);
   const text = t(lang);
   const cookieStore = await cookies();
+  console.log("[dashboard] cookies ready");
   const token = cookieStore.get(TOKEN_KEY)?.value || "";
   if (!token) {
-    redirect("/login");
+    console.log("[dashboard] no token, redirect");
+    redirect(ROUTES.login);
   }
 
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const search = resolvedSearchParams?.search || "";
-  const data = await getProducts(search, token);
+  console.log("[dashboard] search", search);
+  let data;
+  try {
+    console.log("[dashboard] getProducts before");
+    data = await getProducts(search, token);
+    console.log("[dashboard] getProducts after", data?.total);
+  } catch (error) {
+    console.log("[dashboard] getProducts error", error);
+    if (isAuthError(error)) {
+      console.log("[dashboard] auth error, redirect");
+      redirect(ROUTES.login);
+    }
+    throw error;
+  }
 
-  return (
-    <AppShell lang={lang}>
-      <PageHero
-        eyebrow={text.dashboardEyebrow}
-        title={text.dashboardTitle}
-        description={text.dashboardDesc}
-        action={<div className="rounded-full border border-app-border bg-white/8 px-4 py-2 text-sm text-app-text-secondary shadow-app-soft">{text.dashboardCount.replace("{count}", String(data.total))}</div>}
-      />
-      <div className="mb-6">
-        <SystemStatusPanel lang={lang} />
-      </div>
-      <ProductList products={data.items} total={data.total} lang={lang} />
-    </AppShell>
-  );
+  console.log("[dashboard] render");
+  if (isNewDashboardEnabled()) {
+    return <NewDashboard token={token} lang={lang} />;
+  }
+
+  return <OldDashboard lang={lang} data={data} />;
 }

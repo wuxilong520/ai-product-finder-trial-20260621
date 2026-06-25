@@ -1,15 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 import { Button, MinimalField, StatusAlert } from "@/design-system/components";
+import { ROUTES } from "@/config/routes";
 import { login } from "@/lib/api";
-import { setToken } from "@/lib/auth";
+import { getToken, setToken } from "@/lib/auth";
 import { Language, t } from "@/lib/i18n";
 
 export function LoginForm({ lang }: { lang: Language }) {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,8 +22,11 @@ export function LoginForm({ lang }: { lang: Language }) {
     try {
       const result = await login(email, password);
       setToken(result.access_token);
-      router.push("/dashboard");
-      router.refresh();
+      const savedToken = getToken();
+      if (!savedToken) {
+        throw new Error(text.loginSaveFailed);
+      }
+      window.location.assign(ROUTES.dashboard);
     } catch (err) {
       setError(err instanceof Error ? err.message : text.loginFailed);
     } finally {
@@ -33,14 +35,15 @@ export function LoginForm({ lang }: { lang: Language }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 px-4 pb-4 pt-2">
+    <form onSubmit={handleSubmit} className="space-y-5 px-4 pb-4 pt-2" autoComplete="off">
       <MinimalField
         id="email"
         type="email"
         value={email}
         onChange={setEmail}
         label={text.email}
-        placeholder="admin@example.com"
+        placeholder={text.loginEmailPlaceholder}
+        autoComplete="off"
       />
       <MinimalField
         id="password"
@@ -48,7 +51,8 @@ export function LoginForm({ lang }: { lang: Language }) {
         value={password}
         onChange={setPassword}
         label={text.password}
-        placeholder="••••••••"
+        placeholder={text.loginPasswordPlaceholder}
+        autoComplete="new-password"
       />
 
       {error ? <StatusAlert status="error" message={error} /> : null}

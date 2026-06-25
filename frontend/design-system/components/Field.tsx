@@ -1,3 +1,5 @@
+"use client";
+
 import { Eye, EyeOff } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -10,6 +12,7 @@ export function MinimalField({
   onChange,
   label,
   placeholder,
+  autoComplete,
 }: {
   id: string;
   type: string;
@@ -17,6 +20,7 @@ export function MinimalField({
   onChange: (value: string) => void;
   label: string;
   placeholder: string;
+  autoComplete?: string;
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const resolvedType = useMemo(() => {
@@ -27,34 +31,44 @@ export function MinimalField({
   }, [showPassword, type]);
 
   return (
-    <div className="group relative">
+    <div className="group space-y-2">
+      <label htmlFor={id} className="block text-sm font-medium text-slate-200">
+        {label}
+      </label>
+      <div className="relative">
       <Input
         id={id}
         type={resolvedType}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder=" "
+        placeholder={placeholder}
+        autoComplete={autoComplete ?? "off"}
+        autoCorrect="off"
+        autoCapitalize="none"
+        spellCheck={false}
         appearance="minimal"
-        className="peer h-14 px-4 pb-3 pt-5 text-lg text-slate-950 placeholder:text-transparent"
+        className="h-14 rounded-2xl border-white/12 bg-white/8 px-4 pr-14 text-base text-[#f8fafc] placeholder:text-[rgba(248,250,252,0.42)] [color-scheme:dark] [-webkit-text-fill-color:#f8fafc] focus:border-[#6C5CE7] focus:bg-white/10 focus:shadow-[0_0_0_1px_rgba(108,92,231,0.22),0_0_28px_rgba(108,92,231,0.18)]"
+        style={{
+          backgroundColor: "rgba(15, 23, 42, 0.82)",
+          color: "#f8fafc",
+          borderColor: "rgba(255, 255, 255, 0.14)",
+          WebkitTextFillColor: "#f8fafc",
+          caretColor: "#f8fafc",
+        }}
       />
-      <label
-        htmlFor={id}
-        className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 origin-left bg-transparent px-1 text-sm text-slate-400 transition-all duration-200 peer-focus:top-3 peer-focus:translate-y-0 peer-focus:scale-90 peer-focus:text-app-brand-secondary peer-[:not(:placeholder-shown)]:top-3 peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:scale-90"
-      >
-        {label}
-      </label>
       {type === "password" ? (
         <button
           type="button"
           aria-label={showPassword ? "隐藏密码" : "显示密码"}
           onClick={() => setShowPassword((value) => !value)}
-          className="absolute right-4 top-1/2 z-10 -translate-y-1/2 text-slate-500 transition hover:text-slate-800"
+          className="absolute right-4 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-transparent text-slate-300 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-[#6C5CE7]/45"
         >
           {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
         </button>
       ) : null}
       <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
         <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_top,rgba(108,92,231,0.14),transparent_60%)]" />
+      </div>
       </div>
     </div>
   );

@@ -1,8 +1,9 @@
-FROM node:20-alpine AS builder
+FROM docker.m.daocloud.io/library/node:20-alpine AS builder
 
 WORKDIR /app
 
 COPY frontend/package*.json ./
+RUN npm config set registry https://registry.npmmirror.com
 RUN npm install
 
 COPY frontend ./
@@ -16,7 +17,7 @@ ENV NODE_ENV=production
 
 RUN npm run build
 
-FROM node:20-alpine AS runner
+FROM docker.m.daocloud.io/library/node:20-alpine AS runner
 
 WORKDIR /app
 
@@ -28,4 +29,3 @@ COPY --from=builder /app ./
 EXPOSE 3000
 
 CMD ["npm", "run", "start"]
-

@@ -30,7 +30,7 @@ services:
       - "8000"
 
   nginx:
-    image: nginx:1.27-alpine
+    image: docker.m.daocloud.io/library/nginx:1.27-alpine
     restart: unless-stopped
     depends_on:
       - frontend
@@ -39,4 +39,3 @@ services:
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-

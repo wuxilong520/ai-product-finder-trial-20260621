@@ -114,6 +114,33 @@ export type DecisionRecommendResponse = {
   reasons: string[];
 };
 
+export type BusinessTruthRecommendResponse = {
+  keyword: string;
+  selling_price: number;
+  real_market_price: number;
+  market_price_min: number;
+  market_price_max: number;
+  demand_signal: string;
+  supplier_cost: number;
+  shipping_cost: number;
+  platform_fee: number;
+  packaging_cost: number;
+  exchange_rate: number;
+  total_cost: number;
+  profit: number;
+  profit_margin: number;
+  break_even_price: number;
+  phase4_final_score: number;
+  truth_score: number;
+  truth_recommendation: string;
+  truth_level: string;
+  still_uses_simulated_data: boolean;
+  simulated_dependencies: string[];
+  cost_breakdown: Record<string, unknown>;
+  external_market_snapshot: Record<string, unknown>;
+  reasons: string[];
+};
+
 export type P5PredictionResponse = {
   product_id: number;
   keyword: string;

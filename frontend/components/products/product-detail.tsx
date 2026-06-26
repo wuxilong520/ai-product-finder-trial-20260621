@@ -5,6 +5,7 @@ import { Language, t } from "@/lib/i18n";
 import { AnalyzeResponse, Product } from "@/lib/types";
 import { DecisionCard } from "@/components/decision/decision-card";
 import { ProductIntelligencePanel } from "@/components/products/product-intelligence-panel";
+import { BusinessTruthCard } from "@/components/dashboard/business-truth-card";
 
 export function ProductDetail({
   product,
@@ -105,8 +106,11 @@ export function ProductDetail({
         </Card>
       ) : null}
 
-      <ProductIntelligencePanel productId={product.id} lang={lang} />
-      <DecisionCard productId={product.id} lang={lang} />
+      <div className="grid gap-6 xl:grid-cols-2">
+        <ProductIntelligencePanel productId={product.id} lang={lang} />
+        <DecisionCard productId={product.id} lang={lang} />
+      </div>
+      <BusinessTruthCard productId={product.id} lang={lang} />
 
       <Card>
         <CardHeader>

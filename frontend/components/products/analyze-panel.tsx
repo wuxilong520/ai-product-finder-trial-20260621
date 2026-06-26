@@ -52,6 +52,11 @@ export function AnalyzePanel({ initialLang, initialUrl }: { initialLang: Languag
       <section className="overflow-hidden rounded-[28px] border border-white/8 bg-[#121c2c] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
         <div className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
           <div>
+            <div className="mb-4 grid gap-3 md:grid-cols-3">
+              <MetricTile label="AI状态" value={okResult ? "真实AI" : fallbackResult ? "规则补位" : loading ? "分析中" : "待分析"} />
+              <MetricTile label="任务状态" value={state.status} />
+              <MetricTile label="结果流转" value={displayResult ? "已产出" : "待产出"} />
+            </div>
             <div className="mt-3 flex flex-wrap gap-3">
               <Badge
                 variant={state.status === "success" ? "success" : state.status === "error" ? "error" : state.status === "blocked" ? "blocked" : "running"}
@@ -127,7 +132,37 @@ export function AnalyzePanel({ initialLang, initialUrl }: { initialLang: Languag
         </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-3">
+      <section className="grid gap-6 xl:grid-cols-4">
+        <CardBlock title="AI评分展示">
+          {displayResult ? (
+            <div className="grid gap-3">
+              <MetricTile label={text.detailScore} value={String(displayResult.score)} />
+              <MetricTile label={text.detailRecommendation} value={displayResult.recommendation} />
+              <MetricTile label={text.detailProfit} value={displayResult.profit_estimate} />
+            </div>
+          ) : (
+            <EmptyState text={text.waitingResult} />
+          )}
+        </CardBlock>
+
+        <CardBlock title="商品对比分析">
+          {displayResult ? (
+            <div className="space-y-3">
+              <InfoTile label="竞争强度" value={displayResult.competition_level} />
+              <InfoTile label="价格带" value={displayResult.price || "—"} />
+              <InfoTile label="推荐动作" value={displayResult.recommendation} />
+            </div>
+          ) : <EmptyState text={text.waitingResult} />}
+        </CardBlock>
+
+        <CardBlock title="市场趋势预测">
+          {displayResult ? (
+            <div className="space-y-3">
+              <ReasonList items={displayResult.reason.slice(0, 3)} />
+            </div>
+          ) : <EmptyState text={text.waitingResult} />}
+        </CardBlock>
+
         <CardBlock title={text.analyzeSource}>
           {displayResult ? (
             <div className="space-y-3">
@@ -139,6 +174,9 @@ export function AnalyzePanel({ initialLang, initialUrl }: { initialLang: Languag
           )}
         </CardBlock>
 
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-2">
         <CardBlock title={text.detailKeywords}>
           {displayResult ? <TagList items={displayResult.core_keywords} /> : <EmptyState text={text.waitingResult} />}
         </CardBlock>

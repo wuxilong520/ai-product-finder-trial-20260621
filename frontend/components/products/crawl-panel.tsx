@@ -35,18 +35,17 @@ export function CrawlPanel({ lang }: { lang: Language }) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-      <Card className="glow-border">
+    <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+      <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
         <CardHeader>
-          <CardTitle>{text.startCrawl}</CardTitle>
-          <CardDescription>{text.realExtract}</CardDescription>
+          <CardTitle>采集中心</CardTitle>
+          <CardDescription>输入商品链接后，直接得到结构化商品结果卡片。</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-5 flex flex-wrap gap-3">
-            <Badge variant="brand" className="px-4 py-2 text-sm font-medium">
-              <ScanSearch className="h-4 w-4" />
-              {text.realExtract}
-            </Badge>
+          <div className="mb-5 grid gap-3 md:grid-cols-3">
+            <MetricCard label="采集任务" value={state.status} />
+            <MetricCard label="任务通道" value={transport} />
+            <MetricCard label="结果状态" value={result ? "已返回" : "等待中"} />
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -76,28 +75,43 @@ export function CrawlPanel({ lang }: { lang: Language }) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
         <CardHeader>
-          <CardTitle>{text.crawlResultTitle}</CardTitle>
-          <CardDescription>{text.crawlResultDesc}</CardDescription>
+          <CardTitle>采集结果卡片</CardTitle>
+          <CardDescription>这里只展示业务决策需要的信息，不展示调试内容。</CardDescription>
         </CardHeader>
         <CardContent>
           {result ? (
             <div className="space-y-4">
-              <div>
-                <p className="text-sm text-app-text-muted">{text.title}</p>
-                <p className="mt-1 font-medium text-white">{result.title}</p>
+              <div className="grid gap-4 lg:grid-cols-[240px_1fr]">
+                <div className="overflow-hidden rounded-[18px] border border-app-border bg-white/5">
+                  {result.images[0] ? (
+                    <img src={result.images[0]} alt={result.title} className="h-64 w-full object-cover" />
+                  ) : (
+                    <div className="flex h-64 items-center justify-center text-sm text-white/35">暂无首图</div>
+                  )}
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-app-text-muted">{text.title}</p>
+                    <p className="mt-1 text-lg font-semibold text-white">{result.title}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <InfoTile label={text.price} value={result.price || "—"} />
+                    <InfoTile label={text.rating} value={result.rating || "—"} />
+                    <InfoTile label={text.reviewCount} value={result.reviews || "—"} />
+                    <InfoTile label={text.originalUrl} value={result.url} className="break-all" />
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <InfoTile label={text.price} value={result.price || "—"} />
-                <InfoTile label={text.rating} value={result.rating || "—"} />
-                <InfoTile label={text.reviewCount} value={result.reviews || "—"} />
-                <InfoTile label={text.originalUrl} value={result.url} className="break-all" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {result.images.map((image) => (
-                  <img key={image} src={image} alt="product" className="h-32 w-full rounded-2xl border border-app-border object-cover shadow-app-soft" />
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                {result.images.slice(0, 4).map((image) => (
+                  <img key={image} src={image} alt="product" className="h-28 w-full rounded-2xl border border-app-border object-cover shadow-app-soft" />
                 ))}
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Badge variant="neutral" className="px-4 py-2 text-sm">可继续流转</Badge>
+                <Badge variant="brand" className="px-4 py-2 text-sm">{result.product_id ? `商品ID ${result.product_id}` : "未生成商品ID"}</Badge>
               </div>
               <div className="flex flex-wrap gap-3">
                 {result.product_id ? (
@@ -117,6 +131,15 @@ export function CrawlPanel({ lang }: { lang: Language }) {
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function MetricCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[16px] border border-white/8 bg-white/[0.03] px-4 py-4">
+      <div className="text-sm text-white/45">{label}</div>
+      <div className="mt-2 text-lg font-semibold text-white">{value}</div>
     </div>
   );
 }

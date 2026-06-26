@@ -21,6 +21,24 @@ export default async function MarketAnalysisPage() {
           <h1 className="text-3xl font-semibold tracking-tight text-white">{text.marketPageTitle}</h1>
           <p className="mt-2 text-sm leading-7 text-white/60">{text.marketPageDesc}</p>
         </div>
+        <div className="grid gap-4 md:grid-cols-4">
+          <div className="rounded-[18px] border border-white/8 bg-[#121c2c] px-5 py-5 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+            <div className="text-sm text-white/45">趋势分析</div>
+            <div className="mt-2 text-xl font-semibold text-white">实时市场热度</div>
+          </div>
+          <div className="rounded-[18px] border border-white/8 bg-[#121c2c] px-5 py-5 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+            <div className="text-sm text-white/45">类目竞争</div>
+            <div className="mt-2 text-xl font-semibold text-white">竞争度评分</div>
+          </div>
+          <div className="rounded-[18px] border border-white/8 bg-[#121c2c] px-5 py-5 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+            <div className="text-sm text-white/45">机会指数</div>
+            <div className="mt-2 text-xl font-semibold text-white">利润空间判断</div>
+          </div>
+          <div className="rounded-[18px] border border-white/8 bg-[#121c2c] px-5 py-5 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+            <div className="text-sm text-white/45">分析结果</div>
+            <div className="mt-2 text-xl font-semibold text-white">统一卡片展示</div>
+          </div>
+        </div>
         <MarketAnalysisCard lang={lang} />
       </div>
     </XBorderLayout>

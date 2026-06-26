@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 
 import { ROUTES } from "@/config/routes";
 import { NewDashboard } from "@/modules/dashboard/new-dashboard";
-import { OldDashboard } from "@/modules/dashboard/old-dashboard";
 import { getProducts, isAuthError, isNewDashboardEnabled } from "@/lib/api";
 import { TOKEN_KEY } from "@/lib/auth";
 import { t } from "@/lib/i18n";
@@ -25,12 +24,10 @@ export default async function DashboardPage({
     return <NewDashboard token={token} lang={lang} />;
   }
 
-  const text = t(lang);
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const search = resolvedSearchParams?.search || "";
-  let data;
   try {
-    data = await getProducts(search, token);
+    await getProducts(search, token);
   } catch (error) {
     if (isAuthError(error)) {
       redirect(ROUTES.login);
@@ -38,5 +35,5 @@ export default async function DashboardPage({
     throw error;
   }
 
-  return <OldDashboard lang={lang} data={data} />;
+  return <NewDashboard token={token} lang={lang} />;
 }

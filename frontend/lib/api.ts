@@ -1,6 +1,7 @@
 import {
   AnalyzeFullResponse,
   AnalyzeResponse,
+  BusinessTruthRecommendResponse,
   CrawlResult,
   DecisionRecommendResponse,
   DashboardSourcesResponse,
@@ -270,6 +271,22 @@ export async function recommendDecision(productId: number, token?: string): Prom
   });
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "决策推荐失败"));
+  }
+  return response.json();
+}
+
+export async function recommendBusinessTruth(productId: number, token?: string): Promise<BusinessTruthRecommendResponse> {
+  ensureApiBase();
+  const response = await fetch(`${API_V1}/business-truth/recommend`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...buildAuthHeaders(token),
+    },
+    body: JSON.stringify({ product_id: productId }),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "商业真实性评分失败"));
   }
   return response.json();
 }

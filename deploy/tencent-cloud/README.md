@@ -59,16 +59,21 @@ cp .env.tencent.example .env.tencent
 
 ## 四、启动
 
+现在推荐只用这一个命令：
+
 ```bash
 chmod +x deploy.sh
 ./deploy.sh
 ```
 
-或者直接：
+这份脚本会自动做 4 件事：
 
-```bash
-docker compose --env-file ./.env.tencent up -d --build
-```
+- 先备份当前 SQLite 数据库
+- 重新构建后端镜像
+- 重新构建前端镜像
+- 按固定容器名重启公网服务
+
+这样可以避开旧版 `docker-compose` 在腾讯云机器上的兼容问题。
 
 ## 五、部署完成后检查
 
@@ -102,3 +107,31 @@ docker compose --env-file ./.env.tencent up -d --build
 
 前端现在只保留业务页面。
 
+## 八、以后怎么自动同步
+
+仓库里已经预留了 GitHub Actions 自动部署文件：
+
+- `.github/workflows/tencent-cloud-deploy.yml`
+
+只要你把下面 4 个 GitHub Secrets 配好：
+
+- `TENCENT_CLOUD_HOST`
+- `TENCENT_CLOUD_PORT`
+- `TENCENT_CLOUD_USER`
+- `TENCENT_CLOUD_PATH`
+- `TENCENT_CLOUD_SSH_KEY`
+
+以后每次代码推送到 `main`：
+
+- GitHub 仓库会先更新
+- Actions 会自动 SSH 到腾讯云
+- 服务器会自动拉到最新 `main`
+- 然后自动执行 `deploy/tencent-cloud/deploy.sh`
+
+也就是说，后面要保持“仓库 + 公网”同步，标准动作就是：
+
+```bash
+git add .
+git commit -m "你的更新说明"
+git push origin main
+```

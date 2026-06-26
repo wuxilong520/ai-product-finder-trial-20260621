@@ -1,5 +1,9 @@
-import { NewDashboardClient } from "@/modules/dashboard/new-dashboard-client";
-import { getDashboardSources, getDashboardSummary, getDashboardTasks, getDashboardTrends, getProducts } from "@/lib/api";
+import { cookies } from "next/headers";
+
+import { DashboardCommandCenter } from "@/components/dashboard/dashboard-command-center";
+import { getCurrentUser, getDashboardSources, getDashboardSummary, getDashboardTasks, getDashboardTrends, getP5Rankings, getP5Recommendations, getProducts } from "@/lib/api";
+import { XBorderLayout } from "@/components/layouts/xborder-layout";
+import { TOKEN_KEY } from "@/lib/auth";
 import { Language } from "@/lib/i18n";
 
 export async function NewDashboard({
@@ -9,23 +13,31 @@ export async function NewDashboard({
   token: string;
   lang: Language;
 }) {
-  const [summary, trends, tasks, sources, productList] = await Promise.all([
+  const [summary, trends, tasks, sources, productList, rankings, recommendations, user] = await Promise.all([
     getDashboardSummary(token),
     getDashboardTrends(token),
     getDashboardTasks(token),
     getDashboardSources(token),
     getProducts("", token),
+    getP5Rankings(token).catch(() => null),
+    getP5Recommendations({ limit: 10 }, token).catch(() => null),
+    getCurrentUser(token).catch(() => null),
   ]);
 
   return (
-    <NewDashboardClient
-      token={token}
-      lang={lang}
-      initialSummary={summary}
-      initialTrends={trends}
-      initialTasks={tasks}
-      initialSources={sources}
-      productList={productList}
-    />
+    <XBorderLayout lang={lang} activePath="dashboard">
+      <DashboardCommandCenter
+        token={token}
+        lang={lang}
+        summary={summary}
+        trends={trends}
+        tasks={tasks}
+        sources={sources}
+        products={productList}
+        rankings={rankings}
+        recommendations={recommendations}
+        isAdmin={Boolean(user?.is_superuser)}
+      />
+    </XBorderLayout>
   );
 }

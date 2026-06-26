@@ -15,11 +15,19 @@ backend/.env
 frontend/.env.local
 frontend/.env.production.local
 deploy/tencent-cloud/.env.tencent
+deploy/tencent-cloud/temp_ssh/
+deploy/tencent-cloud/tar_b64_chunks/
+deploy/tencent-cloud/diff_chunks/
+deploy/tencent-cloud/*.tar.gz
+deploy/tencent-cloud/*.diff
+deploy/tencent-cloud/*.patch
 
 frontend/node_modules/
 frontend/.next/
 backend/.pytest_cache/
 backend/product_mvp.db
+backend/product_mvp.db.bak_*
+backend/db_backups/
 logs/
 .pnpm-store/
 
@@ -33,3 +41,4 @@ AUTO_TEST_REPORT.md
 FULL_AUDIT_REPORT.md
 E2E_PRODUCT_VERIFICATION_REPORT.md
 UI_SYNC_REPORT.md
+tmp_db_compare/

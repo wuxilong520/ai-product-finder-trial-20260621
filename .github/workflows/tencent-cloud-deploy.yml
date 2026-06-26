@@ -47,7 +47,7 @@ jobs:
           fi
           cd "${TENCENT_CLOUD_PATH}"
           git remote set-url origin "${GITHUB_REPOSITORY_URL}"
-          git fetch origin main
+          git -c http.version=HTTP/1.1 fetch origin main
           git reset --hard origin/main
           bash deploy/tencent-cloud/deploy.sh
           EOF

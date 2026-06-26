@@ -26,10 +26,13 @@ USER_AGENTS = [
 ]
 SCRAPE_RETRY_TIMES = 3
 SCRAPE_TIMEOUT_MS = 18000
+FAST_BLOCK_TIMEOUT_MS = 7000
 
 
 def detect_platform(url: str) -> str:
     host = urlparse(url).netloc.lower()
+    if "1688.com" in host:
+        return "1688"
     if "amazon." in host:
         return "amazon"
     if "aliexpress." in host:
@@ -59,11 +62,16 @@ async def crawl_product(url: str) -> CrawlPreview:
                 )
                 page = await context.new_page()
                 await _apply_stealth(page)
-                await _load_page(page, url)
-                await _human_delay()
+                await _load_page(page, url, platform)
+                if platform != "1688":
+                    await _human_delay()
 
                 if platform == "amazon":
                     data = await _parse_amazon(page, url)
+                elif platform == "1688":
+                    if await _looks_like_1688_blocked(page):
+                        raise AppError("REAL_SCRAPE_FAILED", "1688 当前触发了校验页，公网环境暂时拿不到真实商品详情", "scrape", 500)
+                    data = await _parse_1688(page, url)
                 elif platform == "aliexpress":
                     data = await _parse_aliexpress(page, url)
                 else:
@@ -235,6 +243,64 @@ async def _parse_aliexpress(page, url: str) -> CrawlPreview:
     )
 
 
+async def _parse_1688(page, url: str) -> CrawlPreview:
+    final_url = page.url.lower()
+    title_text = (await page.title() or "").lower()
+    html = (await page.content() or "").lower()
+
+    if "_____tmd_____" in final_url or "x5secdata=" in final_url or "\"action\":\"captcha\"" in html or "captcha" in title_text:
+        raise AppError("REAL_SCRAPE_FAILED", "1688 当前触发了校验页，公网环境暂时拿不到真实商品详情", "scrape", 500)
+
+    title = await _get_first_text(
+        page,
+        [
+            "h1",
+            ".d-title",
+            ".title-text",
+            "[class*='title']",
+        ],
+    )
+    price = await _get_first_text(
+        page,
+        [
+            ".price-now",
+            ".price",
+            "[class*='price']",
+            "[data-testid='price']",
+        ],
+    )
+    images = await _get_images(
+        page,
+        [
+            "img[src*='alicdn.com']",
+            "img[data-src*='alicdn.com']",
+            ".vertical-img img",
+            ".detail-gallery img",
+        ],
+    )
+
+    clean_title = (title or "").strip()
+    if not clean_title or clean_title == "义乌趣织饰品有限公司":
+        raise AppError("REAL_SCRAPE_FAILED", "1688 页面没有拿到真实商品标题，当前更像是店铺页或校验页", "scrape", 500)
+
+    return CrawlPreview(
+        source_platform="1688",
+        source_url=url,
+        title=clean_title,
+        image_url=images[0] if images else None,
+        image_urls=images,
+        price=_to_float(price),
+        original_price=None,
+        currency="CNY",
+        review_count=None,
+        rating=None,
+        category=None,
+        raw_price=price,
+        raw_rating="",
+        raw_reviews="",
+    )
+
+
 async def _parse_shopify(page, url: str) -> CrawlPreview:
     schema = await _extract_shopify_schema(page)
     title = await _get_first_text(page, ["h1", "[data-product-title]"])
@@ -299,13 +365,33 @@ def to_crawl_result(preview: CrawlPreview) -> CrawlResult:
     )
 
 
-async def _load_page(page, url: str) -> None:
+async def _load_page(page, url: str, platform: str) -> None:
     try:
-        await page.goto(url, wait_until="domcontentloaded", timeout=SCRAPE_TIMEOUT_MS)
-        await page.wait_for_load_state("networkidle", timeout=SCRAPE_TIMEOUT_MS)
+        timeout = FAST_BLOCK_TIMEOUT_MS if platform == "1688" else SCRAPE_TIMEOUT_MS
+        await page.goto(url, wait_until="domcontentloaded", timeout=timeout)
+        if platform != "1688":
+            await page.wait_for_load_state("networkidle", timeout=SCRAPE_TIMEOUT_MS)
     except Exception:
-        await page.goto(url, wait_until="load", timeout=SCRAPE_TIMEOUT_MS)
-        await page.wait_for_timeout(1200)
+        timeout = FAST_BLOCK_TIMEOUT_MS if platform == "1688" else SCRAPE_TIMEOUT_MS
+        await page.goto(url, wait_until="load", timeout=timeout)
+        if platform != "1688":
+            await page.wait_for_timeout(1200)
+
+
+async def _looks_like_1688_blocked(page) -> bool:
+    try:
+        final_url = (page.url or "").lower()
+        title_text = (await page.title() or "").lower()
+        html = (await page.content() or "").lower()
+    except Exception:
+        return True
+    return (
+        "_____tmd_____" in final_url
+        or "x5secdata=" in final_url
+        or "\"action\":\"captcha\"" in html
+        or "captcha" in title_text
+        or "rgv587_flag:sm" in html
+    )
 
 
 async def _human_delay() -> None:

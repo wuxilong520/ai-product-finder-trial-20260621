@@ -3,11 +3,8 @@ import { cookies } from "next/headers";
 
 import { CrawlPanel } from "@/components/products/crawl-panel";
 import { ROUTES } from "@/config/routes";
-import { TaskPanel } from "@/components/dashboard/task-panel";
-import { getDashboardSources, getDashboardTasks } from "@/lib/api";
 import { Badge, Card } from "@/design-system/components";
 import { TOKEN_KEY } from "@/lib/auth";
-import { EMPTY_DASHBOARD_SOURCES, EMPTY_DASHBOARD_TASKS, safeLoad } from "@/lib/dashboard-fallback";
 import { t } from "@/lib/i18n";
 import { getServerLanguage } from "@/lib/i18n-server";
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
@@ -21,17 +18,9 @@ export default async function CrawlPage() {
   if (!token) {
     redirect(ROUTES.login);
   }
-  const [tasks, sources] = await Promise.all([
-    safeLoad(() => getDashboardTasks(token), EMPTY_DASHBOARD_TASKS),
-    safeLoad(() => getDashboardSources(token), EMPTY_DASHBOARD_SOURCES),
-  ]);
 
   return (
-    <XBorderLayout
-      lang={lang}
-      activePath="crawl"
-      rightRail={<TaskPanel token={token} initialTasks={tasks} initialSources={sources} lang={lang} />}
-    >
+    <XBorderLayout lang={lang} activePath="crawl">
       <div className="space-y-5">
         <Card className="border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
           <div className="flex flex-wrap items-center gap-3">
@@ -45,7 +34,7 @@ export default async function CrawlPage() {
             </Badge>
           </div>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white">{text.crawlTitle}</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-7 text-white/60">{text.crawlDesc}</p>
+          <p className="mt-2 max-w-2xl text-sm leading-7 text-white/60">{text.crawlBusinessDesc}</p>
         </Card>
         <CrawlPanel lang={lang} />
       </div>

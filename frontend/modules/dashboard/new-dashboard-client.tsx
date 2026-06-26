@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, BrainCircuit, PackageSearch, ScanSearch, Sparkles, TrendingUp } from "lucide-react";
+import { ArrowRight, BrainCircuit, PackageSearch, ScanSearch, Sparkles, TrendingUp, Truck, WandSparkles } from "lucide-react";
 
 import { useKpiRealtime } from "@/components/dashboard/realtime/use-kpi-realtime";
 import { Card } from "@/design-system/components";
-import { TaskPanel } from "@/components/dashboard/task-panel";
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
 import { ROUTES, productDetailRoute } from "@/config/routes";
 import type { DashboardSourcesResponse, DashboardSummaryResponse, DashboardTasksResponse, DashboardTrendsResponse, ProductListResponse } from "@/lib/types";
@@ -41,13 +40,11 @@ export function NewDashboardClient({
   const statCards = kpi.cards.slice(0, 4);
   const topProducts = summary.latest_products.slice(0, 5);
   const recommendedProducts = productList.items.slice(0, 3);
+  const trendPoints = initialTrends.series.points.slice(-4);
+  const trendGrowth = trendPoints.length > 1 ? trendPoints[trendPoints.length - 1].product_count - trendPoints[0].product_count : 0;
 
   return (
-    <XBorderLayout
-      lang={lang}
-      activePath="dashboard"
-      rightRail={<TaskPanel token={token} initialTasks={initialTasks} initialSources={initialSources} lang={lang} />}
-    >
+    <XBorderLayout lang={lang} activePath="dashboard">
       <div className="space-y-6">
         <Card className="rounded-[32px] border border-white/8 bg-[linear-gradient(135deg,rgba(17,24,39,0.92),rgba(15,23,42,0.84))] p-7 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
           <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
@@ -65,6 +62,9 @@ export function NewDashboardClient({
               <QuickEntry href={ROUTES.crawl} icon={<ScanSearch className="h-4 w-4" />} label={text.dashboardQuickCrawl} />
               <QuickEntry href={ROUTES.analyze} icon={<BrainCircuit className="h-4 w-4" />} label={text.dashboardQuickAnalyze} />
               <QuickEntry href={ROUTES.products} icon={<PackageSearch className="h-4 w-4" />} label={text.dashboardQuickProducts} />
+              <QuickEntry href={ROUTES.aiDiscovery} icon={<WandSparkles className="h-4 w-4" />} label={text.navDiscovery} />
+              <QuickEntry href={ROUTES.supplier} icon={<Truck className="h-4 w-4" />} label={text.navSupplier} />
+              <QuickEntry href={ROUTES.operation} icon={<Sparkles className="h-4 w-4" />} label={text.navOperation} />
             </div>
           </div>
         </Card>
@@ -81,7 +81,7 @@ export function NewDashboardClient({
           ))}
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <Card className="rounded-[28px] border border-white/8 bg-[#121c2c] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
             <div className="mb-5 flex items-center justify-between">
               <div>
@@ -123,26 +123,26 @@ export function NewDashboardClient({
           </Card>
 
           <Card className="rounded-[28px] border border-white/8 bg-[#121c2c] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
-            <div className="text-xl font-semibold text-white">{text.dashboardOpportunityTitle}</div>
-            <div className="mt-1 text-sm text-white/45">{text.dashboardOpportunityDesc}</div>
+            <div className="text-xl font-semibold text-white">{text.dashboardTrendTitle}</div>
+            <div className="mt-1 text-sm text-white/45">{text.dashboardTrendDesc}</div>
 
             <div className="mt-6 rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(37,99,235,0.16),rgba(109,40,217,0.06))] p-5">
               <div className="flex items-center gap-2 text-sm text-[#93c5fd]">
                 <TrendingUp className="h-4 w-4" />
-                {text.dashboardOpportunitySummary}
+                {text.dashboardTrendSummary}
               </div>
-              <div className="mt-4 text-[32px] font-semibold text-white">{summary.top_categories[0]?.name || text.dashboardOpportunityPendingCategory}</div>
+              <div className="mt-4 text-[32px] font-semibold text-white">{trendPoints.at(-1)?.date || text.dashboardTrendPending}</div>
               <div className="mt-2 text-sm text-white/60">
-                {summary.top_categories[0]
-                  ? `${text.chartTopCategoryDesc} ${summary.top_categories[0].product_count}`
-                  : text.dashboardOpportunityNeedData}
+                {trendPoints.length
+                  ? `${text.dashboardTrendGrowth} ${trendGrowth >= 0 ? "+" : ""}${trendGrowth}`
+                  : text.dashboardTrendNeedData}
               </div>
             </div>
 
             <div className="mt-5 grid gap-3">
-              <OpportunityMiniCard label={text.dashboardOpportunityPriority} value={recommendedProducts.length ? text.dashboardOpportunityPriorityHigh : text.dashboardOpportunityPriorityMedium} />
-              <OpportunityMiniCard label={text.dashboardOpportunityNewProducts} value={String(summary.latest_products.length)} />
-              <OpportunityMiniCard label={text.dashboardOpportunityActiveSources} value={String(initialSources.sources.filter((item) => item.health === "ok").length)} />
+              <OpportunityMiniCard label={text.dashboardTrendWindow} value={initialTrends.series.period} />
+              <OpportunityMiniCard label={text.dashboardTrendTopCategory} value={summary.top_categories[0]?.name || text.dashboardUncategorized} />
+              <OpportunityMiniCard label={text.dashboardTrendActiveSource} value={String(initialSources.sources.filter((item) => item.health === "ok").length)} />
             </div>
           </Card>
         </div>

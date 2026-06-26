@@ -7,4 +7,3 @@ if [ ! -f ./.env.tencent ]; then
 fi
 
 docker compose --env-file ./.env.tencent up -d --build
-

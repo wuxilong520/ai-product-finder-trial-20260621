@@ -1,18 +1,16 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { AnalyzePanel } from "@/components/products/analyze-panel";
-import { TaskPanel } from "@/components/dashboard/task-panel";
 import { MarketAnalysisCard } from "@/components/market/market-analysis-card";
 import { Badge, Card } from "@/design-system/components";
 import { ROUTES } from "@/config/routes";
-import { getDashboardSources, getDashboardSummary, getDashboardTasks, getProduct, isAuthError } from "@/lib/api";
+import { getProduct, isAuthError } from "@/lib/api";
 import { TOKEN_KEY } from "@/lib/auth";
-import { EMPTY_DASHBOARD_SOURCES, EMPTY_DASHBOARD_TASKS, safeLoad } from "@/lib/dashboard-fallback";
 import { getServerLanguage } from "@/lib/i18n-server";
 import { t } from "@/lib/i18n";
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
 import { Brain, Sparkles } from "lucide-react";
-import { redirect } from "next/navigation";
 
 export default async function AnalyzePage({
   searchParams,
@@ -23,21 +21,14 @@ export default async function AnalyzePage({
   const text = t(lang);
   const cookieStore = await cookies();
   const token = cookieStore.get(TOKEN_KEY)?.value || "";
+  if (!token) {
+    redirect(ROUTES.login);
+  }
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const productId = resolvedSearchParams?.productId;
   let initialUrl: string | undefined;
-  const [summary, tasks, sources] = token
-    ? await Promise.all([
-        getDashboardSummary(token).catch(() => null),
-        safeLoad(() => getDashboardTasks(token), EMPTY_DASHBOARD_TASKS),
-        safeLoad(() => getDashboardSources(token), EMPTY_DASHBOARD_SOURCES),
-      ])
-    : [null, null, null];
 
   if (productId) {
-    if (!token) {
-      redirect(ROUTES.login);
-    }
     try {
       const product = await getProduct(productId, token);
       initialUrl = product.source_url;
@@ -49,11 +40,7 @@ export default async function AnalyzePage({
   }
 
   return (
-    <XBorderLayout
-      lang={lang}
-      activePath="analyze"
-      rightRail={token && summary && tasks && sources ? <TaskPanel token={token} initialTasks={tasks} initialSources={sources} lang={lang} /> : undefined}
-    >
+    <XBorderLayout lang={lang} activePath="analyze">
       <div className="space-y-5">
         <Card className="border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
           <div className="flex flex-wrap items-center gap-3">
@@ -67,7 +54,7 @@ export default async function AnalyzePage({
             </Badge>
           </div>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white">{text.analyzeTitle}</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-7 text-white/60">{text.analyzeDesc}</p>
+          <p className="mt-2 max-w-2xl text-sm leading-7 text-white/60">{text.analyzeBusinessDesc}</p>
         </Card>
         <MarketAnalysisCard lang={lang} />
         <AnalyzePanel initialLang={lang} initialUrl={initialUrl} />

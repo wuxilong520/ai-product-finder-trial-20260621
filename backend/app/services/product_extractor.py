@@ -30,6 +30,8 @@ class ExtractorResult:
 
 def detect_public_platform(url: str) -> str:
     host = urlparse(url).netloc.lower()
+    if "1688.com" in host:
+        return "1688"
     if "amazon." in host:
         return "amazon"
     if "aliexpress." in host:
@@ -163,6 +165,23 @@ async def _parse_platform_fields(page, platform: str, url: str, html: str) -> di
         images = await _get_images(page, ["img[src*='alicdn']", ".images-view-item img", "img[class*='magnifier--image']"])
         availability = await _get_first_text(page, ["[class*='availability']", "[class*='quantity--info']"])
         sales = await _get_first_text(page, ["[class*='trade']", "[class*='sold']", "[class*='orders']"])
+    elif platform == "1688":
+        final_url = page.url.lower()
+        title_text = (await page.title() or "").lower()
+        html_text = html.lower()
+        if "_____tmd_____" in final_url or "x5secdata=" in final_url or "\"action\":\"captcha\"" in html_text or "captcha" in title_text:
+            return {
+                "status": "BLOCKED",
+                "reason": BLOCKED_REASON,
+            }
+
+        title = await _get_first_text(page, ["h1", ".d-title", ".title-text", "[class*='title']"])
+        price = await _get_first_text(page, [".price-now", ".price", "[class*='price']"])
+        rating = ""
+        review_count = ""
+        images = await _get_images(page, ["img[src*='alicdn.com']", "img[data-src*='alicdn.com']", ".detail-gallery img"])
+        availability = ""
+        sales = ""
     else:
         title = await _get_first_text(page, ["h1", "[data-product-title]", "title"])
         price = await _get_first_text(

@@ -14,38 +14,28 @@ export default async function DashboardPage({
 }: {
   searchParams?: Promise<{ search?: string }>;
 }) {
-  console.log("[dashboard] start");
   const lang = await getServerLanguage();
-  console.log("[dashboard] lang", lang);
-  const text = t(lang);
   const cookieStore = await cookies();
-  console.log("[dashboard] cookies ready");
   const token = cookieStore.get(TOKEN_KEY)?.value || "";
   if (!token) {
-    console.log("[dashboard] no token, redirect");
     redirect(ROUTES.login);
   }
 
+  if (isNewDashboardEnabled()) {
+    return <NewDashboard token={token} lang={lang} />;
+  }
+
+  const text = t(lang);
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const search = resolvedSearchParams?.search || "";
-  console.log("[dashboard] search", search);
   let data;
   try {
-    console.log("[dashboard] getProducts before");
     data = await getProducts(search, token);
-    console.log("[dashboard] getProducts after", data?.total);
   } catch (error) {
-    console.log("[dashboard] getProducts error", error);
     if (isAuthError(error)) {
-      console.log("[dashboard] auth error, redirect");
       redirect(ROUTES.login);
     }
     throw error;
-  }
-
-  console.log("[dashboard] render");
-  if (isNewDashboardEnabled()) {
-    return <NewDashboard token={token} lang={lang} />;
   }
 
   return <OldDashboard lang={lang} data={data} />;

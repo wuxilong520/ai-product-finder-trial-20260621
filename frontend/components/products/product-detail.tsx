@@ -47,12 +47,12 @@ export function ProductDetail({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{text.detailDecision}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {intelligence ? (
+      {intelligence ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>{text.detailDecision}</CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="space-y-4">
               <div className="inline-flex rounded-full px-4 py-2 text-sm font-semibold text-white" style={{ background: recommendationMeta?.color }}>
                 {recommendationMeta?.label}
@@ -75,18 +75,16 @@ export function ProductDetail({
                 </div>
               </div>
             </div>
-          ) : (
-            <EmptyState text={text.detailNoAnalysis} />
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{text.detailSummary}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {analysis ? (
+      {analysis ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>{text.detailSummary}</CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="space-y-5">
               <div>
                 <p className="text-sm text-app-text-muted">{text.detailTitleZh}</p>
@@ -103,11 +101,9 @@ export function ProductDetail({
                 </div>
               </div>
             </div>
-          ) : (
-            <EmptyState text={text.detailNoAi} />
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <ProductIntelligencePanel productId={product.id} lang={lang} />
       <DecisionCard productId={product.id} lang={lang} />

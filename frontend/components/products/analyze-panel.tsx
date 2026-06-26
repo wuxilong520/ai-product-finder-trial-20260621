@@ -53,9 +53,6 @@ export function AnalyzePanel({ initialLang, initialUrl }: { initialLang: Languag
         <div className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
           <div>
             <div className="mt-3 flex flex-wrap gap-3">
-              <Badge variant={transport === "ws" ? "success" : "warning"} className="px-4 py-2 text-sm">
-                {transport === "ws" ? text.wsConnected : text.pollingMode}
-              </Badge>
               <Badge
                 variant={state.status === "success" ? "success" : state.status === "error" ? "error" : state.status === "blocked" ? "blocked" : "running"}
                 className="px-4 py-2 text-sm"

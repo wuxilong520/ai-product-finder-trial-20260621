@@ -13,9 +13,9 @@ import type { MarketAnalyzeResponse, SupplierMatchItem } from "@/lib/types";
 const DEFAULT_KEYWORD = "air fryer";
 
 
-export function MarketAnalysisCard({ lang = "zh" }: { lang?: Language }) {
+export function MarketAnalysisCard({ lang = "zh", initialKeyword }: { lang?: Language; initialKeyword?: string }) {
   const text = t(lang);
-  const [keyword, setKeyword] = useState(DEFAULT_KEYWORD);
+  const [keyword, setKeyword] = useState(initialKeyword || DEFAULT_KEYWORD);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<MarketAnalyzeResponse | null>(null);
@@ -51,6 +51,8 @@ export function MarketAnalysisCard({ lang = "zh" }: { lang?: Language }) {
       setLoading(false);
     }
   }
+
+  const currentKeyword = keyword.trim();
 
   return (
     <Card className="border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
@@ -97,6 +99,12 @@ export function MarketAnalysisCard({ lang = "zh" }: { lang?: Language }) {
               <InfoTile label={text.marketRecommendationScore} value={`${Math.round(result.recommendation_score)} / 100`} />
               <InfoTile label={text.marketCategory} value={result.category || text.marketUnknownCategory} />
             </div>
+            {currentKeyword ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <InfoTile label={text.marketKeywordLabel} value={currentKeyword} />
+                <InfoTile label={text.marketSourceLabel} value={result.source} />
+              </div>
+            ) : null}
             <div className="rounded-2xl border border-app-border bg-white/5 p-4 shadow-app-soft">
               <p className="text-sm text-app-text-muted">{text.marketReasons}</p>
               <div className="mt-3 space-y-2">

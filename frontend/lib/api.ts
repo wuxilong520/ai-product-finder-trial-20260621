@@ -15,20 +15,25 @@ import {
   ProductIntelligenceEngineResponse,
   ProductListResponse,
   PublicExtractResult,
+  P5PredictionResponse,
+  P5RankingsResponse,
+  P5RecommendationsResponse,
   SupplierMatchResponse,
   TaskStatusResponse,
   User,
 } from "./types";
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "";
-const API_V1 = `${API_BASE}/api/v1`;
+  process.env.NEXT_PUBLIC_API_BASE ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "";
+const API_V1 = API_BASE.endsWith("/api/v1") ? API_BASE : `${API_BASE}/api/v1`;
 export const WS_URL =
   process.env.NEXT_PUBLIC_WS_URL || "";
 
 function ensureApiBase() {
   if (!API_BASE) {
-    throw new Error("缺少 NEXT_PUBLIC_API_BASE_URL，当前前端还没连上公网后端");
+    throw new Error("缺少 NEXT_PUBLIC_API_BASE，当前前端还没连上公网后端");
   }
 }
 
@@ -420,6 +425,63 @@ export async function getDashboardSources(token?: string): Promise<DashboardSour
   });
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "读取数据源状态失败"));
+  }
+  return response.json();
+}
+
+export async function getP5Rankings(token?: string): Promise<P5RankingsResponse> {
+  ensureApiBase();
+  const response = await fetch(`${API_V1}/p5/rankings`, {
+    cache: "no-store",
+    headers: {
+      ...buildAuthHeaders(token),
+    },
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "读取 P5 排行失败"));
+  }
+  return response.json();
+}
+
+export async function getP5Recommendations(params: { keyword?: string; category?: string; limit?: number }, token?: string): Promise<P5RecommendationsResponse> {
+  ensureApiBase();
+  const url = new URL(`${API_V1}/p5/recommendations`);
+  if (params.keyword) {
+    url.searchParams.set("keyword", params.keyword);
+  }
+  if (params.category) {
+    url.searchParams.set("category", params.category);
+  }
+  if (params.limit) {
+    url.searchParams.set("limit", String(params.limit));
+  }
+  const response = await fetch(url.toString(), {
+    cache: "no-store",
+    headers: {
+      ...buildAuthHeaders(token),
+    },
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "读取 P5 推荐失败"));
+  }
+  return response.json();
+}
+
+export async function predictP5Product(productId: number, horizonDays = 30, token?: string): Promise<P5PredictionResponse> {
+  ensureApiBase();
+  const response = await fetch(`${API_V1}/p5/predict`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...buildAuthHeaders(token),
+    },
+    body: JSON.stringify({
+      product_id: productId,
+      horizon_days: horizonDays,
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "读取 P5 预测失败"));
   }
   return response.json();
 }

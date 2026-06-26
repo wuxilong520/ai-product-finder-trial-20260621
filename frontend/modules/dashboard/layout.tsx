@@ -11,36 +11,49 @@ import { Button } from "@/design-system/components/Button";
 import { Language, t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
+type DashboardText = ReturnType<typeof t>;
+type DashboardTextKey = keyof DashboardText;
+
 type DashboardLayoutProps = {
   children: ReactNode;
   rightRail?: ReactNode;
   lang: Language;
-  activePath?: "dashboard" | "crawl" | "analyze" | "products";
+  activePath?: "dashboard" | "crawl" | "analyze" | "products" | "p5" | "market" | "supplier" | "operation" | "admin" | "settings";
 };
 
 const navSections = [
   {
-    titleKey: "navHome" as const,
-    items: [{ key: "dashboard", href: ROUTES.dashboard, icon: LayoutDashboard, labelKey: "navHome" as const }],
+    titleKey: "navHome" as DashboardTextKey,
+    items: [{ key: "dashboard", href: ROUTES.dashboard, icon: LayoutDashboard, labelKey: "navHome" as DashboardTextKey }],
   },
   {
-    titleKey: "navCrawl" as const,
+    titleKey: "navDiscovery" as DashboardTextKey,
     items: [
-      { key: "products", href: ROUTES.products, icon: PackageSearch, labelKey: "navProductHub" as const },
-      { key: "crawl", href: ROUTES.crawl, icon: ScanSearch, labelKey: "navCrawl" as const },
+      { key: "p5", href: ROUTES.aiDiscovery, icon: Sparkles, labelKey: "navP5" as DashboardTextKey },
+      { key: "market", href: ROUTES.marketAnalysis, icon: LineChart, labelKey: "navMarketAnalysis" as DashboardTextKey },
+      { key: "supplier", href: ROUTES.supplier, icon: PackageSearch, labelKey: "navSupplier" as DashboardTextKey },
     ],
   },
   {
-    titleKey: "navAnalyze" as const,
-    items: [{ key: "analyze", href: ROUTES.analyze, icon: LineChart, labelKey: "navAnalyze" as const }],
+    titleKey: "navProductHub" as DashboardTextKey,
+    items: [
+      { key: "products", href: ROUTES.products, icon: PackageSearch, labelKey: "navProductHub" as DashboardTextKey },
+      { key: "crawl", href: ROUTES.crawl, icon: ScanSearch, labelKey: "navCrawl" as DashboardTextKey },
+      { key: "analyze", href: ROUTES.analyze, icon: LineChart, labelKey: "navAnalyze" as DashboardTextKey },
+      { key: "operation", href: ROUTES.operation, icon: Bell, labelKey: "navOperation" as DashboardTextKey },
+    ],
   },
 ];
 
 const topTabs = [
-  { key: "dashboard", labelKey: "navHome" as const, href: ROUTES.dashboard },
-  { key: "crawl", labelKey: "navCrawl" as const, href: ROUTES.crawl },
-  { key: "products", labelKey: "navProductHub" as const, href: ROUTES.products },
-  { key: "analyze", labelKey: "navAnalyze" as const, href: ROUTES.analyze },
+  { key: "dashboard", labelKey: "navHome" as DashboardTextKey, href: ROUTES.dashboard },
+  { key: "p5", labelKey: "navP5" as DashboardTextKey, href: ROUTES.aiDiscovery },
+  { key: "market", labelKey: "navMarketAnalysis" as DashboardTextKey, href: ROUTES.marketAnalysis },
+  { key: "supplier", labelKey: "navSupplier" as DashboardTextKey, href: ROUTES.supplier },
+  { key: "operation", labelKey: "navOperation" as DashboardTextKey, href: ROUTES.operation },
+  { key: "crawl", labelKey: "navCrawl" as DashboardTextKey, href: ROUTES.crawl },
+  { key: "products", labelKey: "navProductHub" as DashboardTextKey, href: ROUTES.products },
+  { key: "analyze", labelKey: "navAnalyze" as DashboardTextKey, href: ROUTES.analyze },
 ];
 
 export function NewDashboardLayout({ children, rightRail, lang, activePath = "dashboard" }: DashboardLayoutProps) {

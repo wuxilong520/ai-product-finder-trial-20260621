@@ -114,6 +114,57 @@ export type DecisionRecommendResponse = {
   reasons: string[];
 };
 
+export type P5PredictionResponse = {
+  product_id: number;
+  keyword: string;
+  forecast_window_days: number;
+  growth_forecast: number;
+  demand_forecast: number;
+  competition_forecast: number;
+  profit_forecast: number;
+  explosion_probability: number;
+  reasons: string[];
+};
+
+export type P5RecommendationItem = {
+  product_id: number;
+  title: string;
+  title_zh?: string | null;
+  keyword: string;
+  category?: string | null;
+  recommendation_score: number;
+  estimated_profit: number;
+  recommendation: string;
+  reasons: string[];
+};
+
+export type P5RecommendationsResponse = {
+  keyword?: string | null;
+  category?: string | null;
+  total_scanned: number;
+  items: P5RecommendationItem[];
+};
+
+export type P5RankingEntry = {
+  product_id: number;
+  title: string;
+  score: number;
+  category?: string | null;
+};
+
+export type P5RankingsGroup = {
+  top_10: P5RankingEntry[];
+  top_50: P5RankingEntry[];
+  top_100: P5RankingEntry[];
+};
+
+export type P5RankingsResponse = {
+  scanned_products: number;
+  profit_ranking: P5RankingsGroup;
+  growth_ranking: P5RankingsGroup;
+  risk_ranking: P5RankingsGroup;
+};
+
 export type ProductImage = {
   id: number;
   image_url: string;

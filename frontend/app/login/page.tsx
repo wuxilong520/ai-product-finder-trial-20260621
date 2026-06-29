@@ -3,7 +3,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle, LanguageToggle } from
 import { t } from "@/lib/i18n";
 import { getServerLanguage } from "@/lib/i18n-server";
 import Link from "next/link";
-import { ArrowLeft, LockKeyhole, Sparkles, TrendingUp } from "lucide-react";
+import { ArrowLeft, LockKeyhole, ShieldCheck } from "lucide-react";
 
 export default async function LoginPage() {
   const lang = await getServerLanguage();
@@ -23,34 +23,27 @@ export default async function LoginPage() {
             </Link>
           </Button>
           <div className="flex items-center gap-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-app-border bg-white/8 px-4 py-2 text-sm text-app-brand-secondary backdrop-blur">
-              <Sparkles className="h-4 w-4" />
-              {text.loginBadge}
-            </div>
             <LanguageToggle lang={lang} />
           </div>
         </div>
 
-        <div className="grid flex-1 items-center gap-12 py-12 lg:grid-cols-[1fr_420px]">
-          <div>
-            <div className="inline-flex items-center gap-3 rounded-full border border-app-border bg-white/8 px-4 py-2 backdrop-blur">
-              <div className="rounded-2xl bg-app-brand-soft p-2 text-app-brand-secondary">
-                <TrendingUp className="h-4 w-4" />
-              </div>
-              <span className="text-sm text-app-brand-secondary">{text.loginHeroTag}</span>
+        <div className="grid flex-1 items-center gap-10 py-12 lg:grid-cols-[0.92fr_420px]">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-app-border bg-white/8 px-4 py-2 text-sm text-app-brand-secondary backdrop-blur">
+              <ShieldCheck className="h-4 w-4" />
+              {text.loginBadge}
             </div>
 
             <h1 className="gradient-text mt-8 max-w-3xl text-5xl font-semibold tracking-tight">
               {text.loginTitle}
             </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-app-text-secondary">
+            <p className="mt-5 max-w-xl text-lg leading-8 text-app-text-secondary">
               {text.loginDesc}
             </p>
 
-            <div className="mt-10 grid gap-4 sm:grid-cols-3">
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
               <FeatureBox title={text.loginFeatureExtract} description={text.loginFeature1} />
               <FeatureBox title={text.loginFeatureAnalyze} description={text.loginFeature2} />
-              <FeatureBox title={text.loginFeatureSource} description={text.loginFeature3} />
             </div>
           </div>
 
@@ -78,8 +71,8 @@ export default async function LoginPage() {
 
 function FeatureBox({ title, description }: { title: string; description: string }) {
   return (
-    <div className="glass-card rounded-2xl p-5 transition duration-200 hover:-translate-y-1 hover:border-app-border-strong hover:bg-white/10">
-      <p className="text-lg font-semibold text-white">{title}</p>
+    <div className="glass-card rounded-2xl p-5">
+      <p className="text-base font-semibold text-white">{title}</p>
       <p className="mt-2 text-sm leading-6 text-app-text-secondary">{description}</p>
     </div>
   );

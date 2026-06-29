@@ -55,7 +55,7 @@ export function SupplierCenter({ lang }: { lang: Language }) {
       <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
           <CardHeader>
-            <CardTitle>供应商列表卡片</CardTitle>
+            <CardTitle>推荐供应商</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {items.length ? items.map((item, index) => (
@@ -74,7 +74,7 @@ export function SupplierCenter({ lang }: { lang: Language }) {
                 <div className="mt-1 text-sm text-white/45">{item.platform} · {item.supplier_name || "供应入口已就绪"}</div>
                 <div className="mt-4 grid gap-4 md:grid-cols-3">
                   <InfoTile label={text.supplierPrice} value={item.supplier_price != null ? `${item.currency || ""} ${Number(item.supplier_price).toFixed(2)}` : text.supplierPending} />
-                  <InfoTile label="利润空间" value={item.supplier_price != null ? `${Math.max(0, 100 - Math.round(item.supplier_price)).toString()}%` : "待核算"} />
+                  <InfoTile label="成本空间" value={item.supplier_price != null ? `${Math.max(0, 100 - Math.round(item.supplier_price)).toString()}%` : "待核算"} />
                   <InfoTile label={text.supplierStatus} value={item.availability} />
                 </div>
               </a>
@@ -85,7 +85,7 @@ export function SupplierCenter({ lang }: { lang: Language }) {
         <div className="space-y-5">
           <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
             <CardHeader>
-              <CardTitle>价格对比表</CardTitle>
+              <CardTitle>报价对比</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
@@ -113,7 +113,7 @@ export function SupplierCenter({ lang }: { lang: Language }) {
 
           <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
             <CardHeader>
-              <CardTitle>推荐供应商排序</CardTitle>
+              <CardTitle>优先合作顺序</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {[...items].sort((a, b) => b.match_score - a.match_score).slice(0, 5).map((item, index) => (

@@ -1,9 +1,9 @@
-import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { DashboardCommandCenter } from "@/components/dashboard/dashboard-command-center";
-import { getCurrentUser, getDashboardSources, getDashboardSummary, getDashboardTasks, getDashboardTrends, getP5Rankings, getP5Recommendations, getProducts } from "@/lib/api";
+import { getCurrentUser, getDashboardSources, getDashboardSummary, getDashboardTasks, getDashboardTrends, getP5Rankings, getP5Recommendations, getProducts, isAuthError } from "@/lib/api";
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
-import { TOKEN_KEY } from "@/lib/auth";
+import { ROUTES } from "@/config/routes";
 import { Language } from "@/lib/i18n";
 
 export async function NewDashboard({
@@ -13,15 +13,36 @@ export async function NewDashboard({
   token: string;
   lang: Language;
 }) {
-  const [summary, trends, tasks, sources, productList, rankings, recommendations, user] = await Promise.all([
-    getDashboardSummary(token),
-    getDashboardTrends(token),
-    getDashboardTasks(token),
-    getDashboardSources(token),
-    getProducts("", token),
+  let summary;
+  let trends;
+  let tasks;
+  let sources;
+  let productList;
+
+  try {
+    [summary, trends, tasks, sources, productList] = await Promise.all([
+      getDashboardSummary(token),
+      getDashboardTrends(token),
+      getDashboardTasks(token),
+      getDashboardSources(token),
+      getProducts("", token),
+    ]);
+  } catch (error) {
+    if (isAuthError(error)) {
+      redirect(ROUTES.login);
+    }
+    throw error;
+  }
+
+  const [rankings, recommendations, user] = await Promise.all([
     getP5Rankings(token).catch(() => null),
     getP5Recommendations({ limit: 10 }, token).catch(() => null),
-    getCurrentUser(token).catch(() => null),
+    getCurrentUser(token).catch((error) => {
+      if (isAuthError(error)) {
+        return null;
+      }
+      return null;
+    }),
   ]);
 
   return (

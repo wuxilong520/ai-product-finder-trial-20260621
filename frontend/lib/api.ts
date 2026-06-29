@@ -24,13 +24,19 @@ import {
   User,
 } from "./types";
 
-const API_BASE =
+function trimTrailingSlash(value: string) {
+  return value.replace(/\/+$/, "");
+}
+
+const RAW_API_BASE =
   process.env.NEXT_PUBLIC_API_BASE ||
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   "";
+const API_BASE = trimTrailingSlash(RAW_API_BASE);
+const API_ROOT = API_BASE.endsWith("/api/v1") ? API_BASE.replace(/\/api\/v1$/, "") : API_BASE;
 const API_V1 = API_BASE.endsWith("/api/v1") ? API_BASE : `${API_BASE}/api/v1`;
-export const WS_URL =
-  process.env.NEXT_PUBLIC_WS_URL || "";
+const RAW_WS_URL = process.env.NEXT_PUBLIC_WS_URL || "";
+export const WS_URL = trimTrailingSlash(RAW_WS_URL);
 
 function ensureApiBase() {
   if (!API_BASE) {
@@ -40,6 +46,14 @@ function ensureApiBase() {
 
 export function getApiBaseUrl() {
   return API_BASE;
+}
+
+export function getApiRootUrl() {
+  return API_ROOT;
+}
+
+export function getApiV1BaseUrl() {
+  return API_V1;
 }
 
 export function getWsBaseUrl() {

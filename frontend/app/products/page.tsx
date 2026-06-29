@@ -1,15 +1,16 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
 import { ProductList } from "@/components/products/product-list";
-import { Badge, Card } from "@/design-system/components";
+import { Badge, Button, Card, InfoTile } from "@/design-system/components";
 import { ROUTES } from "@/config/routes";
 import { getProducts, isAuthError } from "@/lib/api";
 import { TOKEN_KEY } from "@/lib/auth";
 import { t } from "@/lib/i18n";
 import { getServerLanguage } from "@/lib/i18n-server";
-import { PackageSearch, Sparkles } from "lucide-react";
+import { ArrowRight, PackageSearch, Sparkles } from "lucide-react";
 
 export default async function ProductsPage({
   searchParams,
@@ -52,6 +53,16 @@ export default async function ProductsPage({
           <p className="mt-2 max-w-2xl text-sm leading-7 text-white/60">
             {text.productListBusinessDesc.replace("{count}", String(products.total))}
           </p>
+          <div className="mt-5 grid gap-4 md:grid-cols-3">
+            <InfoTile label="当前定位" value="商品中心（辅助页面）" />
+            <InfoTile label="在流程中的作用" value="沉淀商品，进入分析与决策" />
+            <Button asChild className="h-full">
+              <Link href={ROUTES.dashboard}>
+                返回主决策流
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
         </Card>
         <ProductList products={products.items} total={products.total} lang={lang} />
       </div>

@@ -2,12 +2,14 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Bell, ChevronDown, ChevronRight, LayoutDashboard, LineChart, Menu, PackageSearch, ScanSearch, Sparkles } from "lucide-react";
+import { Bell, ChevronDown, ChevronRight, LayoutDashboard, Menu, Settings, Sparkles } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 import { ROUTES } from "@/config/routes";
 import { Card } from "@/design-system/components";
 import { LanguageToggle } from "@/design-system/components/LanguageToggle";
 import { Button } from "@/design-system/components/Button";
+import { getFlowActiveFromPath } from "@/components/decision-flow/decision-flow-shell";
 import { Language, t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -24,40 +26,36 @@ type DashboardLayoutProps = {
 const navSections = [
   {
     titleKey: "navHome" as DashboardTextKey,
-    items: [{ key: "dashboard", href: ROUTES.dashboard, icon: LayoutDashboard, labelKey: "navHome" as DashboardTextKey }],
-  },
-  {
-    titleKey: "navDiscovery" as DashboardTextKey,
-    items: [
-      { key: "p5", href: ROUTES.aiDiscovery, icon: Sparkles, labelKey: "navP5" as DashboardTextKey },
-      { key: "market", href: ROUTES.marketAnalysis, icon: LineChart, labelKey: "navMarketAnalysis" as DashboardTextKey },
-      { key: "supplier", href: ROUTES.supplier, icon: PackageSearch, labelKey: "navSupplier" as DashboardTextKey },
-    ],
+    items: [{ key: "dashboard", href: ROUTES.dashboard, icon: LayoutDashboard, label: "决策流" }],
   },
   {
     titleKey: "navProductHub" as DashboardTextKey,
-    items: [
-      { key: "products", href: ROUTES.products, icon: PackageSearch, labelKey: "navProductHub" as DashboardTextKey },
-      { key: "crawl", href: ROUTES.crawl, icon: ScanSearch, labelKey: "navCrawl" as DashboardTextKey },
-      { key: "analyze", href: ROUTES.analyze, icon: LineChart, labelKey: "navAnalyze" as DashboardTextKey },
-      { key: "operation", href: ROUTES.operation, icon: Bell, labelKey: "navOperation" as DashboardTextKey },
-    ],
+    items: [{ key: "products", href: ROUTES.products, icon: Sparkles, label: "商品中心" }],
+  },
+  {
+    titleKey: "navSystemAdmin" as DashboardTextKey,
+    items: [{ key: "admin", href: ROUTES.systemAdmin, icon: Settings, label: "系统设置" }],
   },
 ];
 
 const topTabs = [
-  { key: "dashboard", labelKey: "navHome" as DashboardTextKey, href: ROUTES.dashboard },
-  { key: "p5", labelKey: "navP5" as DashboardTextKey, href: ROUTES.aiDiscovery },
-  { key: "market", labelKey: "navMarketAnalysis" as DashboardTextKey, href: ROUTES.marketAnalysis },
-  { key: "supplier", labelKey: "navSupplier" as DashboardTextKey, href: ROUTES.supplier },
-  { key: "operation", labelKey: "navOperation" as DashboardTextKey, href: ROUTES.operation },
-  { key: "crawl", labelKey: "navCrawl" as DashboardTextKey, href: ROUTES.crawl },
-  { key: "products", labelKey: "navProductHub" as DashboardTextKey, href: ROUTES.products },
-  { key: "analyze", labelKey: "navAnalyze" as DashboardTextKey, href: ROUTES.analyze },
+  { key: "crawl", label: "① 采集", href: ROUTES.crawl },
+  { key: "analyze", label: "② 分析", href: ROUTES.analyze },
+  { key: "market", label: "③ 市场", href: ROUTES.marketAnalysis },
+  { key: "supplier", label: "④ 供应链", href: ROUTES.supplier },
+  { key: "dashboard", label: "⑤ 决策", href: ROUTES.dashboard },
+  { key: "operation", label: "⑥ 执行", href: ROUTES.operation },
 ];
 
 export function NewDashboardLayout({ children, rightRail, lang, activePath = "dashboard" }: DashboardLayoutProps) {
   const text = t(lang);
+  const pathname = usePathname();
+  const flowNavKey = getFlowActiveFromPath(pathname || "/dashboard");
+  const navActivePath = activePath === "crawl" || activePath === "analyze" || activePath === "market" || activePath === "supplier" || activePath === "operation" || activePath === "p5"
+    ? "dashboard"
+    : activePath === "settings"
+      ? "admin"
+      : activePath;
 
   return (
     <div className="min-h-screen bg-[#060d18] text-white">
@@ -70,7 +68,7 @@ export function NewDashboardLayout({ children, rightRail, lang, activePath = "da
               </div>
               <div className="min-w-0">
                 <div className="text-[18px] font-semibold leading-none tracking-tight text-white">XBorder</div>
-                <div className="mt-2 truncate text-[14px] text-white/55">{text.shellTopTitle}</div>
+                <div className="mt-2 truncate text-[14px] text-white/55">{lang === "zh" ? "AI单决策流系统" : "AI decision flow system"}</div>
               </div>
             </div>
             <button className="flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-white/60 shadow-[0_10px_20px_rgba(0,0,0,0.16)]">
@@ -85,8 +83,8 @@ export function NewDashboardLayout({ children, rightRail, lang, activePath = "da
                 <div className="space-y-3">
                   {section.items.map((item) => {
                     const Icon = item.icon;
-                    const active = item.key === activePath;
-                    const label = text[item.labelKey];
+                    const active = item.key === flowNavKey || item.key === navActivePath;
+                    const label = item.label;
                     return (
                       <Link
                         key={`${section.titleKey}-${item.key}`}
@@ -144,7 +142,7 @@ export function NewDashboardLayout({ children, rightRail, lang, activePath = "da
                         active ? "font-semibold text-white after:absolute after:bottom-0 after:left-0 after:h-[3px] after:w-full after:rounded-full after:bg-[#2d6cff]" : "text-white/58 hover:text-white/80"
                       )}
                     >
-                      {text[tab.labelKey]}
+                      {tab.label}
                     </span>
                   );
                   return (

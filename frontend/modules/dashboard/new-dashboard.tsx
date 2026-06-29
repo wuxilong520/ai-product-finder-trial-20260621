@@ -27,10 +27,8 @@ export async function NewDashboard({
   return (
     <XBorderLayout lang={lang} activePath="dashboard">
       <DashboardCommandCenter
-        token={token}
         lang={lang}
         summary={summary}
-        trends={trends}
         tasks={tasks}
         sources={sources}
         products={productList}

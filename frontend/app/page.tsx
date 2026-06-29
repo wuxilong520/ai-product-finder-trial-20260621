@@ -45,8 +45,8 @@ export default async function HomePage() {
               <TrendingUp className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[11px] uppercase tracking-[0.22em] text-app-brand-secondary">Cross-border SaaS</p>
-              <h1 className="text-lg font-semibold text-white">Product Finder</h1>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-app-brand-secondary">AI Decision Flow</p>
+              <h1 className="text-lg font-semibold text-white">XBorder</h1>
             </div>
           </div>
 

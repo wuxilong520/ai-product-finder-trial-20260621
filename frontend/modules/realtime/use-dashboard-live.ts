@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { getApiBaseUrl, getDashboardSummary, getDashboardTasks } from "@/lib/api";
+import { getApiV1BaseUrl, getDashboardSummary, getDashboardTasks } from "@/lib/api";
 import type { DashboardSummaryResponse, DashboardTasksResponse } from "@/lib/types";
 
 type LiveState = {
@@ -21,8 +21,8 @@ export function useDashboardLive(token: string, initialSummary: DashboardSummary
   });
 
   const streamUrl = useMemo(() => {
-    const base = getApiBaseUrl();
-    return `${base}/api/v1/stream/dashboard?token=${encodeURIComponent(token)}`;
+    const base = getApiV1BaseUrl();
+    return `${base}/stream/dashboard?token=${encodeURIComponent(token)}`;
   }, [token]);
 
   useEffect(() => {
@@ -100,4 +100,3 @@ export function useDashboardLive(token: string, initialSummary: DashboardSummary
 
   return state;
 }
-

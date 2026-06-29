@@ -1,20 +1,21 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-
-import { XBorderLayout } from "@/components/layouts/xborder-layout";
 import { OperationCenter } from "@/components/operation/operation-center";
-import { ROUTES } from "@/config/routes";
-import { TOKEN_KEY } from "@/lib/auth";
-import { getServerLanguage } from "@/lib/i18n-server";
+import { DecisionFlowShell } from "@/components/decision-flow/decision-flow-shell";
+import { loadFlowPageData } from "@/lib/flow-page-data";
 
 export default async function OperationPage() {
-  const lang = await getServerLanguage();
-  const token = (await cookies()).get(TOKEN_KEY)?.value || "";
-  if (!token) redirect(ROUTES.login);
+  const { lang, products, tasks, sources } = await loadFlowPageData();
 
   return (
-    <XBorderLayout lang={lang} activePath="operation">
+    <DecisionFlowShell
+      lang={lang}
+      activeStep="operation"
+      title="第6步：执行运营"
+      description="最后一步不再只是看结果，而是把通过判断的商品推进到执行动作里：待选、已选、已执行，真正完成一条业务链路。"
+      products={products}
+      tasks={tasks}
+      sources={sources}
+    >
       <OperationCenter lang={lang} />
-    </XBorderLayout>
+    </DecisionFlowShell>
   );
 }

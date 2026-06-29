@@ -53,9 +53,9 @@ export function AnalyzePanel({ initialLang, initialUrl }: { initialLang: Languag
         <div className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
           <div>
             <div className="mb-4 grid gap-3 md:grid-cols-3">
-              <MetricTile label="AI状态" value={okResult ? "真实AI" : fallbackResult ? "规则补位" : loading ? "分析中" : "待分析"} />
-              <MetricTile label="任务状态" value={state.status} />
-              <MetricTile label="结果流转" value={displayResult ? "已产出" : "待产出"} />
+              <MetricTile label="分析状态" value={loading ? "分析中" : displayResult ? "已完成" : "待分析"} />
+              <MetricTile label="流程状态" value={state.status} />
+              <MetricTile label="结果流转" value={displayResult ? "可继续进入市场判断" : "等待分析结果"} />
             </div>
             <div className="mt-3 flex flex-wrap gap-3">
               <Badge
@@ -133,7 +133,7 @@ export function AnalyzePanel({ initialLang, initialUrl }: { initialLang: Languag
       </section>
 
       <section className="grid gap-6 xl:grid-cols-4">
-        <CardBlock title="AI评分展示">
+        <CardBlock title="商品评分">
           {displayResult ? (
             <div className="grid gap-3">
               <MetricTile label={text.detailScore} value={String(displayResult.score)} />
@@ -145,7 +145,7 @@ export function AnalyzePanel({ initialLang, initialUrl }: { initialLang: Languag
           )}
         </CardBlock>
 
-        <CardBlock title="商品对比分析">
+        <CardBlock title="商品判断">
           {displayResult ? (
             <div className="space-y-3">
               <InfoTile label="竞争强度" value={displayResult.competition_level} />
@@ -155,7 +155,7 @@ export function AnalyzePanel({ initialLang, initialUrl }: { initialLang: Languag
           ) : <EmptyState text={text.waitingResult} />}
         </CardBlock>
 
-        <CardBlock title="市场趋势预测">
+        <CardBlock title="优先关注点">
           {displayResult ? (
             <div className="space-y-3">
               <ReasonList items={displayResult.reason.slice(0, 3)} />

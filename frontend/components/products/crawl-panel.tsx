@@ -38,14 +38,14 @@ export function CrawlPanel({ lang }: { lang: Language }) {
     <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
       <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
         <CardHeader>
-          <CardTitle>采集中心</CardTitle>
-          <CardDescription>输入商品链接后，直接得到结构化商品结果卡片。</CardDescription>
+          <CardTitle>采集输入</CardTitle>
+          <CardDescription>输入真实商品链接，把它带进这条决策流。</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="mb-5 grid gap-3 md:grid-cols-3">
-            <MetricCard label="采集任务" value={state.status} />
-            <MetricCard label="任务通道" value={transport} />
-            <MetricCard label="结果状态" value={result ? "已返回" : "等待中"} />
+            <MetricCard label="当前状态" value={state.status} />
+            <MetricCard label="同步方式" value={transport === "ws" ? "实时同步" : transport === "polling" ? "自动刷新" : "等待中"} />
+            <MetricCard label="流程结果" value={result ? "已进入下一步" : "等待采集"} />
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -77,8 +77,8 @@ export function CrawlPanel({ lang }: { lang: Language }) {
 
       <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
         <CardHeader>
-          <CardTitle>采集结果卡片</CardTitle>
-          <CardDescription>这里只展示业务决策需要的信息，不展示调试内容。</CardDescription>
+          <CardTitle>采集结果</CardTitle>
+          <CardDescription>这里只保留后续分析和决策真正要用的信息。</CardDescription>
         </CardHeader>
         <CardContent>
           {result ? (

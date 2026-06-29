@@ -1,20 +1,24 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-
-import { XBorderLayout } from "@/components/layouts/xborder-layout";
 import { SupplierCenter } from "@/components/supplier/supplier-center";
-import { ROUTES } from "@/config/routes";
-import { TOKEN_KEY } from "@/lib/auth";
-import { getServerLanguage } from "@/lib/i18n-server";
+import { DecisionFlowShell } from "@/components/decision-flow/decision-flow-shell";
+import { XBorderLayout } from "@/components/layouts/xborder-layout";
+import { loadFlowPageData } from "@/lib/flow-page-data";
 
 export default async function SupplierPage() {
-  const lang = await getServerLanguage();
-  const token = (await cookies()).get(TOKEN_KEY)?.value || "";
-  if (!token) redirect(ROUTES.login);
+  const { lang, products, tasks, sources } = await loadFlowPageData();
 
   return (
     <XBorderLayout lang={lang} activePath="supplier">
-      <SupplierCenter lang={lang} />
+      <DecisionFlowShell
+        lang={lang}
+        activeStep="supplier"
+        title="第4步：确认供应链"
+        description="市场值不值得做之后，下一步就是确认能不能拿到货、价格合不合理、利润空间够不够。这里就是整条流程里的供应链确认步骤。"
+        products={products}
+        tasks={tasks}
+        sources={sources}
+      >
+        <SupplierCenter lang={lang} />
+      </DecisionFlowShell>
     </XBorderLayout>
   );
 }

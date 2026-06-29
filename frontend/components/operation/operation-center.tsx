@@ -46,7 +46,7 @@ export function OperationCenter({ lang }: { lang: Language }) {
         <CardHeader>
           <div className="flex flex-wrap items-center gap-3">
             <Badge variant="brand"><Rocket className="h-4 w-4" />{text.navOperation}</Badge>
-            <Badge variant="neutral"><Sparkles className="h-4 w-4" />{text.operationCoreFlow}</Badge>
+            <Badge variant="neutral"><Sparkles className="h-4 w-4" />执行推进流程</Badge>
           </div>
           <CardTitle>{text.operationTitle}</CardTitle>
           <p className="text-sm text-white/55">{text.operationDesc}</p>
@@ -69,7 +69,7 @@ export function OperationCenter({ lang }: { lang: Language }) {
         <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
           <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
             <CardHeader>
-              <CardTitle>推荐商品列表</CardTitle>
+              <CardTitle>待推进商品</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {data.items.map((item) => {
@@ -122,7 +122,7 @@ export function OperationCenter({ lang }: { lang: Language }) {
           <div className="space-y-5">
             <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
               <CardHeader>
-                <CardTitle>状态流转</CardTitle>
+                <CardTitle>推进状态</CardTitle>
               </CardHeader>
               <CardContent className="grid gap-4 md:grid-cols-3 xl:grid-cols-1">
                 <InfoTile label="待选" value={String(data.items.length - selectedIds.length)} />
@@ -133,7 +133,7 @@ export function OperationCenter({ lang }: { lang: Language }) {
 
             <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
               <CardHeader>
-                <CardTitle>执行流程说明</CardTitle>
+                <CardTitle>执行步骤</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {flowSteps.map((step, index) => (

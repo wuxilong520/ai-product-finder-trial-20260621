@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { getApiBaseUrl, getWsBaseUrl } from "@/lib/api";
+import { getApiRootUrl, getApiV1BaseUrl, getWsBaseUrl } from "@/lib/api";
 
 export type DashboardRealtimeTransport = "sse" | "websocket" | "polling" | "idle";
 
@@ -30,11 +30,27 @@ export function useDashboardStream({
   const wsStartedRef = useRef(false);
 
   const streamUrl = useMemo(() => {
-    const base = getApiBaseUrl();
-    return `${base}/api/v1/stream/dashboard?token=${encodeURIComponent(token)}`;
+    const base = getApiV1BaseUrl();
+    return `${base}/stream/dashboard?token=${encodeURIComponent(token)}`;
   }, [token]);
 
-  const wsBase = useMemo(() => getWsBaseUrl(), []);
+  const wsBase = useMemo(() => {
+    const configured = getWsBaseUrl();
+    if (configured) {
+      return configured;
+    }
+    const apiRoot = getApiRootUrl();
+    if (!apiRoot) {
+      return "";
+    }
+    if (apiRoot.startsWith("https://")) {
+      return apiRoot.replace(/^https:\/\//, "wss://") + "/ws";
+    }
+    if (apiRoot.startsWith("http://")) {
+      return apiRoot.replace(/^http:\/\//, "ws://") + "/ws";
+    }
+    return "";
+  }, []);
 
   useEffect(() => {
     if (!token) {

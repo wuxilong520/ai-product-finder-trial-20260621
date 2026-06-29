@@ -10,6 +10,45 @@ import { getServerLanguage } from "@/lib/i18n-server";
 export default async function SettingsPage() {
   const lang = await getServerLanguage();
   const token = (await cookies()).get(TOKEN_KEY)?.value || "";
+  const text = lang === "en"
+    ? {
+        title: "Account Settings",
+        desc: "Manage store links, account details, and login password here without any technical settings.",
+        store: "Store Links",
+        storeStatus: "Current Status",
+        storeCount: "Store Count",
+        manageable: "Manageable",
+        pending: "Waiting for access",
+        profile: "Profile",
+        accountType: "Account Type",
+        accountState: "Status",
+        formal: "Standard Account",
+        active: "Active",
+        password: "Password Change",
+        security: "Security Status",
+        entry: "Update Entry",
+        enabled: "Enabled",
+        coming: "Coming to this page",
+      }
+    : {
+        title: "账户设置",
+        desc: "这里统一管理店铺绑定、账号信息和登录密码，不展示任何技术配置。",
+        store: "店铺绑定",
+        storeStatus: "当前状态",
+        storeCount: "店铺数量",
+        manageable: "可管理",
+        pending: "待接入展示",
+        profile: "账号信息",
+        accountType: "账户类型",
+        accountState: "使用状态",
+        formal: "正式账户",
+        active: "正常",
+        password: "登录密码修改",
+        security: "安全状态",
+        entry: "修改入口",
+        enabled: "已启用",
+        coming: "即将接入当前页",
+      };
 
   if (!token) {
     redirect(ROUTES.login);
@@ -19,40 +58,38 @@ export default async function SettingsPage() {
     <XBorderLayout lang={lang} activePath="settings">
       <div className="space-y-6">
         <Card className="border-white/8 bg-[#121c2c] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
-          <h1 className="text-3xl font-semibold tracking-tight text-white">账户设置</h1>
-          <p className="mt-2 text-sm leading-7 text-white/60">
-            这里统一管理店铺绑定、账号信息和登录密码，不展示任何技术配置。
-          </p>
+          <h1 className="text-3xl font-semibold tracking-tight text-white">{text.title}</h1>
+          <p className="mt-2 text-sm leading-7 text-white/60">{text.desc}</p>
         </Card>
 
         <div className="grid gap-6 xl:grid-cols-3">
           <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
             <CardHeader>
-              <CardTitle>店铺绑定</CardTitle>
+              <CardTitle>{text.store}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <InfoTile label="当前状态" value="可管理" />
-              <InfoTile label="店铺数量" value="待接入展示" />
+              <InfoTile label={text.storeStatus} value={text.manageable} />
+              <InfoTile label={text.storeCount} value={text.pending} />
             </CardContent>
           </Card>
 
           <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
             <CardHeader>
-              <CardTitle>账号信息</CardTitle>
+              <CardTitle>{text.profile}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <InfoTile label="账户类型" value="正式账户" />
-              <InfoTile label="使用状态" value="正常" />
+              <InfoTile label={text.accountType} value={text.formal} />
+              <InfoTile label={text.accountState} value={text.active} />
             </CardContent>
           </Card>
 
           <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
             <CardHeader>
-              <CardTitle>登录密码修改</CardTitle>
+              <CardTitle>{text.password}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <InfoTile label="安全状态" value="已启用" />
-              <InfoTile label="修改入口" value="即将接入当前页" />
+              <InfoTile label={text.security} value={text.enabled} />
+              <InfoTile label={text.entry} value={text.coming} />
             </CardContent>
           </Card>
         </div>

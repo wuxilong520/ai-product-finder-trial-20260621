@@ -5,23 +5,50 @@ import { loadFlowPageData } from "@/lib/flow-page-data";
 
 export default async function ActionCenterPage() {
   const { lang } = await loadFlowPageData();
+  const text = lang === "en"
+    ? {
+        title: "Action Center",
+        desc: "Handle AI picks, profit review, supplier suggestions, price comparisons, and execution status in one place.",
+        top10: "Top 10 Picks",
+        profit: "Profit Review",
+        supplier: "Supplier Suggestions",
+        compare: "Price Compare",
+        queue: "Launch Queue",
+        single: "One place",
+        linked: "Connected view",
+        real: "Real link",
+        direct: "Direct compare",
+        closed: "Closed loop",
+      }
+    : {
+        title: "商业执行",
+        desc: "这里统一处理 AI 推荐商品、利润分析、供应商推荐、价格对比和执行状态。",
+        top10: "推荐商品TOP10",
+        profit: "利润分析",
+        supplier: "供应商推荐",
+        compare: "价格对比",
+        queue: "执行队列",
+        single: "统一入口",
+        linked: "同页查看",
+        real: "真实联动",
+        direct: "直接比较",
+        closed: "状态闭环",
+      };
 
   return (
     <XBorderLayout lang={lang} activePath="action">
       <div className="space-y-6">
         <Card className="border-white/6 bg-[#111A2E]">
           <CardHeader>
-            <CardTitle>商业执行</CardTitle>
-            <p className="text-sm leading-7 text-white/55">
-              这里统一处理 AI 推荐商品、利润分析、供应商推荐、价格对比和执行状态。
-            </p>
+            <CardTitle>{text.title}</CardTitle>
+            <p className="text-sm leading-7 text-white/55">{text.desc}</p>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-5">
-            <MetricCard label="推荐商品TOP10" value="统一入口" />
-            <MetricCard label="利润分析" value="同页查看" />
-            <MetricCard label="供应商推荐" value="真实联动" />
-            <MetricCard label="价格对比" value="直接比较" />
-            <MetricCard label="执行队列" value="状态闭环" />
+            <MetricCard label={text.top10} value={text.single} />
+            <MetricCard label={text.profit} value={text.linked} />
+            <MetricCard label={text.supplier} value={text.real} />
+            <MetricCard label={text.compare} value={text.direct} />
+            <MetricCard label={text.queue} value={text.closed} />
           </CardContent>
         </Card>
 

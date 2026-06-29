@@ -13,6 +13,31 @@ import type { P5RecommendationsResponse } from "@/lib/types";
 
 export function OperationCenter({ lang }: { lang: Language }) {
   const text = t(lang);
+  const uiText = lang === "en"
+    ? {
+        badge: "Action Center",
+        flow: "Execution Flow",
+        queueTitle: "Products to Process",
+        launched: "Launched",
+        selected: "Selected",
+        pending: "Pending",
+        add: "Add to Store",
+        view: "View Product",
+        progress: "Progress",
+        steps: "Execution Steps",
+      }
+    : {
+        badge: "商业执行",
+        flow: "执行推进流程",
+        queueTitle: "待推进商品",
+        launched: "已上架",
+        selected: "已选",
+        pending: "待选",
+        add: "一键加入店铺",
+        view: "查看商品",
+        progress: "推进状态",
+        steps: "执行步骤",
+      };
   const flowSteps = [text.operationStep1, text.operationStep2, text.operationStep3, text.operationStep4];
   const [data, setData] = useState<P5RecommendationsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,8 +70,8 @@ export function OperationCenter({ lang }: { lang: Language }) {
       <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
         <CardHeader>
           <div className="flex flex-wrap items-center gap-3">
-            <Badge variant="brand"><Rocket className="h-4 w-4" />商业执行</Badge>
-            <Badge variant="neutral"><Sparkles className="h-4 w-4" />执行推进流程</Badge>
+            <Badge variant="brand"><Rocket className="h-4 w-4" />{uiText.badge}</Badge>
+            <Badge variant="neutral"><Sparkles className="h-4 w-4" />{uiText.flow}</Badge>
           </div>
           <CardTitle>{text.operationTitle}</CardTitle>
           <p className="text-sm text-white/55">{text.operationDesc}</p>
@@ -69,13 +94,13 @@ export function OperationCenter({ lang }: { lang: Language }) {
         <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
           <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
             <CardHeader>
-              <CardTitle>待推进商品</CardTitle>
+              <CardTitle>{uiText.queueTitle}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {data.items.map((item) => {
                 const isSelected = selectedIds.includes(item.product_id);
                 const isLaunched = launchedIds.includes(item.product_id);
-                const statusLabel = isLaunched ? "已上架" : isSelected ? "已选" : "待选";
+                const statusLabel = isLaunched ? uiText.launched : isSelected ? uiText.selected : uiText.pending;
                 return (
                   <Card key={item.product_id} className="border-white/8 bg-white/[0.03] shadow-none">
                     <CardContent className="p-5">
@@ -106,10 +131,10 @@ export function OperationCenter({ lang }: { lang: Language }) {
                           setLaunchedIds((current) => current.includes(item.product_id) ? current : [...current, item.product_id]);
                         }}>
                           <CheckCircle2 className="mr-2 h-4 w-4" />
-                          一键加入店铺
+                          {uiText.add}
                         </Button>
                         <Button asChild variant="outline">
-                          <Link href={productDetailRoute(item.product_id)}>查看商品</Link>
+                          <Link href={productDetailRoute(item.product_id)}>{uiText.view}</Link>
                         </Button>
                       </div>
                     </CardContent>
@@ -122,18 +147,18 @@ export function OperationCenter({ lang }: { lang: Language }) {
           <div className="space-y-5">
             <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
               <CardHeader>
-                <CardTitle>推进状态</CardTitle>
+                <CardTitle>{uiText.progress}</CardTitle>
               </CardHeader>
               <CardContent className="grid gap-4 md:grid-cols-3 xl:grid-cols-1">
-                <InfoTile label="待选" value={String(data.items.length - selectedIds.length)} />
-                <InfoTile label="已选" value={String(selectedIds.length)} />
-                <InfoTile label="已上架" value={String(launchedIds.length)} />
+                <InfoTile label={uiText.pending} value={String(data.items.length - selectedIds.length)} />
+                <InfoTile label={uiText.selected} value={String(selectedIds.length)} />
+                <InfoTile label={uiText.launched} value={String(launchedIds.length)} />
               </CardContent>
             </Card>
 
             <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
               <CardHeader>
-                <CardTitle>执行步骤</CardTitle>
+                <CardTitle>{uiText.steps}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {flowSteps.map((step, index) => (

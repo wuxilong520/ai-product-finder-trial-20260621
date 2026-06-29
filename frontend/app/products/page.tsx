@@ -19,6 +19,19 @@ export default async function ProductsPage({
 }) {
   const lang = await getServerLanguage();
   const text = t(lang);
+  const pageText = lang === "en"
+    ? {
+        total: "Total Products",
+        current: "Current Module",
+        module: "Products",
+        back: "Back to Home",
+      }
+    : {
+        total: "商品总量",
+        current: "当前模块",
+        module: "商品资产",
+        back: "回到首页",
+      };
   const cookieStore = await cookies();
   const token = cookieStore.get(TOKEN_KEY)?.value || "";
   if (!token) {
@@ -50,11 +63,11 @@ export default async function ProductsPage({
               </p>
             </div>
             <div className="grid gap-4 md:grid-cols-3 xl:min-w-[760px]">
-              <InfoTile label="商品总量" value={String(products.total)} />
-              <InfoTile label="当前模块" value="商品资产" />
+              <InfoTile label={pageText.total} value={String(products.total)} />
+              <InfoTile label={pageText.current} value={pageText.module} />
               <Button asChild className="h-full bg-[#4F7CFF] hover:bg-[#4F7CFF]/90">
                 <Link href={ROUTES.home}>
-                  回到首页
+                  {pageText.back}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>

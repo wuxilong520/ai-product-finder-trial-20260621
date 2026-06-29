@@ -11,6 +11,7 @@ export function LanguageToggle({ lang }: { lang: Language }) {
   function switchLanguage(nextLang: Language) {
     document.cookie = `${LANGUAGE_COOKIE}=${nextLang}; path=/; max-age=${60 * 60 * 24 * 365}`;
     router.refresh();
+    window.location.reload();
   }
 
   return (

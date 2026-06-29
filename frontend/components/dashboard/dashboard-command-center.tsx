@@ -34,6 +34,81 @@ export function DashboardCommandCenter({
   recommendations: P5RecommendationsResponse | null;
   isAdmin: boolean;
 }) {
+  const text = lang === "en"
+    ? {
+        totalProducts: "Total Products",
+        totalProductsDesc: "Real products currently inside the system",
+        profitChance: "Profit Potential",
+        profitChanceDesc: "Estimated profit across recommended products",
+        marketHeat: "Market Heat",
+        marketHeatDesc: "Combined heat from the growth ranking",
+        aiIndex: "AI Decision Index",
+        aiIndexDesc: "Average decision score of current recommendations",
+        todayTitle: "Today's Key Products",
+        todayDesc: "Shows the real products worth reviewing first today.",
+        recommendBadge: "Recommended",
+        profit: "Profit",
+        keyword: "Keyword",
+        suggestion: "Suggestion",
+        noToday: "No daily recommendations yet. Start by adding real products.",
+        categoriesTitle: "Fast-Growing Categories",
+        categoriesDesc: "Use real product distribution and growth results to spot stronger directions.",
+        categoryBadge: "Category",
+        categoryCount: "Products in library:",
+        noCategory: "There is not enough category data yet.",
+        oppTitle: "Market Opportunities",
+        oppDesc: "See which directions are worth deeper judgment now.",
+        chance: "Opportunity",
+        category: "Category",
+        uncategorized: "Uncategorized",
+        heat: "Heat",
+        risk: "Risk",
+        profitRoom: "Profit Room",
+        riskLow: "Low to medium",
+        riskMid: "Medium",
+        riskHigh: "High",
+        roomHigh: "Strong",
+        roomWatch: "Watch",
+        roomCareful: "Careful",
+        noOpp: "No clear market opportunity yet.",
+      }
+    : {
+        totalProducts: "总商品量",
+        totalProductsDesc: "当前进入系统的真实商品数量",
+        profitChance: "利润机会",
+        profitChanceDesc: "推荐商品的累计预估利润",
+        marketHeat: "市场热度",
+        marketHeatDesc: "来自增长榜的综合热度",
+        aiIndex: "AI推荐指数",
+        aiIndexDesc: "当前推荐商品的平均决策分",
+        todayTitle: "今日值得关注商品",
+        todayDesc: "这里展示今天最值得优先关注的真实商品。",
+        recommendBadge: "推荐",
+        profit: "利润",
+        keyword: "关键词",
+        suggestion: "建议",
+        noToday: "现在还没有形成今日推荐商品，先从采集真实商品开始。",
+        categoriesTitle: "热门增长类目",
+        categoriesDesc: "用真实商品分布和增长结果，快速看当前更值得关注的类目方向。",
+        categoryBadge: "类目",
+        categoryCount: "当前入库商品数：",
+        noCategory: "当前还没有足够类目分布数据。",
+        oppTitle: "潜力市场机会",
+        oppDesc: "看现在更值得深入判断的机会方向。",
+        chance: "机会",
+        category: "类目",
+        uncategorized: "未分类",
+        heat: "热度",
+        risk: "风险",
+        profitRoom: "利润空间",
+        riskLow: "中低",
+        riskMid: "中等",
+        riskHigh: "偏高",
+        roomHigh: "较高",
+        roomWatch: "可观察",
+        roomCareful: "谨慎",
+        noOpp: "当前还没有形成清晰的市场机会结果。",
+      };
   const topRecommendations = recommendations?.items.slice(0, 8) || [];
   const categoryCards = summary.top_categories.slice(0, 6);
   const marketOpportunities = rankings?.growth_ranking.top_10.slice(0, 3) || [];
@@ -49,30 +124,30 @@ export function DashboardCommandCenter({
     <div className="space-y-6">
       <section className="grid gap-4 xl:grid-cols-4">
         <MetricCard
-          title="总商品量"
+          title={text.totalProducts}
           value={String(products.total)}
-          description="当前进入系统的真实商品数量"
+          description={text.totalProductsDesc}
           tone="blue"
           icon={<ShoppingBag className="h-5 w-5" />}
         />
         <MetricCard
-          title="利润机会"
+          title={text.profitChance}
           value={String(totalProfit)}
-          description="推荐商品的累计预估利润"
+          description={text.profitChanceDesc}
           tone="green"
           icon={<TrendingUp className="h-5 w-5" />}
         />
         <MetricCard
-          title="市场热度"
+          title={text.marketHeat}
           value={`${avgMarketHeat}/100`}
-          description="来自增长榜的综合热度"
+          description={text.marketHeatDesc}
           tone="orange"
           icon={<Flame className="h-5 w-5" />}
         />
         <MetricCard
-          title="AI推荐指数"
+          title={text.aiIndex}
           value={`${avgAiScore}/100`}
-          description="当前推荐商品的平均决策分"
+          description={text.aiIndexDesc}
           tone="blue"
           icon={<Sparkles className="h-5 w-5" />}
         />
@@ -81,8 +156,8 @@ export function DashboardCommandCenter({
       <section className="grid gap-6 xl:grid-cols-2">
         <Card className="border-white/6 bg-[#111A2E]">
           <CardHeader>
-            <CardTitle>今日值得关注商品</CardTitle>
-            <CardDescription>这里展示今天最值得优先关注的真实商品。</CardDescription>
+            <CardTitle>{text.todayTitle}</CardTitle>
+            <CardDescription>{text.todayDesc}</CardDescription>
           </CardHeader>
           <CardContent>
             {topRecommendations.length ? (
@@ -95,7 +170,7 @@ export function DashboardCommandCenter({
                   >
                     <div className="flex items-center justify-between gap-2">
                       <Badge variant="brand" className="px-3 py-1.5 text-xs">
-                        推荐
+                        {text.recommendBadge}
                       </Badge>
                       <span className="text-xs text-white/45">{Math.round(item.recommendation_score)}/100</span>
                     </div>
@@ -103,23 +178,23 @@ export function DashboardCommandCenter({
                       {item.title_zh || item.title}
                     </div>
                     <div className="mt-4 grid gap-2">
-                      <InfoRow label="利润" value={String(item.estimated_profit)} tone="green" />
-                      <InfoRow label="关键词" value={item.keyword} tone="neutral" />
-                      <InfoRow label="建议" value={item.recommendation} tone="blue" />
+                      <InfoRow label={text.profit} value={String(item.estimated_profit)} tone="green" />
+                      <InfoRow label={text.keyword} value={item.keyword} tone="neutral" />
+                      <InfoRow label={text.suggestion} value={item.recommendation} tone="blue" />
                     </div>
                   </Link>
                 ))}
               </div>
             ) : (
-              <EmptyState text="现在还没有形成今日推荐商品，先从采集真实商品开始。" />
+              <EmptyState text={text.noToday} />
             )}
           </CardContent>
         </Card>
 
         <Card className="border-white/6 bg-[#111A2E]">
           <CardHeader>
-            <CardTitle>热门增长类目</CardTitle>
-            <CardDescription>用真实商品分布和增长结果，快速看当前更值得关注的类目方向。</CardDescription>
+            <CardTitle>{text.categoriesTitle}</CardTitle>
+            <CardDescription>{text.categoriesDesc}</CardDescription>
           </CardHeader>
           <CardContent>
             {categoryCards.length ? (
@@ -128,12 +203,12 @@ export function DashboardCommandCenter({
                   <div key={`${item.name}-${index}`} className="min-w-[220px] rounded-2xl border border-white/6 bg-[rgba(255,255,255,0.02)] p-4">
                     <div className="flex items-center justify-between gap-2">
                       <Badge variant="neutral" className="px-3 py-1.5 text-xs">
-                        类目
+                        {text.categoryBadge}
                       </Badge>
                       <span className="text-xs text-white/40">TOP {index + 1}</span>
                     </div>
                     <div className="mt-4 text-base font-semibold text-white">{item.name}</div>
-                    <div className="mt-3 text-sm text-white/55">当前入库商品数：{item.product_count}</div>
+                    <div className="mt-3 text-sm text-white/55">{text.categoryCount}{item.product_count}</div>
                     <div className="mt-5 h-2 rounded-full bg-white/6">
                       <div
                         className="h-2 rounded-full bg-[linear-gradient(90deg,#4F7CFF,#3DD68C)]"
@@ -144,7 +219,7 @@ export function DashboardCommandCenter({
                 ))}
               </div>
             ) : (
-              <EmptyState text="当前还没有足够类目分布数据。" />
+              <EmptyState text={text.noCategory} />
             )}
           </CardContent>
         </Card>
@@ -153,8 +228,8 @@ export function DashboardCommandCenter({
       <section className="grid gap-6 xl:grid-cols-3">
         <Card className="border-white/6 bg-[#111A2E] xl:col-span-3">
           <CardHeader>
-            <CardTitle>潜力市场机会</CardTitle>
-            <CardDescription>看现在更值得深入判断的机会方向。</CardDescription>
+            <CardTitle>{text.oppTitle}</CardTitle>
+            <CardDescription>{text.oppDesc}</CardDescription>
           </CardHeader>
           <CardContent>
             {marketOpportunities.length ? (
@@ -162,7 +237,7 @@ export function DashboardCommandCenter({
                 {marketOpportunities.map((item, index) => (
                   <div key={`${item.product_id}-${item.title}-${index}`} className="rounded-2xl border border-white/6 bg-[rgba(255,255,255,0.02)] p-5">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-sm font-medium text-white">机会 {index + 1}</div>
+                      <div className="text-sm font-medium text-white">{text.chance} {index + 1}</div>
                       <Badge variant={item.score >= 80 ? "success" : item.score >= 60 ? "warning" : "neutral"} className="px-3 py-1.5 text-xs">
                         {Math.round(item.score)}
                       </Badge>
@@ -170,17 +245,17 @@ export function DashboardCommandCenter({
                     <div className="mt-4 line-clamp-2 min-h-[44px] text-base font-semibold leading-6 text-white">
                       {item.title}
                     </div>
-                    <div className="mt-3 text-sm text-white/55">类目：{item.category || "未分类"}</div>
+                    <div className="mt-3 text-sm text-white/55">{text.category}：{item.category || text.uncategorized}</div>
                     <div className="mt-4 grid gap-3">
-                      <InfoRow label="热度" value={`${Math.round(item.score)}/100`} tone="orange" />
-                      <InfoRow label="风险" value={item.score >= 80 ? "中低" : item.score >= 60 ? "中等" : "偏高"} tone={item.score >= 80 ? "green" : item.score >= 60 ? "orange" : "red"} />
-                      <InfoRow label="利润空间" value={item.score >= 80 ? "较高" : item.score >= 60 ? "可观察" : "谨慎"} tone={item.score >= 80 ? "green" : "blue"} />
+                      <InfoRow label={text.heat} value={`${Math.round(item.score)}/100`} tone="orange" />
+                      <InfoRow label={text.risk} value={item.score >= 80 ? text.riskLow : item.score >= 60 ? text.riskMid : text.riskHigh} tone={item.score >= 80 ? "green" : item.score >= 60 ? "orange" : "red"} />
+                      <InfoRow label={text.profitRoom} value={item.score >= 80 ? text.roomHigh : item.score >= 60 ? text.roomWatch : text.roomCareful} tone={item.score >= 80 ? "green" : "blue"} />
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <EmptyState text="当前还没有形成清晰的市场机会结果。" />
+              <EmptyState text={text.noOpp} />
             )}
           </CardContent>
         </Card>

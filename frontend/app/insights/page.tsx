@@ -9,6 +9,31 @@ export default async function InsightsPage({
   searchParams?: Promise<{ productId?: string }>;
 }) {
   const { lang } = await loadFlowPageData();
+  const text = lang === "en"
+    ? {
+        title: "Insights",
+        desc: "Review market trends, hot categories, breakout opportunities, risk alerts, and future outlook in one place.",
+        trend: "Market Trends",
+        category: "Hot Categories",
+        ranking: "Best Sellers",
+        risk: "Risk Alerts",
+        chart: "Charts",
+        compare: "Compare",
+        dynamic: "Live updates",
+        watch: "Watch now",
+      }
+    : {
+        title: "市场洞察",
+        desc: "这里统一查看市场趋势、热门类目、爆款机会、风险提示和未来趋势判断。",
+        trend: "市场趋势",
+        category: "热门类目",
+        ranking: "爆款榜单",
+        risk: "风险提示",
+        chart: "图表展示",
+        compare: "横向对比",
+        dynamic: "动态更新",
+        watch: "实时关注",
+      };
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const productId = resolvedSearchParams?.productId;
 
@@ -17,16 +42,14 @@ export default async function InsightsPage({
       <div className="space-y-6">
         <Card className="border-white/6 bg-[#111A2E]">
           <CardHeader>
-            <CardTitle>市场洞察</CardTitle>
-            <p className="text-sm leading-7 text-white/55">
-              这里统一查看市场趋势、热门类目、爆款机会、风险提示和未来趋势判断。
-            </p>
+            <CardTitle>{text.title}</CardTitle>
+            <p className="text-sm leading-7 text-white/55">{text.desc}</p>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-4">
-            <MetricCard label="市场趋势" value="图表展示" />
-            <MetricCard label="热门类目" value="横向对比" />
-            <MetricCard label="爆款榜单" value="动态更新" />
-            <MetricCard label="风险提示" value="实时关注" />
+            <MetricCard label={text.trend} value={text.chart} />
+            <MetricCard label={text.category} value={text.compare} />
+            <MetricCard label={text.ranking} value={text.dynamic} />
+            <MetricCard label={text.risk} value={text.watch} />
           </CardContent>
         </Card>
 

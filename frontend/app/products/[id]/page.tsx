@@ -16,6 +16,21 @@ import { ArrowRight } from "lucide-react";
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const lang = await getServerLanguage();
   const text = t(lang);
+  const pageText = lang === "en"
+    ? {
+        flow: "Flow Position",
+        flowValue: "Product Detail / Decision Prep",
+        next: "Next Suggestion",
+        nextValue: "Review details, then open insights or action center",
+        back: "Back to Home",
+      }
+    : {
+        flow: "流程位置",
+        flowValue: "商品详情 / 决策准备区",
+        next: "下一步建议",
+        nextValue: "看完详情后进入市场或执行",
+        back: "返回首页",
+      };
   const cookieStore = await cookies();
   const token = cookieStore.get(TOKEN_KEY)?.value || "";
   if (!token) {
@@ -39,11 +54,11 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           <h1 className="text-3xl font-semibold tracking-tight text-white">{text.productDetailTitle}</h1>
           <p className="mt-2 max-w-2xl text-sm leading-7 text-white/60">{text.productDetailDesc}</p>
           <div className="mt-5 grid gap-4 md:grid-cols-3">
-            <InfoTile label="流程位置" value="商品详情 / 决策准备区" />
-            <InfoTile label="下一步建议" value="看完详情后进入市场或执行" />
+            <InfoTile label={pageText.flow} value={pageText.flowValue} />
+            <InfoTile label={pageText.next} value={pageText.nextValue} />
             <Button asChild className="h-full">
               <Link href={ROUTES.home}>
-                返回首页
+                {pageText.back}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>

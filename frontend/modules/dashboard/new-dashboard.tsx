@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { DashboardCommandCenter } from "@/components/dashboard/dashboard-command-center";
-import { getCurrentUser, getDashboardSources, getDashboardSummary, getDashboardTasks, getDashboardTrends, getP5Rankings, getP5Recommendations, getProducts, isAuthError } from "@/lib/api";
+import { getCurrentUser, getDashboardSources, getDashboardSummary, getDashboardTasks, getDashboardTrends, getP5Rankings, getP5Recommendations, getProducts, isAuthError } from "@/lib/api-gateway";
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
 import { ROUTES } from "@/config/routes";
 import { Language } from "@/lib/i18n";

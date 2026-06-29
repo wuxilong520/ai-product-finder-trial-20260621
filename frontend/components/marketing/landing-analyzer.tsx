@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Loader2, SearchCheck } from "lucide-react";
 
 import { Button, Card, CardContent, InfoTile, Input, LinkTile, MetricTile, StatusAlert } from "@/design-system/components";
-import { analyzeFullPublic } from "@/lib/api";
+import { analyzeFullPublic } from "@/lib/api-gateway";
 import { Language, t } from "@/lib/i18n";
 import { AnalyzeFullResponse } from "@/lib/types";
 

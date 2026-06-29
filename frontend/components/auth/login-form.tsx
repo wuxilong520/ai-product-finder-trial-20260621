@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { Button, MinimalField, StatusAlert } from "@/design-system/components";
 import { ROUTES } from "@/config/routes";
-import { login } from "@/lib/api";
+import { login } from "@/lib/api-gateway";
 import { getToken, setToken } from "@/lib/auth";
 import { Language, t } from "@/lib/i18n";
 

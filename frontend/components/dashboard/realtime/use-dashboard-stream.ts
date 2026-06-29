@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { getApiRootUrl, getApiV1BaseUrl, getWsBaseUrl } from "@/lib/api";
+import { getApiRootUrl, getApiV1BaseUrl, getWsBaseUrl } from "@/lib/api-gateway";
 
 export type DashboardRealtimeTransport = "sse" | "websocket" | "polling" | "idle";
 

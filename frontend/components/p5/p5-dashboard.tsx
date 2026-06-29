@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { BarChart3, BrainCircuit, Loader2, Sparkles, TrendingUp, TriangleAlert } from "lucide-react";
 
 import { Badge, Card, CardContent, CardHeader, CardTitle, EmptyState, InfoTile, StatusBadge } from "@/design-system/components";
-import { getP5Rankings, predictP5Product } from "@/lib/api";
+import { getP5Rankings, predictP5Product } from "@/lib/api-gateway";
 import { getToken } from "@/lib/auth";
 import { Language, t } from "@/lib/i18n";
 import type { P5PredictionResponse, P5RankingsResponse } from "@/lib/types";

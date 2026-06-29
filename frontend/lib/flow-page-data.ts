@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { ROUTES } from "@/config/routes";
-import { getDashboardSources, getDashboardTasks, getProducts, isAuthError } from "@/lib/api";
+import { getDashboardSources, getDashboardTasks, getProducts, isAuthError } from "@/lib/api-gateway";
 import { TOKEN_KEY } from "@/lib/auth";
 import { EMPTY_DASHBOARD_SOURCES, EMPTY_DASHBOARD_TASKS, safeLoad } from "@/lib/dashboard-fallback";
 import { getServerLanguage } from "@/lib/i18n-server";

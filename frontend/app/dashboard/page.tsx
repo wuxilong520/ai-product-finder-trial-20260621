@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 
 import { ROUTES } from "@/config/routes";
 import { NewDashboard } from "@/modules/dashboard/new-dashboard";
-import { getProducts, isAuthError, isNewDashboardEnabled } from "@/lib/api";
+import { getProducts, isAuthError, isNewDashboardEnabled } from "@/lib/api-gateway";
 import { TOKEN_KEY } from "@/lib/auth";
 import { t } from "@/lib/i18n";
 import { getServerLanguage } from "@/lib/i18n-server";

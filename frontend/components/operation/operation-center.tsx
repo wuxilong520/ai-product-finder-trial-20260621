@@ -6,7 +6,7 @@ import { CheckCircle2, Loader2, Rocket, Sparkles } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState, InfoTile, StatusBadge } from "@/design-system/components";
 import { productDetailRoute } from "@/config/routes";
-import { getP5Recommendations } from "@/lib/api";
+import { getP5Recommendations } from "@/lib/api-gateway";
 import { getToken } from "@/lib/auth";
 import { Language, t } from "@/lib/i18n";
 import type { P5RecommendationsResponse } from "@/lib/types";

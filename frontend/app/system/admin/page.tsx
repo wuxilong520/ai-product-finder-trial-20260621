@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
 import { Card, InfoTile } from "@/design-system/components";
 import { ROUTES } from "@/config/routes";
-import { getCurrentUser, getDashboardSources, getDashboardTasks, getSystemHealth } from "@/lib/api";
+import { getCurrentUser, getDashboardSources, getDashboardTasks, getSystemHealth } from "@/lib/api-gateway";
 import { TOKEN_KEY } from "@/lib/auth";
 import { t } from "@/lib/i18n";
 import { getServerLanguage } from "@/lib/i18n-server";

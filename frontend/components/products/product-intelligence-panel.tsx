@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { BrainCircuit, Loader2 } from "lucide-react";
 
 import { Badge, Card, CardContent, CardHeader, CardTitle, EmptyState, InfoTile, StatusBadge } from "@/design-system/components";
-import { getProductIntelligence } from "@/lib/api";
+import { getProductIntelligence } from "@/lib/api-gateway";
 import { getToken } from "@/lib/auth";
 import { Language, t } from "@/lib/i18n";
 import type { ProductIntelligenceEngineResponse } from "@/lib/types";

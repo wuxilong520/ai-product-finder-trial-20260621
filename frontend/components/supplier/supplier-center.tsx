@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ExternalLink, Loader2, Search } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState, Input, InfoTile, StatusBadge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/design-system/components";
-import { matchSuppliers } from "@/lib/api";
+import { matchSuppliers } from "@/lib/api-gateway";
 import { getToken } from "@/lib/auth";
 import { Language, t } from "@/lib/i18n";
 import type { SupplierMatchItem } from "@/lib/types";

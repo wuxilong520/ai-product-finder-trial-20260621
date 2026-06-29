@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Loader2, SearchCheck } from "lucide-react";
 
 import { Badge, Button, Card, EmptyState, InfoTile, Input, LinkTile, MetricTile, ReasonList, StatusAlert } from "@/design-system/components";
-import { analyzeFullPublic } from "@/lib/api";
+import { analyzeFullPublic } from "@/lib/api-gateway";
 import { useTaskStatus } from "@/hooks/use-task-status";
 import { Language, t } from "@/lib/i18n";
 import { AnalyzeFullResponse } from "@/lib/types";

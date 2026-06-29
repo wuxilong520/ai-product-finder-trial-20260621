@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Loader2, ShieldCheck } from "lucide-react";
 
-import { recommendBusinessTruth } from "@/lib/api";
+import { recommendBusinessTruth } from "@/lib/api-gateway";
 import { getToken } from "@/lib/auth";
 import { Language, t } from "@/lib/i18n";
 import type { BusinessTruthRecommendResponse } from "@/lib/types";

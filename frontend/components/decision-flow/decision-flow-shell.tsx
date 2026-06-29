@@ -143,8 +143,7 @@ export function DecisionFlowShell({
         <CardHeader className="gap-5">
           <div className="flex flex-wrap items-center gap-3">
             <Badge variant="brand" className="px-4 py-2 text-sm font-medium">
-              <BrainCircuit className="h-4 w-4" />
-              {lang === "zh" ? "单决策流" : "Single decision flow"}
+              {lang === "zh" ? "功能工作台" : "Workspace"}
             </Badge>
             <StatusBadge
               status={currentStep.status === "done" ? "success" : currentStep.status === "active" ? "running" : "blocked"}
@@ -163,9 +162,9 @@ export function DecisionFlowShell({
               <CardDescription className="mt-3 max-w-3xl text-sm leading-7 text-white/60">{description}</CardDescription>
             </div>
             <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-1">
-              <InfoTile label={lang === "zh" ? "当前卡点" : "Current step"} value={currentStep.title} />
+              <InfoTile label={lang === "zh" ? "当前模块" : "Current module"} value={currentStep.title} />
               <InfoTile label={lang === "zh" ? "AI推荐指数" : "AI index"} value={`${Math.min(100, 45 + products.total + activeSources * 8)} / 100`} />
-              <InfoTile label={lang === "zh" ? "下一步" : "Next"} value={nextStep?.title || (lang === "zh" ? "进入执行" : "Go execute")} />
+              <InfoTile label={lang === "zh" ? "建议去向" : "Suggested next"} value={nextStep?.title || (lang === "zh" ? "进入执行" : "Go execute")} />
             </div>
           </div>
         </CardHeader>
@@ -173,8 +172,8 @@ export function DecisionFlowShell({
 
       <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
         <CardHeader>
-          <CardTitle>{lang === "zh" ? "AI决策流水线" : "AI decision pipeline"}</CardTitle>
-          <CardDescription>{lang === "zh" ? "所有功能都收口到这一条业务流程里，不再是分散工具页。" : "Every feature is embedded into one business flow."}</CardDescription>
+          <CardTitle>{lang === "zh" ? "当前模块关联能力" : "Module capability overview"}</CardTitle>
+          <CardDescription>{lang === "zh" ? "这里展示当前页面和其他能力模块之间的关系，方便你快速切换。" : "Shows how the current page connects to other capabilities."}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 xl:grid-cols-6">
@@ -195,24 +194,24 @@ export function DecisionFlowShell({
         <div className="space-y-6">
           <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
             <CardHeader>
-              <CardTitle>{lang === "zh" ? "流程提示" : "Flow guide"}</CardTitle>
-              <CardDescription>{lang === "zh" ? "每一步只保留当前决策需要的动作。" : "Only keep the actions needed for the current step."}</CardDescription>
+              <CardTitle>{lang === "zh" ? "操作提示" : "Guide"}</CardTitle>
+              <CardDescription>{lang === "zh" ? "只保留当前页面真正有用的操作提醒。" : "Only keeps the most useful hints for this page."}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <StepGuideRow
                 icon={<ScanSearch className="h-4 w-4" />}
-                title={lang === "zh" ? "先采集，再分析" : "Crawl first"}
-                desc={lang === "zh" ? "没有真实商品数据，后面所有评分都不稳。" : "Without real products, every later score is weak."}
+                title={lang === "zh" ? "先准备真实商品" : "Start with real products"}
+                desc={lang === "zh" ? "没有真实商品数据，后面的分析结果就不可靠。" : "Without real products, later analysis is weaker."}
               />
               <StepGuideRow
                 icon={<PackageSearch className="h-4 w-4" />}
-                title={lang === "zh" ? "分析后再看市场" : "Then check market"}
-                desc={lang === "zh" ? "商品本身过关后，再判断市场值不值得做。" : "Validate the product before judging the market."}
+                title={lang === "zh" ? "先看商品，再看市场" : "Check product, then market"}
+                desc={lang === "zh" ? "先判断商品本身，再决定值不值得继续推进。" : "Validate the product before scaling the decision."}
               />
               <StepGuideRow
                 icon={<Truck className="h-4 w-4" />}
-                title={lang === "zh" ? "货源确认后再执行" : "Confirm supply before operation"}
-                desc={lang === "zh" ? "能不能拿货、利润够不够，决定最后是否推进。" : "Supplier and margin decide whether to execute."}
+                title={lang === "zh" ? "确认供货后再推进" : "Confirm supply before execution"}
+                desc={lang === "zh" ? "供货稳定和利润空间，决定是否值得真正执行。" : "Supply stability and margin decide execution."}
               />
             </CardContent>
           </Card>
@@ -237,8 +236,8 @@ export function DecisionFlowShell({
 
           <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
             <CardHeader>
-              <CardTitle>{lang === "zh" ? "快捷推进" : "Quick move"}</CardTitle>
-              <CardDescription>{lang === "zh" ? "直接去下一步，不再让你在一堆页面里找。" : "Jump to the next step directly."}</CardDescription>
+              <CardTitle>{lang === "zh" ? "快捷入口" : "Quick access"}</CardTitle>
+              <CardDescription>{lang === "zh" ? "快速跳到最相关的几个模块。" : "Jump to the most relevant modules."}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {steps.slice(0, 3).map((step) => (

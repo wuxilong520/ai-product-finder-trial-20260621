@@ -11,8 +11,8 @@ export default async function MarketAnalysisPage() {
       <DecisionFlowShell
         lang={lang}
         activeStep="market"
-        title="第3步：做市场判断"
-        description="当商品本身看起来还不错时，这一步帮你判断市场到底值不值得进：看趋势、需求、竞争和机会，再决定要不要继续推进。"
+        title="市场雷达"
+        description="用关键词和商品方向去看趋势、需求、竞争和机会强弱，帮助你判断市场是否值得继续推进。"
         products={products}
         tasks={tasks}
         sources={sources}

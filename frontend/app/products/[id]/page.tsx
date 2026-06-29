@@ -6,7 +6,7 @@ import { ProductDetail } from "@/components/products/product-detail";
 import { MarketAnalysisCard } from "@/components/market/market-analysis-card";
 import { Button, Card, InfoTile } from "@/design-system/components";
 import { ROUTES } from "@/config/routes";
-import { getProduct, isAuthError } from "@/lib/api";
+import { getProduct, isAuthError } from "@/lib/api-gateway";
 import { TOKEN_KEY } from "@/lib/auth";
 import { t } from "@/lib/i18n";
 import { getServerLanguage } from "@/lib/i18n-server";

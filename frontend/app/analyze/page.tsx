@@ -2,7 +2,7 @@ import { AnalyzePanel } from "@/components/products/analyze-panel";
 import { MarketAnalysisCard } from "@/components/market/market-analysis-card";
 import { DecisionFlowShell } from "@/components/decision-flow/decision-flow-shell";
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
-import { getProduct, isAuthError } from "@/lib/api";
+import { getProduct, isAuthError } from "@/lib/api-gateway";
 import { loadFlowPageData } from "@/lib/flow-page-data";
 
 export default async function AnalyzePage({
@@ -31,8 +31,8 @@ export default async function AnalyzePage({
       <DecisionFlowShell
         lang={lang}
         activeStep="analyze"
-        title="第2步：做商品分析"
-        description="这一步只干一件事：把采集到的商品变成 AI 可读的判断结果。先看商品本身值不值得做，再进入后面的市场与供应链。"
+        title="智能分析"
+        description="围绕商品本身做 AI 评分、卖点判断和基础机会分析，帮助你更快判断这个商品值不值得继续看。"
         products={products}
         tasks={tasks}
         sources={sources}

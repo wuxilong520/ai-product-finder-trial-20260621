@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Loader2, Sparkles, Wand2 } from "lucide-react";
 
 import { Button, Card, EmptyState, InfoTile, Input, ReasonList, StatusAlert } from "@/design-system/components";
-import { analyzeFullPublic } from "@/lib/api";
+import { analyzeFullPublic } from "@/lib/api-gateway";
 import { Language, t } from "@/lib/i18n";
 import { AnalyzeFullResponse } from "@/lib/types";
 

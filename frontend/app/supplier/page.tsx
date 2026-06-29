@@ -11,8 +11,8 @@ export default async function SupplierPage() {
       <DecisionFlowShell
         lang={lang}
         activeStep="supplier"
-        title="第4步：确认供应链"
-        description="市场值不值得做之后，下一步就是确认能不能拿到货、价格合不合理、利润空间够不够。这里就是整条流程里的供应链确认步骤。"
+        title="供应网络"
+        description="围绕关键词和商品方向匹配供应商，比较价格、可用性和利润空间，帮助你确认供货是否可行。"
         products={products}
         tasks={tasks}
         sources={sources}

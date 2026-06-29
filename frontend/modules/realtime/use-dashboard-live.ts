@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { getApiV1BaseUrl, getDashboardSummary, getDashboardTasks } from "@/lib/api";
+import { getApiV1BaseUrl, getDashboardSummary, getDashboardTasks } from "@/lib/api-gateway";
 import type { DashboardSummaryResponse, DashboardTasksResponse } from "@/lib/types";
 
 type LiveState = {

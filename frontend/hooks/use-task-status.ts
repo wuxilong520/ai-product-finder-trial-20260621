@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { getTaskStatus, getWsBaseUrl } from "@/lib/api";
+import { getTaskStatus, getWsBaseUrl } from "@/lib/api-gateway";
 import { TaskStatusResponse } from "@/lib/types";
 
 const defaultState: TaskStatusResponse = {

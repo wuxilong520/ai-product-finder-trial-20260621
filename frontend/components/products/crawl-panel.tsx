@@ -6,7 +6,7 @@ import { Link2, Loader2, ScanSearch } from "lucide-react";
 
 import { analyzeWithProductRoute, productDetailRoute } from "@/config/routes";
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, InfoTile, Input, Label, StatusAlert } from "@/design-system/components";
-import { crawlProduct } from "@/lib/api";
+import { crawlProduct } from "@/lib/api-gateway";
 import { getToken } from "@/lib/auth";
 import { useTaskStatus } from "@/hooks/use-task-status";
 import { Language, t } from "@/lib/i18n";

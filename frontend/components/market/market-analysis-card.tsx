@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Activity, BarChart3, ExternalLink, Loader2, Search, TrendingUp } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState, InfoTile, Input, StatusBadge } from "@/design-system/components";
-import { analyzeMarketKeyword, matchSuppliers } from "@/lib/api";
+import { analyzeMarketKeyword, matchSuppliers } from "@/lib/api-gateway";
 import { getToken } from "@/lib/auth";
 import { Language, t } from "@/lib/i18n";
 import type { MarketAnalyzeResponse, SupplierMatchItem } from "@/lib/types";

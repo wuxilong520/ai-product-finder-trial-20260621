@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { getDashboardTasks } from "@/lib/api";
+import { getDashboardTasks } from "@/lib/api-gateway";
 import type { DashboardTaskState, DashboardTasksResponse, TaskStatusResponse } from "@/lib/types";
 import { useDashboardStream } from "./use-dashboard-stream";
 

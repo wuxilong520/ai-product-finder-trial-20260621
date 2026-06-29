@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { getDashboardSources, getDashboardTrends } from "@/lib/api";
+import { getDashboardSources, getDashboardTrends } from "@/lib/api-gateway";
 import type { DashboardSourcesResponse, DashboardTrendsResponse } from "@/lib/types";
 import { useDashboardStream } from "./use-dashboard-stream";
 

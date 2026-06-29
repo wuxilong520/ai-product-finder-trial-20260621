@@ -7,7 +7,7 @@ import { LayoutGrid, List, Search, Trash2 } from "lucide-react";
 
 import { ROUTES, productDetailRoute } from "@/config/routes";
 import { Badge, Button, Card, CardContent, CardHeader, EmptyState, Input, StatusBadge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/design-system/components";
-import { batchDeleteProducts, deleteProduct } from "@/lib/api";
+import { batchDeleteProducts, deleteProduct } from "@/lib/api-gateway";
 import { getToken } from "@/lib/auth";
 import { Language, t } from "@/lib/i18n";
 import { Product } from "@/lib/types";
@@ -68,12 +68,12 @@ export function ProductList({ products, total, lang }: { products: Product[]; to
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <Card className="overflow-hidden border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
-        <CardHeader className="flex flex-col gap-4 border-b border-white/8 pb-5 md:flex-row md:items-center md:justify-between">
+        <CardHeader className="flex flex-col gap-5 border-b border-white/8 pb-5 md:flex-row md:items-center md:justify-between">
           <div>
-            <div className="text-lg font-semibold text-white">{text.productListTitle}</div>
-            <div className="mt-1 text-sm text-white/45">{text.productListBusinessDesc.replace("{count}", String(total))}</div>
+            <div className="text-xl font-semibold text-white">{text.productListTitle}</div>
+            <div className="mt-2 text-sm leading-6 text-white/45">{text.productListBusinessDesc.replace("{count}", String(total))}</div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <form onSubmit={handleSearchSubmit} className="flex w-full max-w-sm gap-2">
@@ -158,9 +158,9 @@ export function ProductList({ products, total, lang }: { products: Product[]; to
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>{product.current_price ?? "—"}</TableCell>
-                    <TableCell>{product.rating ?? "—"}</TableCell>
-                    <TableCell>{product.review_count ?? 0}</TableCell>
+                    <TableCell className="text-white/80">{product.current_price ?? "—"}</TableCell>
+                    <TableCell className="text-white/80">{product.rating ?? "—"}</TableCell>
+                    <TableCell className="text-white/80">{product.review_count ?? 0}</TableCell>
                     <TableCell><ProductIntelligenceBadge productId={product.id} lang={lang} /></TableCell>
                     <TableCell>
                       <StatusBadge status={product.is_active ? "success" : "warning"} label={product.is_active ? text.active : text.inactive} />

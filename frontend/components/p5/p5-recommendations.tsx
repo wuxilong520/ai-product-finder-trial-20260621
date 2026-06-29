@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Loader2, Search, Sparkles } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState, Input, StatusBadge } from "@/design-system/components";
-import { getP5Recommendations } from "@/lib/api";
+import { getP5Recommendations } from "@/lib/api-gateway";
 import { getToken } from "@/lib/auth";
 import { productDetailRoute } from "@/config/routes";
 import { Language, t } from "@/lib/i18n";

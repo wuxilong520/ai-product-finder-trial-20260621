@@ -81,7 +81,7 @@ for (const file of scanTargets) {
   }
 }
 
-const allowedLayoutMarkers = ["AppShell", "PageLayout", "NewDashboardLayout", "XBorderLayout"];
+const allowedLayoutMarkers = ["NewDashboardLayout", "XBorderLayout"];
 
 for (const page of requiredLayoutPages) {
   const fullPath = path.join(root, page);
@@ -92,7 +92,7 @@ for (const page of requiredLayoutPages) {
   if (!hasDirectLayout && !hasDelegatedLayout) {
     violations.push({
       file: page,
-      reason: "这个页面没有接入统一布局 `AppShell / PageLayout / NewDashboardLayout`。",
+      reason: "这个页面没有接入统一布局 `NewDashboardLayout / XBorderLayout`。",
     });
   }
 }
@@ -109,7 +109,7 @@ const lines = [
   "",
   "## 当前统一规则",
   "",
-  "- 业务页面必须使用 `AppShell`、`PageLayout`、`NewDashboardLayout` 或 `XBorderLayout`。",
+  "- 业务页面必须使用 `NewDashboardLayout` 或 `XBorderLayout`。",
   "- 页面与组件禁止直接引用旧 UI 目录，统一走 `@/design-system/components`。",
   "- 页面与业务组件禁止继续使用旧的 `slate / gray / blue-600` 这一套零散浅色风格类名。",
   "- 新页面默认继承深色主题、统一卡片、统一按钮、统一输入框和统一语言切换。",

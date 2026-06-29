@@ -7,6 +7,5 @@ export * from "@/design-system/components/Input";
 export * from "@/design-system/components/Label";
 export * from "@/design-system/components/LanguageToggle";
 export * from "@/design-system/components/Modal";
-export * from "@/design-system/components/PageLayout";
 export * from "@/design-system/components/Table";
 export * from "@/design-system/components/Tabs";

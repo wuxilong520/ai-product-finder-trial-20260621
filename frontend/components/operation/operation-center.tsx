@@ -45,7 +45,7 @@ export function OperationCenter({ lang }: { lang: Language }) {
       <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
         <CardHeader>
           <div className="flex flex-wrap items-center gap-3">
-            <Badge variant="brand"><Rocket className="h-4 w-4" />{text.navOperation}</Badge>
+            <Badge variant="brand"><Rocket className="h-4 w-4" />商业执行</Badge>
             <Badge variant="neutral"><Sparkles className="h-4 w-4" />执行推进流程</Badge>
           </div>
           <CardTitle>{text.operationTitle}</CardTitle>

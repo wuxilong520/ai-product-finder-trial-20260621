@@ -44,7 +44,7 @@ export function buildDecisionFlowSteps({
       key: "crawl",
       title: lang === "zh" ? "采集商品" : "Crawl",
       description: lang === "zh" ? "先拿到真实商品数据，后面所有判断都从这里开始。" : "Start with real product data.",
-      href: ROUTES.crawl,
+      href: ROUTES.products,
       metricLabel: lang === "zh" ? "已入库商品" : "Products",
       metricValue: String(productCount),
       actionLabel: lang === "zh" ? "进入采集" : "Open crawl",
@@ -53,7 +53,7 @@ export function buildDecisionFlowSteps({
       key: "analyze",
       title: lang === "zh" ? "商品分析" : "Analyze",
       description: lang === "zh" ? "做 AI 评分、卖点提炼和基础利润判断。" : "Run AI scoring and product analysis.",
-      href: ROUTES.analyze,
+      href: ROUTES.insights,
       metricLabel: lang === "zh" ? "分析结果" : "Analyses",
       metricValue: String(analyzeCount),
       actionLabel: lang === "zh" ? "进入分析" : "Open analyze",
@@ -62,7 +62,7 @@ export function buildDecisionFlowSteps({
       key: "market",
       title: lang === "zh" ? "市场判断" : "Market",
       description: lang === "zh" ? "看趋势、需求、竞争和机会值。" : "Check trend, demand, competition, and opportunity.",
-      href: ROUTES.marketAnalysis,
+      href: ROUTES.insights,
       metricLabel: lang === "zh" ? "活跃数据源" : "Sources",
       metricValue: String(activeSources),
       actionLabel: lang === "zh" ? "进入市场" : "Open market",
@@ -71,7 +71,7 @@ export function buildDecisionFlowSteps({
       key: "supplier",
       title: lang === "zh" ? "供应链匹配" : "Supplier",
       description: lang === "zh" ? "找货源、比价格、看匹配度。" : "Match suppliers and compare prices.",
-      href: ROUTES.supplier,
+      href: ROUTES.actionCenter,
       metricLabel: lang === "zh" ? "匹配入口" : "Sources",
       metricValue: String(activeSources),
       actionLabel: lang === "zh" ? "进入供应链" : "Open supplier",
@@ -80,7 +80,7 @@ export function buildDecisionFlowSteps({
       key: "decision",
       title: lang === "zh" ? "AI决策" : "Decision",
       description: lang === "zh" ? "把商品、市场、供应链结果合成最终判断。" : "Merge product, market, and supplier signals.",
-      href: ROUTES.dashboard,
+      href: ROUTES.actionCenter,
       metricLabel: lang === "zh" ? "运行任务" : "Running",
       metricValue: String(runningTasks),
       actionLabel: lang === "zh" ? "回到决策流" : "Open decision",
@@ -89,7 +89,7 @@ export function buildDecisionFlowSteps({
       key: "operation",
       title: lang === "zh" ? "执行运营" : "Operation",
       description: lang === "zh" ? "把推荐商品推进到待选、已选、已执行。" : "Move recommendations into execution.",
-      href: ROUTES.operation,
+      href: ROUTES.actionCenter,
       metricLabel: lang === "zh" ? "运行任务" : "Running",
       metricValue: String(runningTasks),
       actionLabel: lang === "zh" ? "进入执行" : "Open operation",
@@ -394,21 +394,19 @@ export function DecisionFlowMiniStatus({
 }
 
 export function getFlowActiveFromPath(path: string): "dashboard" | "products" | "admin" {
-  if (path.startsWith("/system/admin")) {
+  if (path.startsWith("/settings")) {
     return "admin";
   }
-  if (path.startsWith("/product")) {
+  if (path.startsWith("/products")) {
     return "products";
   }
   return "dashboard";
 }
 
 export function getStepKeyFromPath(path: string): DecisionFlowStep["key"] {
-  if (path.startsWith("/crawl")) return "crawl";
-  if (path.startsWith("/analyze")) return "analyze";
-  if (path.startsWith("/market-analysis")) return "market";
-  if (path.startsWith("/supplier")) return "supplier";
-  if (path.startsWith("/operation")) return "operation";
+  if (path.startsWith("/products")) return "crawl";
+  if (path.startsWith("/insights")) return "market";
+  if (path.startsWith("/action-center")) return "operation";
   return "decision";
 }
 

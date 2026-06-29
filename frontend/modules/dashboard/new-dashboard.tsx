@@ -46,7 +46,7 @@ export async function NewDashboard({
   ]);
 
   return (
-    <XBorderLayout lang={lang} activePath="dashboard">
+    <XBorderLayout lang={lang} activePath="home">
       <DashboardCommandCenter
         lang={lang}
         summary={summary}

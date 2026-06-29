@@ -26,7 +26,7 @@ export function LoginForm({ lang }: { lang: Language }) {
       if (!savedToken) {
         throw new Error(text.loginSaveFailed);
       }
-      window.location.assign(ROUTES.dashboard);
+      window.location.assign(ROUTES.home);
     } catch (err) {
       setError(err instanceof Error ? err.message : text.loginFailed);
     } finally {

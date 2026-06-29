@@ -10,15 +10,13 @@ const componentsDir = path.join(root, "components");
 const reportPath = path.join(root, "..", "UI_SYNC_REPORT.md");
 
 const requiredLayoutPages = [
-  "app/analyze/page.tsx",
-  "app/crawl/page.tsx",
-  "app/dashboard/page.tsx",
+  "app/insights/page.tsx",
+  "app/action-center/page.tsx",
+  "app/products/page.tsx",
   "app/products/[id]/page.tsx",
 ];
 
-const pageDelegatedLayoutMarkers = {
-  "app/dashboard/page.tsx": ["NewDashboard", "OldDashboard"],
-};
+const pageDelegatedLayoutMarkers = {};
 
 const forbiddenImport = "@/components/ui/";
 const forbiddenPatterns = [
@@ -114,7 +112,7 @@ const lines = [
   "- 业务页面必须使用 `AppShell`、`PageLayout`、`NewDashboardLayout` 或 `XBorderLayout`。",
   "- 页面与组件禁止直接引用旧 UI 目录，统一走 `@/design-system/components`。",
   "- 页面与业务组件禁止继续使用旧的 `slate / gray / blue-600` 这一套零散浅色风格类名。",
-  "- 新页面默认继承深色主题、玻璃卡片、统一按钮、统一输入框和统一语言切换。",
+  "- 新页面默认继承深色主题、统一卡片、统一按钮、统一输入框和统一语言切换。",
   "",
   "## 检查结果",
   "",

@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Bell, ChevronDown, ChevronRight, Home, Layers3, Radar, Search, Settings, ShoppingBag, Sparkles, Target, Truck, WandSparkles, Workflow } from "lucide-react";
+import { Bell, ChevronDown, ChevronRight, Home, LineChart, Search, Settings, ShoppingBag, Sparkles, WalletCards } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { ROUTES } from "@/config/routes";
@@ -10,16 +10,7 @@ import { LanguageToggle } from "@/design-system/components/LanguageToggle";
 import { Language } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-type LayoutActivePath =
-  | "dashboard"
-  | "products"
-  | "crawl"
-  | "analyze"
-  | "market"
-  | "supplier"
-  | "operation"
-  | "admin"
-  | "settings";
+type LayoutActivePath = "home" | "products" | "insights" | "action" | "settings";
 
 type DashboardLayoutProps = {
   children: ReactNode;
@@ -28,137 +19,68 @@ type DashboardLayoutProps = {
   activePath?: LayoutActivePath;
 };
 
-type TopNavKey =
-  | "home"
-  | "asset"
-  | "capture"
-  | "insight"
-  | "market"
-  | "supply"
-  | "decision"
-  | "growth"
-  | "settings";
+type TopNavKey = LayoutActivePath;
 
-type TopNavItem = {
-  key: TopNavKey;
-  label: string;
-  href: string;
-  icon: typeof Home;
-};
+const topNavItems = [
+  { key: "home", label: "首页", href: ROUTES.home, icon: Home },
+  { key: "products", label: "商品库", href: ROUTES.products, icon: ShoppingBag },
+  { key: "insights", label: "市场洞察", href: ROUTES.insights, icon: LineChart },
+  { key: "action", label: "商业执行", href: ROUTES.actionCenter, icon: WalletCards },
+  { key: "settings", label: "账户", href: ROUTES.settings, icon: Settings },
+] as const;
 
-type SideNavItem = {
-  label: string;
-  hint: string;
-  href: string;
-};
-
-const topNavItems: TopNavItem[] = [
-  { key: "home", label: "首页", href: ROUTES.dashboard, icon: Home },
-  { key: "asset", label: "商品资产", href: ROUTES.products, icon: ShoppingBag },
-  { key: "capture", label: "数据采集", href: ROUTES.crawl, icon: Search },
-  { key: "insight", label: "智能分析", href: ROUTES.analyze, icon: WandSparkles },
-  { key: "market", label: "市场雷达", href: ROUTES.marketAnalysis, icon: Radar },
-  { key: "supply", label: "供应网络", href: ROUTES.supplier, icon: Truck },
-  { key: "decision", label: "AI决策", href: ROUTES.aiDiscovery, icon: Target },
-  { key: "growth", label: "商业执行", href: ROUTES.operation, icon: Workflow },
-  { key: "settings", label: "个人设置", href: ROUTES.settings, icon: Settings },
-];
-
-const sideNavMap: Record<Exclude<TopNavKey, "home">, { title: string; items: SideNavItem[] }> = {
-  asset: {
-    title: "商品资产",
+const sideNavMap: Record<Exclude<TopNavKey, "home">, { title: string; items: Array<{ label: string; hint: string; href: string }> }> = {
+  products: {
+    title: "商品库",
     items: [
-      { label: "商品列表", hint: "看全部商品", href: ROUTES.products },
-      { label: "商品详情", hint: "进入单个商品详情", href: ROUTES.products },
-      { label: "AI评分", hint: "看商品评分结果", href: ROUTES.products },
-      { label: "利润分析", hint: "看利润空间", href: ROUTES.products },
-      { label: "商品对比", hint: "做商品横向判断", href: ROUTES.products },
+      { label: "商品列表", hint: "查看全部商品", href: ROUTES.products },
+      { label: "商品详情", hint: "查看单个商品表现", href: ROUTES.products },
+      { label: "商品对比", hint: "做横向比较", href: ROUTES.products },
     ],
   },
-  capture: {
-    title: "数据采集",
+  insights: {
+    title: "市场洞察",
     items: [
-      { label: "URL采集", hint: "输入商品链接", href: ROUTES.crawl },
-      { label: "采集任务", hint: "看采集运行情况", href: ROUTES.crawl },
-      { label: "采集结果", hint: "查看采集结果", href: ROUTES.crawl },
+      { label: "市场趋势", hint: "看趋势变化", href: ROUTES.insights },
+      { label: "热门类目", hint: "看增长类目", href: ROUTES.insights },
+      { label: "爆款榜单", hint: "看热销方向", href: ROUTES.insights },
+      { label: "风险提示", hint: "看潜在风险", href: ROUTES.insights },
+      { label: "未来趋势预测", hint: "看未来判断", href: ROUTES.insights },
     ],
   },
-  insight: {
-    title: "智能分析",
-    items: [
-      { label: "AI评分中心", hint: "看综合评分", href: ROUTES.analyze },
-      { label: "商品分析", hint: "分析单个商品", href: ROUTES.analyze },
-      { label: "类目分析", hint: "看类目表现", href: ROUTES.analyze },
-      { label: "趋势预测", hint: "看趋势变化", href: ROUTES.analyze },
-    ],
-  },
-  market: {
-    title: "市场雷达",
-    items: [
-      { label: "热度地图", hint: "看市场热度", href: ROUTES.marketAnalysis },
-      { label: "爆品榜单", hint: "看热门商品", href: ROUTES.marketAnalysis },
-      { label: "类目趋势", hint: "看类目变化", href: ROUTES.marketAnalysis },
-      { label: "风险预警", hint: "看风险提示", href: ROUTES.marketAnalysis },
-    ],
-  },
-  supply: {
-    title: "供应网络",
-    items: [
-      { label: "供应商列表", hint: "看可匹配供应商", href: ROUTES.supplier },
-      { label: "价格对比", hint: "比不同平台价格", href: ROUTES.supplier },
-      { label: "利润空间", hint: "看利润余量", href: ROUTES.supplier },
-      { label: "推荐排序", hint: "看供应商优先级", href: ROUTES.supplier },
-    ],
-  },
-  decision: {
-    title: "AI决策",
-    items: [
-      { label: "推荐TOP10", hint: "看优先推荐商品", href: ROUTES.aiDiscovery },
-      { label: "决策列表", hint: "看全部决策结果", href: ROUTES.dashboard },
-      { label: "风险评分", hint: "看风险侧重点", href: ROUTES.dashboard },
-      { label: "利润预测", hint: "看利润判断", href: ROUTES.dashboard },
-    ],
-  },
-  growth: {
+  action: {
     title: "商业执行",
     items: [
-      { label: "待执行", hint: "看待推进商品", href: ROUTES.operation },
-      { label: "已执行", hint: "看已处理结果", href: ROUTES.operation },
-      { label: "状态流转", hint: "看推进状态", href: ROUTES.operation },
+      { label: "推荐商品TOP10", hint: "查看优先推荐", href: ROUTES.actionCenter },
+      { label: "利润分析", hint: "查看利润空间", href: ROUTES.actionCenter },
+      { label: "供应商推荐", hint: "查看可合作货源", href: ROUTES.actionCenter },
+      { label: "价格对比", hint: "比较价格区间", href: ROUTES.actionCenter },
+      { label: "上架执行队列", hint: "查看执行状态", href: ROUTES.actionCenter },
     ],
   },
   settings: {
-    title: "个人设置",
+    title: "账户",
     items: [
-      { label: "店铺绑定", hint: "管理店铺信息", href: ROUTES.settings },
-      { label: "账号信息", hint: "查看当前账号", href: ROUTES.settings },
-      { label: "密码修改", hint: "修改登录信息", href: ROUTES.settings },
+      { label: "店铺绑定", hint: "管理店铺资料", href: ROUTES.settings },
+      { label: "账号信息", hint: "查看账号信息", href: ROUTES.settings },
+      { label: "密码修改", hint: "修改登录密码", href: ROUTES.settings },
     ],
   },
 };
 
 function getTopNavKey(pathname: string | null | undefined): TopNavKey {
-  if (!pathname) return "home";
-  if (pathname === "/dashboard" || pathname === "/") return "home";
-  if (pathname.startsWith("/products") || pathname.startsWith("/product")) return "asset";
-  if (pathname.startsWith("/crawl")) return "capture";
-  if (pathname.startsWith("/analyze")) return "insight";
-  if (pathname.startsWith("/market-analysis")) return "market";
-  if (pathname.startsWith("/supplier")) return "supply";
-  if (pathname.startsWith("/ai-discovery") || pathname.startsWith("/p5") || pathname.startsWith("/dashboard")) return "decision";
-  if (pathname.startsWith("/operation")) return "growth";
-  if (pathname.startsWith("/settings") || pathname.startsWith("/system/admin")) return "settings";
+  if (!pathname || pathname === "/") return "home";
+  if (pathname.startsWith("/products")) return "products";
+  if (pathname.startsWith("/insights")) return "insights";
+  if (pathname.startsWith("/action-center")) return "action";
+  if (pathname.startsWith("/settings")) return "settings";
   return "home";
-}
-
-function shouldShowSideNav(topNavKey: TopNavKey) {
-  return topNavKey !== "home";
 }
 
 export function NewDashboardLayout({ children, rightRail, lang }: DashboardLayoutProps) {
   const pathname = usePathname();
   const topNavKey = getTopNavKey(pathname);
-  const showSideNav = shouldShowSideNav(topNavKey);
+  const showSideNav = topNavKey !== "home";
   const sideNav = topNavKey !== "home" ? sideNavMap[topNavKey] : null;
 
   return (
@@ -171,7 +93,7 @@ export function NewDashboardLayout({ children, rightRail, lang }: DashboardLayou
             </div>
             <div className="min-w-0">
               <div className="truncate text-[17px] font-semibold leading-none text-white">AI跨境电商系统</div>
-              <div className="mt-1 truncate text-xs text-white/45">AI Decision Platform</div>
+              <div className="mt-1 truncate text-xs text-white/45">AI Business Decision Platform</div>
             </div>
           </div>
 
@@ -200,14 +122,12 @@ export function NewDashboardLayout({ children, rightRail, lang }: DashboardLayou
               <Search className="h-4 w-4 text-white/35" />
               <span>搜索商品</span>
               <span className="text-white/25">|</span>
-              <span>全站点</span>
+              <span>全部站点</span>
               <ChevronDown className="h-4 w-4 text-white/35" />
             </div>
-
             <div className="hidden rounded-full border border-white/10 bg-white/[0.02] p-1.5 md:block">
               <LanguageToggle lang={lang} />
             </div>
-
             <button className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-[#111A2E] text-white/70">
               <Bell className="h-4 w-4" />
             </button>
@@ -220,21 +140,14 @@ export function NewDashboardLayout({ children, rightRail, lang }: DashboardLayou
           <aside className="hidden w-[260px] shrink-0 border-r border-white/6 bg-[#0B1220] lg:block">
             <div className="h-full overflow-y-auto px-4 py-6">
               <div className="rounded-2xl border border-white/6 bg-[#111A2E] p-4">
-                <div className="text-xs font-medium tracking-[0.18em] text-white/35">当前功能域</div>
-                <div className="mt-3 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#4F7CFF]/12 text-[#4F7CFF]">
-                    <Layers3 className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <div className="text-base font-semibold text-white">{sideNav.title}</div>
-                    <div className="text-xs text-white/40">页面内细分导航</div>
-                  </div>
-                </div>
+                <div className="text-xs font-medium tracking-[0.18em] text-white/35">当前模块</div>
+                <div className="mt-3 text-base font-semibold text-white">{sideNav.title}</div>
+                <div className="mt-1 text-xs text-white/40">页面内功能导航</div>
               </div>
 
               <div className="mt-6 space-y-2">
                 {sideNav.items.map((item) => {
-                  const active = pathname === item.href || (item.href !== ROUTES.products && pathname?.startsWith(item.href));
+                  const active = pathname === item.href || pathname?.startsWith(`${item.href}/`);
                   return (
                     <Link
                       key={`${sideNav.title}-${item.label}`}

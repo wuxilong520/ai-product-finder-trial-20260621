@@ -53,8 +53,8 @@ export default async function ProductsPage({
               <InfoTile label="商品总量" value={String(products.total)} />
               <InfoTile label="当前模块" value="商品资产" />
               <Button asChild className="h-full bg-[#4F7CFF] hover:bg-[#4F7CFF]/90">
-                <Link href={ROUTES.dashboard}>
-                  回到首页驾驶舱
+                <Link href={ROUTES.home}>
+                  回到首页
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>

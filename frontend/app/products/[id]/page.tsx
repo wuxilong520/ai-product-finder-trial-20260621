@@ -42,8 +42,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             <InfoTile label="流程位置" value="商品详情 / 决策准备区" />
             <InfoTile label="下一步建议" value="看完详情后进入市场或执行" />
             <Button asChild className="h-full">
-              <Link href={ROUTES.dashboard}>
-                返回主决策流
+              <Link href={ROUTES.home}>
+                返回首页
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>

@@ -44,7 +44,7 @@ export function NewDashboardClient({
   const trendGrowth = trendPoints.length > 1 ? trendPoints[trendPoints.length - 1].product_count - trendPoints[0].product_count : 0;
 
   return (
-    <XBorderLayout lang={lang} activePath="dashboard">
+    <XBorderLayout lang={lang} activePath="home">
       <div className="space-y-6">
         <Card className="rounded-[32px] border border-white/8 bg-[linear-gradient(135deg,rgba(17,24,39,0.92),rgba(15,23,42,0.84))] p-7 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
           <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
@@ -59,12 +59,12 @@ export function NewDashboardClient({
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <QuickEntry href={ROUTES.crawl} icon={<ScanSearch className="h-4 w-4" />} label={text.dashboardQuickCrawl} />
-              <QuickEntry href={ROUTES.analyze} icon={<BrainCircuit className="h-4 w-4" />} label={text.dashboardQuickAnalyze} />
+              <QuickEntry href={ROUTES.products} icon={<ScanSearch className="h-4 w-4" />} label={text.dashboardQuickCrawl} />
+              <QuickEntry href={ROUTES.insights} icon={<BrainCircuit className="h-4 w-4" />} label={text.dashboardQuickAnalyze} />
               <QuickEntry href={ROUTES.products} icon={<PackageSearch className="h-4 w-4" />} label={text.dashboardQuickProducts} />
-              <QuickEntry href={ROUTES.aiDiscovery} icon={<WandSparkles className="h-4 w-4" />} label={text.navDiscovery} />
-              <QuickEntry href={ROUTES.supplier} icon={<Truck className="h-4 w-4" />} label={text.navSupplier} />
-              <QuickEntry href={ROUTES.operation} icon={<Sparkles className="h-4 w-4" />} label={text.navOperation} />
+              <QuickEntry href={ROUTES.actionCenter} icon={<WandSparkles className="h-4 w-4" />} label={text.navDiscovery} />
+              <QuickEntry href={ROUTES.actionCenter} icon={<Truck className="h-4 w-4" />} label={text.navSupplier} />
+              <QuickEntry href={ROUTES.actionCenter} icon={<Sparkles className="h-4 w-4" />} label={text.navOperation} />
             </div>
           </div>
         </Card>

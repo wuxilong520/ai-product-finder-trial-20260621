@@ -21,9 +21,9 @@ export function PageLayout({ children, lang }: { children: React.ReactNode; lang
   const text = t(lang);
 
   const navItems = [
-    { href: ROUTES.dashboard, label: text.navProducts, icon: LayoutDashboard },
-    { href: ROUTES.crawl, label: text.navCrawl, icon: ScanSearch },
-    { href: ROUTES.analyze, label: text.navAnalyze, icon: Brain },
+    { href: ROUTES.home, label: "首页", icon: LayoutDashboard },
+    { href: ROUTES.products, label: "商品库", icon: ScanSearch },
+    { href: ROUTES.insights, label: "市场洞察", icon: Brain },
   ];
 
   function logout() {

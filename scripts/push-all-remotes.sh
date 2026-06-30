@@ -2,17 +2,16 @@
 set -euo pipefail
 
 REPO_DIR="/Users/Admin/Documents/商品上传/publish_repo"
-GITEE_KEY="/Users/Admin/Documents/商品上传/publish_repo/.deploy-keys/github_push_key"
-GITEE_REMOTE="gitee"
+PRIMARY_REMOTE="origin"
+BACKUP_REMOTE="github"
 BRANCH="main"
 
 cd "$REPO_DIR"
 
-echo "1) 推送到 GitHub（origin）..."
-git push origin "$BRANCH"
+echo "1) 推送到国内主仓（Gitee / origin）..."
+git push "$PRIMARY_REMOTE" "$BRANCH"
 
-echo "2) 推送到 Gitee（gitee）..."
-GIT_SSH_COMMAND="ssh -i ${GITEE_KEY} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
-  git push "$GITEE_REMOTE" "$BRANCH"
+echo "2) 推送到国外备份仓（GitHub / github）..."
+git push "$BACKUP_REMOTE" "$BRANCH"
 
-echo "完成：GitHub 和 Gitee 都已经同步。"
+echo "完成：国内主仓已更新，国外备份仓也已同步。"

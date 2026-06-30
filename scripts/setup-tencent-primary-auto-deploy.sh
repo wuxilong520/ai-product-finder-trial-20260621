@@ -4,13 +4,14 @@ set -euo pipefail
 SERVER_USER="ubuntu"
 SERVER_HOST="121.4.35.33"
 SERVER_KEY="/Users/Admin/.ssh/codex_tencent"
-CRON_LINE="* * * * * /usr/bin/env bash /home/ubuntu/publish_repo/scripts/auto-deploy-from-primary.sh >> /home/ubuntu/publish_repo/logs/auto-deploy.log 2>&1"
+CRON_LINE="* * * * * /usr/bin/env bash /home/ubuntu/publish_repo/scripts/auto-deploy-from-primary.sh >> /home/ubuntu/publish_repo_runtime/auto-deploy.log 2>&1"
 
 ssh -i "${SERVER_KEY}" -o StrictHostKeyChecking=yes "${SERVER_USER}@${SERVER_HOST}" <<'EOF'
 set -euo pipefail
 
 mkdir -p /home/ubuntu/publish_repo
 mkdir -p /home/ubuntu/publish_repo/logs
+mkdir -p /home/ubuntu/publish_repo_runtime
 mkdir -p /home/ubuntu/publish_repo_runtime_restore
 
 if [ ! -d /home/ubuntu/publish_repo/.git ]; then
@@ -87,7 +88,8 @@ if [ -d /home/ubuntu/publish_repo_runtime_restore/db_backups ]; then
 fi
 
 mkdir -p /home/ubuntu/publish_repo/.deploy-state
-echo "$(git rev-parse HEAD)" > /home/ubuntu/publish_repo/.deploy-state/last_deployed_commit
+mkdir -p /home/ubuntu/publish_repo_runtime/state
+echo "$(git rev-parse HEAD)" > /home/ubuntu/publish_repo_runtime/state/last_deployed_commit
 EOF
 
 ssh -i "${SERVER_KEY}" -o StrictHostKeyChecking=yes "${SERVER_USER}@${SERVER_HOST}" "(

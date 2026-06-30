@@ -3,10 +3,12 @@ set -euo pipefail
 
 REPO_DIR="/home/ubuntu/publish_repo"
 LOCK_FILE="/tmp/publish_repo_auto_deploy.lock"
-STATE_DIR="${REPO_DIR}/.deploy-state"
+RUNTIME_DIR="/home/ubuntu/publish_repo_runtime"
+STATE_DIR="${RUNTIME_DIR}/state"
 LAST_DEPLOYED_FILE="${STATE_DIR}/last_deployed_commit"
 LOG_PREFIX="[auto-deploy]"
 
+mkdir -p "${RUNTIME_DIR}"
 mkdir -p "${STATE_DIR}"
 
 exec 9>"${LOCK_FILE}"

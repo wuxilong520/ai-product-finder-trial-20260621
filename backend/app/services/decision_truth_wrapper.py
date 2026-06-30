@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.core.runtime import AppError
 from app.repositories.business_truth_decision import business_truth_decision_repository
 from app.repositories.product import product_repository
-from app.services.cost_model.product_cost_engine import product_cost_engine
+from app.services.data_hub import data_hub
 from app.services.decision_engine import decision_engine
 from app.services.market_intelligence_engine import market_intelligence_engine
 from app.services.market_truth_layer.external_price_calibrator import external_price_calibrator
@@ -14,15 +14,17 @@ from app.services.supplier_matching_engine import supplier_matching_engine
 
 
 class DecisionTruthWrapper:
-    def recommend(self, db: Session, product_id: int) -> dict:
+    def recommend(self, db: Session, product_id: int, task_id: int | None = None, task_input: dict | None = None) -> dict:
         product = product_repository.get_by_id(db, product_id)
         if not product:
             raise AppError("PRODUCT_NOT_FOUND", "商品不存在", "db", 404)
 
-        base_decision = decision_engine.recommend(db, product_id)
+        base_decision = decision_engine.recommend(db, product_id, task_id=task_id, task_input=task_input)
         keyword = product.title_zh or product.title
+        market_signals = data_hub.get_market_data(db, keyword=keyword, task_input=task_input)
+        supplier_data = data_hub.get_supplier_data(db, keyword=keyword, task_input=task_input)
         market_payload = market_intelligence_engine.analyze_keyword(db, keyword)
-        suppliers_payload = supplier_matching_engine.match(db, keyword)
+        _suppliers_payload = supplier_matching_engine.match(db, keyword)
 
         selling_price = float(product.current_price or 0)
         calibrated_market = external_price_calibrator.calibrate(
@@ -31,10 +33,24 @@ class DecisionTruthWrapper:
             current_price=selling_price,
             market_payload=market_payload,
         )
-        cost_payload = product_cost_engine.calculate(
-            suppliers=suppliers_payload["suppliers"],
+        cost_model = data_hub.get_cost_data(
+            db=db,
             selling_price=selling_price,
+            currency=product.currency_code or "USD",
+            suppliers=supplier_data,
+            task_input=task_input,
         )
+        cost_payload = {
+            "total_cost": float(cost_model.total_cost),
+            "cost_breakdown": {
+                "supplier_cost": float(cost_model.product_cost),
+                "shipping_cost": float(cost_model.shipping_cost),
+                "platform_fee": float(cost_model.platform_fee),
+                "exchange_rate": 1.0,
+                "packaging_cost": float(cost_model.packaging_cost),
+            },
+            "simulated_dependencies": ["data_hub_cost_pipeline", f"truth_level:{cost_model.truth_level}"],
+        }
         profit_payload = profit_real_engine.calculate(
             selling_price=selling_price,
             total_cost=float(cost_payload["total_cost"]),
@@ -62,6 +78,9 @@ class DecisionTruthWrapper:
 
         merged_dependencies = list(dict.fromkeys(cost_payload["simulated_dependencies"] + calibrated_market["simulated_dependencies"]))
         payload = {
+            "workspace_id": task_input.get("workspace_id") if task_input else None,
+            "user_id": task_input.get("user_id") if task_input else None,
+            "api_key_id": task_input.get("api_key_id") if task_input else None,
             "keyword": keyword,
             "selling_price": round(selling_price, 2),
             "real_market_price": round(float(calibrated_market["real_market_price"]), 2),
@@ -81,13 +100,22 @@ class DecisionTruthWrapper:
             "truth_score": round(float(truth_score), 2),
             "truth_recommendation": truth_recommendation,
             "truth_level": truth_level,
+            "source_id": base_decision.get("source_id") or f"decision:{product_id}",
+            "source_type": "estimated",
+            "confidence_score": round((sum(signal.confidence_score for signal in market_signals) / len(market_signals)) if market_signals else 0.0, 4),
+            "freshness_score": round((sum(signal.freshness_score for signal in market_signals) / len(market_signals)) if market_signals else 0.0, 4),
             "still_uses_simulated_data": True,
             "simulated_dependencies": merged_dependencies,
             "cost_breakdown": cost_payload["cost_breakdown"],
             "external_market_snapshot": calibrated_market,
+            "lineage_chain": [
+                *(market_signals[0].lineage_chain if market_signals else ["market_provider"]),
+                *(supplier_data[0].lineage_chain if supplier_data else ["supplier_provider"]),
+                "decision_truth_wrapper",
+            ][:8],
             "reasons": reasons,
         }
-        business_truth_decision_repository.upsert(db, product_id=product_id, **payload)
+        business_truth_decision_repository.upsert(db, product_id=product_id, task_id=task_id, **payload)
         return payload
 
     def _truth_score(

@@ -6,6 +6,8 @@ export const ROUTES = {
   insights: "/insights",
   actionCenter: "/action-center",
   settings: "/settings",
+  tasks: "/tasks",
+  createTask: "/create",
 } as const;
 
 export function productDetailRoute(id: number | string) {
@@ -14,4 +16,8 @@ export function productDetailRoute(id: number | string) {
 
 export function analyzeWithProductRoute(productId: number | string) {
   return `${ROUTES.insights}?productId=${productId}`;
+}
+
+export function taskDetailRoute(taskId: number | string) {
+  return `${ROUTES.tasks}/${taskId}`;
 }

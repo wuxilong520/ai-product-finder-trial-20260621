@@ -137,6 +137,8 @@ function getTopNavKey(pathname: string | null | undefined): TopNavKey {
   if (!pathname || pathname === "/") return "home";
   if (pathname.startsWith("/products")) return "products";
   if (pathname.startsWith("/insights")) return "insights";
+  if (pathname.startsWith("/tasks")) return "action";
+  if (pathname.startsWith("/create")) return "action";
   if (pathname.startsWith("/action-center")) return "action";
   if (pathname.startsWith("/settings")) return "settings";
   return "home";

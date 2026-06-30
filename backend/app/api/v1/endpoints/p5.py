@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import db_session, get_current_user
+from app.api.deps import db_session, get_request_context
 from app.core.runtime import AppError, error_response
 from app.schemas.p5 import (
     P5PredictionRequest,
@@ -21,7 +21,7 @@ def get_p5_recommendations(
     category: str | None = Query(default=None),
     limit: int = Query(default=10, ge=1, le=100),
     db: Session = Depends(db_session),
-    current_user=Depends(get_current_user),
+    auth_context=Depends(get_request_context),
 ):
     try:
         result = p5_global_product_decision_engine.get_recommendations(db, keyword=keyword, category=category, limit=limit)
@@ -35,7 +35,7 @@ def get_p5_recommendations(
 @router.get("/p5/rankings", response_model=P5RankingsResponse)
 def get_p5_rankings(
     db: Session = Depends(db_session),
-    current_user=Depends(get_current_user),
+    auth_context=Depends(get_request_context),
 ):
     try:
         result = p5_global_product_decision_engine.get_rankings(db)
@@ -50,7 +50,7 @@ def get_p5_rankings(
 def post_p5_predict(
     payload: P5PredictionRequest,
     db: Session = Depends(db_session),
-    current_user=Depends(get_current_user),
+    auth_context=Depends(get_request_context),
 ):
     try:
         result = p5_global_product_decision_engine.predict(db, payload.product_id, payload.horizon_days)

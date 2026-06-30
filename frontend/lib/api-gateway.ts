@@ -33,6 +33,16 @@ export {
   recommendBusinessTruth,
   recommendDecision,
 } from "@/lib/api";
+export {
+  getTaskExplain as getDecisionTaskExplain,
+  getTaskFull as getDecisionTaskFull,
+  getTaskList as getDecisionTaskList,
+  getTaskResult as getDecisionTaskResult,
+  getTaskStatus as getDecisionTaskStatus,
+  getTaskTrace as getDecisionTaskTrace,
+  retryTask as retryDecisionTask,
+  submitTask as submitDecisionTask,
+} from "@/lib/api/task";
 
 export const API_DOMAIN_MAP = {
   assetVault: "/api/v1/products",

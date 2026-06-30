@@ -30,6 +30,8 @@ class UserRead(BaseModel):
     id: int
     email: EmailStr
     full_name: str | None = None
+    role: str
+    workspace_id: int | None = None
     is_active: bool
     is_superuser: bool
     created_at: datetime
@@ -64,3 +66,5 @@ class LoginResponse(BaseModel):
 
 class TokenPayload(BaseModel):
     sub: str
+    workspace_id: int | None = None
+    role: str | None = None

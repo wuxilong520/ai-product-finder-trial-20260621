@@ -103,6 +103,14 @@ export type SupplierMatchResponse = {
 };
 
 export type DecisionRecommendResponse = {
+  source_id?: string | null;
+  source_type?: string | null;
+  lineage_chain?: string[];
+  truth_level?: string | null;
+  confidence_score?: number | null;
+  freshness_score?: number | null;
+  market_fit_score?: number | null;
+  supplier_fit_score?: number | null;
   intelligence_score: number;
   market_score: number;
   supplier_score: number;
@@ -134,6 +142,11 @@ export type BusinessTruthRecommendResponse = {
   truth_score: number;
   truth_recommendation: string;
   truth_level: string;
+  source_id?: string | null;
+  source_type?: string | null;
+  lineage_chain?: string[];
+  confidence_score?: number | null;
+  freshness_score?: number | null;
   still_uses_simulated_data: boolean;
   simulated_dependencies: string[];
   cost_breakdown: Record<string, unknown>;
@@ -294,6 +307,107 @@ export type TaskStatusResponse = {
   detail: Record<string, unknown>;
   error_reason?: string | null;
   updated_at: string;
+};
+
+export type TaskJobStatus = "pending" | "running" | "success" | "failed" | "retrying" | "unknown";
+
+export type TaskSubmitPayload = {
+  keyword: string;
+  market_type: "amazon" | "1688" | "shopee";
+  supplier_strategy: "cheapest" | "quality" | "balanced";
+  cost_mode: "strict" | "estimated";
+  decision_mode: "fast" | "deep";
+};
+
+export type TaskSubmitResponse = {
+  task_id: number;
+  status: TaskJobStatus | string;
+  job_type?: string;
+};
+
+export type TaskDetailStatusResponse = {
+  task_id: number;
+  status: TaskJobStatus | string;
+  retry_count?: number;
+  last_error?: string | null;
+  updated_at?: string;
+  progress?: number;
+  created_at?: string;
+  current_step?: string;
+};
+
+export type TaskListItem = {
+  task_id: number;
+  status: TaskJobStatus | string;
+  created_at?: string;
+  updated_at?: string;
+  retry_count?: number;
+  progress?: number;
+  last_error?: string | null;
+  workspace_id?: number;
+  user_id?: number;
+};
+
+export type TaskExplainResponse = {
+  task_id: number;
+  status: TaskJobStatus | string;
+  explain_result: {
+    product_id?: number;
+    task_id?: number;
+    api_key_id?: number;
+    market_signals_used?: Array<Record<string, unknown>>;
+    supplier_sources?: Array<Record<string, unknown>>;
+    cost_breakdown?: Record<string, unknown>;
+    risk_factors?: Record<string, unknown>;
+    confidence_score?: number;
+    why_this_recommendation?: string[];
+    data_lineage?: string[];
+    confidence_detail?: Record<string, unknown>;
+    provider_routing?: Record<string, unknown>;
+    cost_provider?: string;
+    supplier_provider?: string;
+    market_provider?: string;
+  };
+};
+
+export type TaskTraceResponse = {
+  task_id: number;
+  status: TaskJobStatus | string;
+  governance_trace: {
+    event_id?: string;
+    event_key?: string;
+    event_stage?: string;
+    task_id?: number;
+    workspace_id?: number;
+    user_id?: number;
+    api_key_id?: number;
+    source_id?: string;
+    truth_level?: string;
+    lineage_chain?: string[];
+    confidence_score?: number;
+    freshness_score?: number;
+    provider_routing?: Record<string, unknown>;
+  };
+};
+
+export type TaskFullResult = {
+  task_id: number;
+  status: TaskJobStatus | string;
+  result: {
+    task_id: number;
+    product_id?: number;
+    decision_result?: DecisionRecommendResponse;
+    truth_result?: BusinessTruthRecommendResponse;
+    explain_result?: TaskExplainResponse["explain_result"];
+    governance_trace?: TaskTraceResponse["governance_trace"];
+  } | null;
+};
+
+export type TaskFullResponse = {
+  task: TaskDetailStatusResponse;
+  result: TaskFullResult["result"];
+  explain: TaskExplainResponse["explain_result"];
+  trace: TaskTraceResponse["governance_trace"];
 };
 
 export type DashboardStatCard = {

@@ -27,12 +27,18 @@ class P5RecommendationItem(BaseModel):
     recommendation_score: float
     estimated_profit: float
     recommendation: str
+    truth_level: str | None = None
+    source_type: str | None = None
+    freshness_score: float | None = None
     reasons: list[str]
 
 
 class P5RecommendationsResponse(BaseModel):
     keyword: str | None = None
     category: str | None = None
+    truth_level: str | None = None
+    source_type: str | None = None
+    freshness_min: float | None = None
     total_scanned: int
     items: list[P5RecommendationItem]
 

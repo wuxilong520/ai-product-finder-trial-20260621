@@ -3,6 +3,7 @@ from app.models.base import TimestampMixin
 from app.models.business_truth import BusinessTruthDecision
 from app.models.category import Category
 from app.models.crawl_run import CrawlRun
+from app.models.data_governance import DataLineageRecord, DataQualityHistory, DataSourceRegistryRecord, SyncJobRecord
 from app.models.decision_recommendation import DecisionRecommendation
 from app.models.market_intelligence import MarketIntelligence
 from app.models.platform import Platform
@@ -16,6 +17,9 @@ __all__ = [
     "BusinessTruthDecision",
     "Category",
     "CrawlRun",
+    "DataLineageRecord",
+    "DataQualityHistory",
+    "DataSourceRegistryRecord",
     "DecisionRecommendation",
     "MarketIntelligence",
     "Platform",
@@ -25,6 +29,7 @@ __all__ = [
     "ProductKeyword",
     "SourcingLink",
     "SupplierMatch",
+    "SyncJobRecord",
     "TimestampMixin",
     "User",
 ]

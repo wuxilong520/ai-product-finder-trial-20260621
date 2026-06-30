@@ -25,6 +25,10 @@ class BusinessTruthRecommendResponse(BaseModel):
     truth_score: float
     truth_recommendation: str
     truth_level: str
+    source_id: str | None = None
+    lineage_chain: list[str] = []
+    confidence_score: float | None = None
+    freshness_score: float | None = None
     still_uses_simulated_data: bool
     simulated_dependencies: list[str]
     cost_breakdown: dict

@@ -9,11 +9,10 @@ from app.core.runtime import AppError
 from app.models.product import Product
 from app.repositories.business_truth_decision import business_truth_decision_repository
 from app.repositories.product import product_repository
+from app.services.data_hub import data_hub
 from app.services.decision_engine import decision_engine
 from app.services.decision_truth_wrapper import decision_truth_wrapper
-from app.services.market_intelligence_engine import market_intelligence_engine
 from app.services.product_intelligence_engine import product_intelligence_engine
-from app.services.supplier_matching_engine import supplier_matching_engine
 
 
 @dataclass
@@ -48,9 +47,25 @@ class AIGlobalProductDecisionEngine:
             "risk_ranking": self._ranking_group(snapshots, lambda item: float(item.product_intelligence["risk_score"]), reverse=False),
         }
 
-    def get_recommendations(self, db: Session, keyword: str | None = None, category: str | None = None, limit: int = 10) -> dict:
+    def get_recommendations(
+        self,
+        db: Session,
+        keyword: str | None = None,
+        category: str | None = None,
+        limit: int = 10,
+        truth_level: str | None = None,
+        source_type: str | None = None,
+        freshness_min: float | None = None,
+    ) -> dict:
         snapshots = self._build_all_snapshots(db)
-        filtered = self._filter_snapshots(snapshots, keyword=keyword, category=category)
+        filtered = self._filter_snapshots(
+            snapshots,
+            keyword=keyword,
+            category=category,
+            truth_level=truth_level,
+            source_type=source_type,
+            freshness_min=freshness_min,
+        )
         items: list[dict] = []
 
         for snapshot in filtered:
@@ -73,6 +88,9 @@ class AIGlobalProductDecisionEngine:
                     "recommendation_score": round(recommendation_score, 2),
                     "estimated_profit": round(estimated_profit, 2),
                     "recommendation": self._recommendation_label(recommendation_score),
+                    "truth_level": snapshot.business_truth.get("truth_level"),
+                    "source_type": snapshot.supplier_matches[0].get("source_type") if snapshot.supplier_matches else None,
+                    "freshness_score": snapshot.supplier_matches[0].get("freshness_score") if snapshot.supplier_matches else None,
                     "reasons": [
                         f"真实性决策分 {truth_score:.1f}，说明利润和风险校准后仍有业务价值。",
                         f"未来 30 天爆发概率约 {prediction['explosion_probability']:.1f} / 100，具备继续跟进的理由。",
@@ -85,6 +103,9 @@ class AIGlobalProductDecisionEngine:
         return {
             "keyword": keyword,
             "category": category,
+            "truth_level": truth_level,
+            "source_type": source_type,
+            "freshness_min": freshness_min,
             "total_scanned": len(filtered),
             "items": items[:limit],
         }
@@ -101,8 +122,39 @@ class AIGlobalProductDecisionEngine:
         keyword = self._pick_keyword(product)
         category = product.category.name if product.category else None
         product_intelligence = product_intelligence_engine.get_or_create_intelligence(db, product.id)
-        market_intelligence = market_intelligence_engine.analyze_keyword(db, keyword)
-        supplier_matches = supplier_matching_engine.match(db, keyword)["suppliers"]
+        market_signals = data_hub.get_market_data(db, keyword=keyword)
+        supplier_offer_items = data_hub.get_supplier_data(db, keyword=keyword)
+        market_intelligence = {
+            "trend_score": round(self._mean_attr_dict(market_signals, "trend_score"), 2),
+            "demand_score": round(self._mean_attr_dict(market_signals, "demand_level"), 2),
+            "competition_score": round(self._mean_attr_dict(market_signals, "competition_index"), 2),
+            "opportunity_score": round(
+                max(
+                    0.0,
+                    min(
+                        100.0,
+                        self._mean_attr_dict(market_signals, "trend_score") * 0.35
+                        + self._mean_attr_dict(market_signals, "demand_level") * 0.35
+                        + (100 - self._mean_attr_dict(market_signals, "competition_index")) * 0.20
+                        + self._mean_attr_dict(market_signals, "confidence_score") * 0.10,
+                    ),
+                ),
+                2,
+            ),
+        }
+        supplier_matches = [
+            {
+                "platform": item.platform,
+                "match_score": item.match_score,
+                "supplier_name": item.supplier_name,
+                "supplier_title": item.supplier_title,
+                "supplier_url": item.supplier_url,
+                "truth_level": item.truth_level,
+                "source_type": item.source_type,
+                "freshness_score": item.freshness_score,
+            }
+            for item in supplier_offer_items
+        ]
         decision = decision_engine.recommend(db, product.id)
 
         truth_record = business_truth_decision_repository.get_by_product_id(db, product.id)
@@ -225,7 +277,15 @@ class AIGlobalProductDecisionEngine:
             "top_100": ranked[:100],
         }
 
-    def _filter_snapshots(self, snapshots: list[P5ProductSnapshot], keyword: str | None, category: str | None) -> list[P5ProductSnapshot]:
+    def _filter_snapshots(
+        self,
+        snapshots: list[P5ProductSnapshot],
+        keyword: str | None,
+        category: str | None,
+        truth_level: str | None = None,
+        source_type: str | None = None,
+        freshness_min: float | None = None,
+    ) -> list[P5ProductSnapshot]:
         result = snapshots
         if keyword:
             needle = keyword.lower()
@@ -238,6 +298,16 @@ class AIGlobalProductDecisionEngine:
         if category:
             needle = category.lower()
             result = [item for item in result if item.category and needle in item.category.lower()]
+        if truth_level:
+            result = [item for item in result if item.business_truth.get("truth_level") == truth_level]
+        if source_type:
+            result = [item for item in result if any(match.get("source_type") == source_type for match in item.supplier_matches)]
+        if freshness_min is not None:
+            result = [
+                item
+                for item in result
+                if item.supplier_matches and max(float(match.get("freshness_score") or 0) for match in item.supplier_matches[:3]) >= freshness_min
+            ]
         return result
 
     def _supplier_score(self, suppliers: list[dict]) -> float:
@@ -262,6 +332,14 @@ class AIGlobalProductDecisionEngine:
 
     def _clamp(self, value: float) -> float:
         return max(0.0, min(100.0, value))
+
+    def _mean_attr_dict(self, items: list, field: str) -> float:
+        if not items:
+            return 0.0
+        values = [float(getattr(item, field, 0) or 0) for item in items]
+        if not values:
+            return 0.0
+        return mean(values)
 
 
 p5_global_product_decision_engine = AIGlobalProductDecisionEngine()

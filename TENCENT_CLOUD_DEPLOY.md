@@ -90,10 +90,16 @@ Nginx 建议：
 - 国内主仓：Gitee
 - 国外备份仓：GitHub
 - 腾讯云服务器每分钟检查一次 Gitee `main`
-- 发现新提交后会自动：
+- 发现以下任一变化后会自动：
+  - Gitee `main` 有新提交
+  - 生产环境文件 `deploy/tencent-cloud/.env.tencent` 内容发生变化
+- 自动动作：
   - 拉取 Gitee 最新代码
   - 同步 GitHub 备份仓
   - 执行 `deploy/tencent-cloud/deploy.sh`
+- 自动部署状态文件：
+  - `/home/ubuntu/publish_repo_runtime/state/last_deployed_commit`
+  - `/home/ubuntu/publish_repo_runtime/state/last_env_hash`
 - 自动检查日志位置：
   - `/home/ubuntu/publish_repo/logs/auto-deploy.log`
   - 实际运行文件已迁移到 `/home/ubuntu/publish_repo_runtime/auto-deploy.log`

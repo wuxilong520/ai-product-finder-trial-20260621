@@ -90,6 +90,11 @@ fi
 mkdir -p /home/ubuntu/publish_repo/.deploy-state
 mkdir -p /home/ubuntu/publish_repo_runtime/state
 echo "$(git rev-parse HEAD)" > /home/ubuntu/publish_repo_runtime/state/last_deployed_commit
+if [ -f /home/ubuntu/publish_repo/deploy/tencent-cloud/.env.tencent ]; then
+  shasum -a 256 /home/ubuntu/publish_repo/deploy/tencent-cloud/.env.tencent | awk '{print $1}' > /home/ubuntu/publish_repo_runtime/state/last_env_hash
+else
+  echo "missing" > /home/ubuntu/publish_repo_runtime/state/last_env_hash
+fi
 EOF
 
 ssh -i "${SERVER_KEY}" -o StrictHostKeyChecking=yes "${SERVER_USER}@${SERVER_HOST}" "(

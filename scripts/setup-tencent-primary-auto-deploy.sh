@@ -11,6 +11,7 @@ set -euo pipefail
 
 mkdir -p /home/ubuntu/publish_repo
 mkdir -p /home/ubuntu/publish_repo/logs
+mkdir -p /home/ubuntu/publish_repo_runtime_restore
 
 if [ ! -d /home/ubuntu/publish_repo/.git ]; then
   cd /home/ubuntu/publish_repo
@@ -50,9 +51,40 @@ fi
 chmod 600 /home/ubuntu/.ssh/config
 
 cd /home/ubuntu/publish_repo
+
+if [ -f /home/ubuntu/publish_repo/deploy/tencent-cloud/.env.tencent ]; then
+  cp /home/ubuntu/publish_repo/deploy/tencent-cloud/.env.tencent /home/ubuntu/publish_repo_runtime_restore/.env.tencent
+fi
+
+if [ -f /home/ubuntu/publish_repo/backend/product_mvp.db ]; then
+  cp /home/ubuntu/publish_repo/backend/product_mvp.db /home/ubuntu/publish_repo_runtime_restore/product_mvp.db
+fi
+
+if [ -d /home/ubuntu/publish_repo/backend/db_backups ]; then
+  rm -rf /home/ubuntu/publish_repo_runtime_restore/db_backups
+  cp -R /home/ubuntu/publish_repo/backend/db_backups /home/ubuntu/publish_repo_runtime_restore/db_backups
+fi
+
 git fetch origin main
-git checkout -B main origin/main
+find /home/ubuntu/publish_repo -mindepth 1 -maxdepth 1 ! -name '.git' ! -name 'logs' -exec rm -rf {} +
+git checkout -f -B main origin/main
 git reset --hard origin/main
+
+mkdir -p /home/ubuntu/publish_repo/deploy/tencent-cloud
+mkdir -p /home/ubuntu/publish_repo/backend
+
+if [ -f /home/ubuntu/publish_repo_runtime_restore/.env.tencent ]; then
+  cp /home/ubuntu/publish_repo_runtime_restore/.env.tencent /home/ubuntu/publish_repo/deploy/tencent-cloud/.env.tencent
+fi
+
+if [ -f /home/ubuntu/publish_repo_runtime_restore/product_mvp.db ]; then
+  cp /home/ubuntu/publish_repo_runtime_restore/product_mvp.db /home/ubuntu/publish_repo/backend/product_mvp.db
+fi
+
+if [ -d /home/ubuntu/publish_repo_runtime_restore/db_backups ]; then
+  rm -rf /home/ubuntu/publish_repo/backend/db_backups
+  cp -R /home/ubuntu/publish_repo_runtime_restore/db_backups /home/ubuntu/publish_repo/backend/db_backups
+fi
 
 mkdir -p /home/ubuntu/publish_repo/.deploy-state
 echo "$(git rev-parse HEAD)" > /home/ubuntu/publish_repo/.deploy-state/last_deployed_commit

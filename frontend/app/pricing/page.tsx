@@ -1,15 +1,11 @@
 import { cookies } from "next/headers";
 
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
-import { Card, CardContent, CardHeader, CardTitle, Button } from "@/design-system/components";
+import { Card } from "@/design-system/components";
+import { PricingCards } from "@/components/billing/pricing-cards";
 import { TOKEN_KEY } from "@/lib/auth";
 import { getBillingPlans, getCurrentBillingStatus } from "@/lib/api/billing";
 import { getServerLanguage } from "@/lib/i18n-server";
-
-function formatLimit(value: number) {
-  if (value < 0) return "不限";
-  return `${value}`;
-}
 
 export default async function PricingPage() {
   const lang = await getServerLanguage();
@@ -25,7 +21,7 @@ export default async function PricingPage() {
         <Card className="border-white/8 bg-[#121c2c] p-6">
           <h1 className="text-3xl font-semibold text-white">套餐与订阅</h1>
           <p className="mt-2 text-sm leading-7 text-white/60">
-            这里先把对外售卖用的套餐结构和当前订阅状态展示出来，后面接入真实支付后就可以直接打通购买。
+            这里现在已经接入了真实订单创建入口，支持选择支付宝或微信支付。当前还差你的商户参数接入，接好后就能发起真实扣款。
           </p>
           {currentPlan ? (
             <div className="mt-4 rounded-2xl border border-white/8 bg-white/5 px-4 py-3 text-sm text-white/75">
@@ -38,24 +34,7 @@ export default async function PricingPage() {
           )}
         </Card>
 
-        <div className="grid gap-6 xl:grid-cols-4">
-          {plans.map((plan) => (
-            <Card key={plan.plan_name} className="border-white/8 bg-[#121c2c]">
-              <CardHeader>
-                <CardTitle className="capitalize">{plan.plan_name}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-white/75">
-                  <div>每日任务数：{formatLimit(plan.task_limit)}</div>
-                  <div className="mt-2">每日接口数：{formatLimit(plan.api_limit)}</div>
-                </div>
-                <Button className="w-full" variant={plan.plan_name === "pro" ? "primary" : "secondary"}>
-                  {plan.plan_name === "free" ? "当前默认体验" : "预留支付接入"}
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <PricingCards plans={plans} currentPlan={currentPlan} />
       </div>
     </XBorderLayout>
   );

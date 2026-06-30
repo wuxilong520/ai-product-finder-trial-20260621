@@ -45,6 +45,16 @@ class Settings(BaseSettings):
     auth_challenge_expire_minutes: int = int(os.getenv("AUTH_CHALLENGE_EXPIRE_MINUTES", "10"))
     auth_challenge_rate: float = float(os.getenv("AUTH_CHALLENGE_RATE", "0.15"))
     auth_challenge_fail_threshold: int = int(os.getenv("AUTH_CHALLENGE_FAIL_THRESHOLD", "2"))
+    alipay_app_id: str = os.getenv("ALIPAY_APP_ID", "")
+    alipay_private_key: str = os.getenv("ALIPAY_PRIVATE_KEY", "")
+    alipay_public_key: str = os.getenv("ALIPAY_PUBLIC_KEY", "")
+    alipay_notify_url: str = os.getenv("ALIPAY_NOTIFY_URL", "")
+    wechat_pay_app_id: str = os.getenv("WECHAT_PAY_APP_ID", "")
+    wechat_pay_mch_id: str = os.getenv("WECHAT_PAY_MCH_ID", "")
+    wechat_pay_api_v3_key: str = os.getenv("WECHAT_PAY_API_V3_KEY", "")
+    wechat_pay_cert_serial: str = os.getenv("WECHAT_PAY_CERT_SERIAL", "")
+    wechat_pay_private_key: str = os.getenv("WECHAT_PAY_PRIVATE_KEY", "")
+    wechat_pay_notify_url: str = os.getenv("WECHAT_PAY_NOTIFY_URL", "")
 
     model_config = SettingsConfigDict(
         env_file=(str(PROJECT_ROOT / ".env"), str(BACKEND_DIR / ".env")),

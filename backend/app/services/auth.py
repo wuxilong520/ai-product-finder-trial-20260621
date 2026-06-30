@@ -1,17 +1,51 @@
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
+import random
+import secrets
 
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.runtime import AppError
 from app.core.security import create_access_token, get_password_hash, verify_password
+from app.repositories.auth_identity import auth_identity_repository
 from app.repositories.user import user_repository
-from app.schemas.auth import UserCreate
+from app.schemas.auth import AuthChallengeResponse, UserCreate, UserRegisterRequest
+from app.services.email_service import email_service
 from app.workspace.service import workspace_service
 
 
 class AuthService:
-    def register_user(self, db: Session, payload: UserCreate):
+    def _generate_code(self) -> str:
+        return f"{random.randint(100000, 999999)}"
+
+    def _should_require_challenge(self, db: Session, email: str, purpose: str) -> bool:
+        existing = auth_identity_repository.get_latest_active_challenge_by_email(db, email, purpose)
+        if existing:
+            return True
+        return random.random() < settings.auth_challenge_rate
+
+    def _build_challenge(self, db: Session, email: str, purpose: str) -> AuthChallengeResponse:
+        a = random.randint(1, 9)
+        b = random.randint(1, 9)
+        answer = str(a + b)
+        record = auth_identity_repository.create_challenge(
+            db,
+            email=email,
+            purpose=purpose,
+            challenge_token=secrets.token_urlsafe(24),
+            challenge_question=f"为了确认是你本人，请回答：{a} + {b} = ?",
+            answer_hash=get_password_hash(answer),
+            expires_at=datetime.now(UTC) + timedelta(minutes=settings.auth_challenge_expire_minutes),
+        )
+        return AuthChallengeResponse(
+            challenge_token=record.challenge_token,
+            challenge_question=record.challenge_question,
+            expires_in_seconds=settings.auth_challenge_expire_minutes * 60,
+        )
+
+    def register_user(self, db: Session, payload: UserCreate | UserRegisterRequest):
+        if isinstance(payload, UserRegisterRequest):
+            self.verify_code(db, email=payload.email, code=payload.verification_code, purpose="register")
         existing = user_repository.get_by_email(db, payload.email)
         if existing:
             raise AppError("EMAIL_EXISTS", "邮箱已经注册过了", "auth", 400)
@@ -32,12 +66,79 @@ class AuthService:
         db.refresh(user)
         return user
 
+    def send_verification_code(self, db: Session, email: str, purpose: str, challenge_answer: str | None = None, challenge_token: str | None = None):
+        challenge_verified = False
+        if challenge_token and challenge_answer:
+            self.verify_challenge(db, challenge_token, challenge_answer)
+            challenge_verified = True
+
+        if not challenge_verified and self._should_require_challenge(db, email, purpose):
+            return {
+                "success": False,
+                "message": "需要先完成安全验证",
+                "challenge": self._build_challenge(db, email, purpose),
+            }
+
+        auth_identity_repository.purge_codes(db, email, purpose)
+        code = self._generate_code()
+        auth_identity_repository.create_code(
+            db,
+            email=email,
+            purpose=purpose,
+            code_hash=get_password_hash(code),
+            expires_at=datetime.now(UTC) + timedelta(minutes=settings.auth_code_expire_minutes),
+        )
+        email_service.send_verification_code(email, code, "登录" if purpose == "login" else "注册")
+        return {
+            "success": True,
+            "message": f"验证码已发送到 {email}",
+            "challenge": None,
+        }
+
+    def verify_code(self, db: Session, email: str, code: str, purpose: str):
+        record = auth_identity_repository.get_latest_active_code(db, email, purpose)
+        if not record:
+            raise AppError("CODE_NOT_FOUND", "验证码不存在或已过期，请重新获取", "auth", 400)
+        auth_identity_repository.touch_code_attempt(db, record)
+        if not verify_password(code, record.code_hash):
+            raise AppError("CODE_INVALID", "验证码不正确", "auth", 400)
+        auth_identity_repository.mark_code_used(db, record)
+        return True
+
+    def verify_challenge(self, db: Session, challenge_token: str, answer: str):
+        record = auth_identity_repository.get_active_challenge(db, challenge_token)
+        if not record:
+            raise AppError("CHALLENGE_NOT_FOUND", "当前验证已失效，请重新获取验证码", "auth", 400)
+        auth_identity_repository.touch_challenge_attempt(db, record)
+        if not verify_password(answer.strip(), record.answer_hash):
+            raise AppError("CHALLENGE_INVALID", "安全验证答案不正确", "auth", 400)
+        auth_identity_repository.resolve_challenge(db, record)
+        return True
+
     def authenticate_user(self, db: Session, email: str, password: str):
         user = user_repository.get_by_email(db, email)
         if not user:
             return None
         if not verify_password(password, user.password_hash):
             return None
+        return user
+
+    def login_with_code(self, db: Session, email: str, code: str):
+        self.verify_code(db, email=email, code=code, purpose="login")
+        user = user_repository.get_by_email(db, email)
+        if not user:
+            raise AppError("USER_NOT_FOUND", "这个邮箱还没有注册，请先注册", "auth", 404)
+        return user
+
+    def reset_password(self, db: Session, email: str, code: str, new_password: str):
+        self.verify_code(db, email=email, code=code, purpose="reset_password")
+        user = user_repository.get_by_email(db, email)
+        if not user:
+            raise AppError("USER_NOT_FOUND", "这个邮箱还没有注册", "auth", 404)
+        user.password_hash = get_password_hash(new_password)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
         return user
 
     def create_login_token(self, user) -> str:

@@ -26,6 +26,50 @@ class UserCreate(BaseModel):
     }
 
 
+class UserRegisterRequest(UserCreate):
+    verification_code: str = Field(
+        min_length=4,
+        max_length=8,
+        description="邮箱验证码",
+    )
+
+
+class SendCodeRequest(BaseModel):
+    email: EmailStr
+    purpose: str = Field(default="login")
+    challenge_token: str | None = None
+    challenge_answer: str | None = None
+
+
+class VerifyCodeLoginRequest(BaseModel):
+    email: EmailStr
+    code: str = Field(min_length=4, max_length=8)
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+    code: str = Field(min_length=4, max_length=8)
+    new_password: str = Field(min_length=8)
+
+
+class AuthChallengeResponse(BaseModel):
+    required: bool = True
+    challenge_token: str
+    challenge_question: str
+    expires_in_seconds: int
+
+
+class VerifyChallengeRequest(BaseModel):
+    challenge_token: str
+    answer: str = Field(min_length=1, max_length=50)
+
+
+class SendCodeResponse(BaseModel):
+    success: bool
+    message: str
+    challenge: AuthChallengeResponse | None = None
+
+
 class UserRead(BaseModel):
     id: int
     email: EmailStr

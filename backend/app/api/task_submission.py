@@ -132,6 +132,8 @@ def retry_task(
     auth_context=Depends(get_request_context),
 ):
     existing_record = task_controller.get_task_record(db, task_id)
+    existing_payload = (existing_record.result_payload or {}) if existing_record else {}
+    task_input = existing_payload.get("task_input", {}) if isinstance(existing_payload.get("task_input", {}), dict) else {}
     return task_controller.retry_task(
         db,
         task_id=task_id,
@@ -140,7 +142,12 @@ def retry_task(
             task_id=retry_task_id,
             job_type="decision",
             payload={
-                "product_id": 1,
+                "product_id": task_input.get("product_id", 1),
+                "keyword": task_input.get("keyword", ""),
+                "market_type": task_input.get("market_type", "amazon"),
+                "supplier_strategy": task_input.get("supplier_strategy", "balanced"),
+                "cost_mode": task_input.get("cost_mode", "estimated"),
+                "decision_mode": task_input.get("decision_mode", "deep"),
                 "user_id": auth_context.user_id,
                 "workspace_id": auth_context.workspace_id,
                 "api_key_id": auth_context.api_key_id or (existing_record.api_key_id if existing_record else None),

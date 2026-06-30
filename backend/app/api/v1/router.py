@@ -1,12 +1,14 @@
 from fastapi import APIRouter
 
 from app.api import result_query, task_submission
-from app.api.v1.endpoints import analyze, api_keys, auth, business_truth, dashboard, decision, decision_explain, governance, market, p5, products, suppliers
+from app.api.v1.endpoints import admin, analyze, api_keys, auth, billing, business_truth, dashboard, decision, decision_explain, governance, market, p5, products, suppliers
 
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(auth.router, prefix="/auth", tags=["认证"])
 api_router.include_router(api_keys.router, tags=["API Key"])
+api_router.include_router(admin.router, tags=["后台管理"])
+api_router.include_router(billing.router, tags=["订阅套餐"])
 api_router.include_router(analyze.router, tags=["一键分析"])
 api_router.include_router(dashboard.router, tags=["新版看板"])
 api_router.include_router(decision.router, tags=["决策中心"])

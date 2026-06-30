@@ -79,18 +79,27 @@ class TaskController:
             raise AppError("TASK_NOT_FOUND", "没有找到这个任务", "task", 404)
 
         payload = record.result_payload or {}
-        product_id = payload.get("product_id") or payload.get("decision_result", {}).get("product_id") or 1
+        decision_result = payload.get("decision_result", {}) if isinstance(payload.get("decision_result", {}), dict) else {}
+        explain_result = payload.get("explain_result", {}) if isinstance(payload.get("explain_result", {}), dict) else {}
+        trace_result = payload.get("governance_trace", {}) if isinstance(payload.get("governance_trace", {}), dict) else {}
+        product_id = payload.get("product_id") or decision_result.get("product_id") or explain_result.get("product_id") or 1
+        task_payload = {
+            "product_id": product_id,
+            "keyword": payload.get("keyword") or decision_result.get("keyword") or "",
+            "market_type": payload.get("market_type") or trace_result.get("provider_routing", {}).get("market_type") or "amazon",
+            "supplier_strategy": payload.get("supplier_strategy") or trace_result.get("provider_routing", {}).get("supplier_strategy") or "balanced",
+            "cost_mode": payload.get("cost_mode") or trace_result.get("provider_routing", {}).get("cost_mode") or "estimated",
+            "decision_mode": payload.get("decision_mode") or "deep",
+            "user_id": record.user_id,
+            "workspace_id": record.workspace_id,
+            "api_key_id": record.api_key_id,
+        }
         return sync_runtime_service.resubmit_existing_task(
             db=db,
             task_id=task_id,
             job_type=record.job_type,
             job_key=f"{record.job_type}:{task_id}",
-            payload={
-                "product_id": product_id,
-                "user_id": record.user_id,
-                "workspace_id": record.workspace_id,
-                "api_key_id": record.api_key_id,
-            },
+            payload=task_payload,
             runner_factory=runner_factory,
         )
 

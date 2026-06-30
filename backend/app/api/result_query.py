@@ -51,6 +51,15 @@ def get_task_result(
     }
 
 
+@router.get("/task/{task_id}/result")
+def get_task_result_compat(
+    task_id: int,
+    db: Session = Depends(db_session),
+    auth_context=Depends(get_request_context),
+):
+    return get_task_result(task_id=task_id, db=db, auth_context=auth_context)
+
+
 @router.get("/tasks/{task_id}/explain")
 def get_task_explain(
     task_id: int,
@@ -71,6 +80,15 @@ def get_task_explain(
     }
 
 
+@router.get("/task/{task_id}/explain")
+def get_task_explain_compat(
+    task_id: int,
+    db: Session = Depends(db_session),
+    auth_context=Depends(get_request_context),
+):
+    return get_task_explain(task_id=task_id, db=db, auth_context=auth_context)
+
+
 @router.get("/tasks/{task_id}/trace")
 def get_task_trace(
     task_id: int,
@@ -89,6 +107,15 @@ def get_task_trace(
         "status": result.get("status"),
         "governance_trace": result_payload.get("governance_trace", {}),
     }
+
+
+@router.get("/task/{task_id}/trace")
+def get_task_trace_compat(
+    task_id: int,
+    db: Session = Depends(db_session),
+    auth_context=Depends(get_request_context),
+):
+    return get_task_trace(task_id=task_id, db=db, auth_context=auth_context)
 
 
 @router.get("/task/{task_id}/full")

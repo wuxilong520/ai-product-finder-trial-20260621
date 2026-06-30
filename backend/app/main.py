@@ -18,10 +18,11 @@ from app.core.runtime import (
 from app.core.startup_checks import collect_runtime_summary, validate_startup_env
 from app.repositories.platform import platform_repository
 from app.billing.service import billing_service
+from app.billing import order as billing_order  # noqa: F401
 from app.services.auth import auth_service
 from app.services.task_status import task_status_service
 from app.workspace.service import workspace_service
-from app.models import analysis, business_truth, category, crawl_run, decision_recommendation, market_intelligence, platform, product, product_intelligence, supplier_match, user  # noqa: F401
+from app.models import analysis, auth_identity, business_truth, category, crawl_run, decision_recommendation, market_intelligence, platform, product, product_intelligence, supplier_match, user  # noqa: F401
 from app.workspace import model as workspace_model  # noqa: F401
 from app.api_key import model as api_key_model  # noqa: F401
 from app.quota import model as quota_model  # noqa: F401

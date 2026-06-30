@@ -33,6 +33,17 @@ class Settings(BaseSettings):
     next_public_ws_url: str = os.getenv("NEXT_PUBLIC_WS_URL", "")
     first_superuser_email: str = os.getenv("FIRST_SUPERUSER_EMAIL", "admin@example.com")
     first_superuser_password: str = os.getenv("FIRST_SUPERUSER_PASSWORD", "change_this_password")
+    smtp_host: str = os.getenv("SMTP_HOST", "")
+    smtp_port: int = int(os.getenv("SMTP_PORT", "465"))
+    smtp_user: str = os.getenv("SMTP_USER", "")
+    smtp_password: str = os.getenv("SMTP_PASSWORD", "")
+    smtp_from_email: str = os.getenv("SMTP_FROM_EMAIL", "")
+    smtp_use_tls: bool = os.getenv("SMTP_USE_TLS", "false").lower() == "true"
+    smtp_use_ssl: bool = os.getenv("SMTP_USE_SSL", "true").lower() == "true"
+    auth_code_expire_minutes: int = int(os.getenv("AUTH_CODE_EXPIRE_MINUTES", "10"))
+    auth_challenge_expire_minutes: int = int(os.getenv("AUTH_CHALLENGE_EXPIRE_MINUTES", "10"))
+    auth_challenge_rate: float = float(os.getenv("AUTH_CHALLENGE_RATE", "0.15"))
+    auth_challenge_fail_threshold: int = int(os.getenv("AUTH_CHALLENGE_FAIL_THRESHOLD", "2"))
 
     model_config = SettingsConfigDict(
         env_file=(str(PROJECT_ROOT / ".env"), str(BACKEND_DIR / ".env")),

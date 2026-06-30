@@ -14,6 +14,19 @@ export type LoginResponse = {
   user: User;
 };
 
+export type AuthChallenge = {
+  required: boolean;
+  challenge_token: string;
+  challenge_question: string;
+  expires_in_seconds: number;
+};
+
+export type SendCodeResponse = {
+  success: boolean;
+  message: string;
+  challenge?: AuthChallenge | null;
+};
+
 export type CrawlResult = {
   product_id?: number | null;
   title: string;

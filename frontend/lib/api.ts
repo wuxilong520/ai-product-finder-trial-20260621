@@ -20,6 +20,7 @@ import {
   P5RankingsResponse,
   P5RecommendationsResponse,
   SupplierMatchResponse,
+  SendCodeResponse,
   TaskStatusResponse,
   User,
 } from "./types";
@@ -125,6 +126,94 @@ export async function login(email: string, password: string): Promise<LoginRespo
 
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "登录失败，请检查账号和密码"));
+  }
+
+  return response.json();
+}
+
+export async function loginWithCode(email: string, code: string): Promise<LoginResponse> {
+  ensureApiBase();
+  const response = await fetchWithTimeout(`${API_V1}/auth/login/code`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, code }),
+  }, 15000);
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "验证码登录失败"));
+  }
+
+  return response.json();
+}
+
+export async function registerUser(email: string, password: string, verificationCode: string, fullName?: string): Promise<User> {
+  ensureApiBase();
+  const response = await fetchWithTimeout(`${API_V1}/auth/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      password,
+      verification_code: verificationCode,
+      full_name: fullName || null,
+    }),
+  }, 15000);
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "注册失败"));
+  }
+
+  return response.json();
+}
+
+export async function sendAuthCode(
+  email: string,
+  purpose: "login" | "register" | "reset_password",
+  challengeToken?: string,
+  challengeAnswer?: string
+): Promise<SendCodeResponse> {
+  ensureApiBase();
+
+  const response = await fetchWithTimeout(`${API_V1}/auth/send-code`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      purpose,
+      challenge_token: challengeToken || null,
+      challenge_answer: challengeAnswer || null,
+    }),
+  }, 15000);
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "发送验证码失败"));
+  }
+
+  return response.json();
+}
+
+export async function resetPassword(email: string, code: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+  ensureApiBase();
+  const response = await fetchWithTimeout(`${API_V1}/auth/password/reset`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      code,
+      new_password: newPassword,
+    }),
+  }, 15000);
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "重置密码失败"));
   }
 
   return response.json();

@@ -1,6 +1,13 @@
 export const ROUTES = {
   home: "/",
   login: "/login",
+  register: "/register",
+  forgotPassword: "/forgot-password",
+  admin: "/admin",
+  pricing: "/pricing",
+  terms: "/terms",
+  privacy: "/privacy",
+  servicePolicy: "/service-policy",
   dashboard: "/",
   products: "/products",
   insights: "/insights",

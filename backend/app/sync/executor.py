@@ -21,7 +21,13 @@ class SyncExecutor:
         max_retries: int = 2,
     ) -> dict:
         record_id = task_id
-        sync_scheduler.update_persisted_job(db, record_id=record_id, status="running", retry_count=0)
+        sync_scheduler.update_persisted_job(
+            db,
+            record_id=record_id,
+            status="running",
+            retry_count=0,
+            result_payload={"task_input": payload},
+        )
 
         retry_count = 0
         while True:
@@ -34,7 +40,7 @@ class SyncExecutor:
                     record_id=record_id,
                     status="success",
                     retry_count=retry_count,
-                    result_payload=result,
+                    result_payload={**({"task_input": payload} if isinstance(payload, dict) else {}), **(result if isinstance(result, dict) else {"result": result})},
                 )
                 return {
                     "job_id": record_id,
@@ -53,6 +59,7 @@ class SyncExecutor:
                         status="running",
                         retry_count=retry_count,
                         last_error=str(exc),
+                        result_payload={"task_input": payload},
                     )
                     await asyncio.sleep(0)
                     continue
@@ -63,6 +70,7 @@ class SyncExecutor:
                     status="failed",
                     retry_count=retry_count,
                     last_error=str(exc),
+                    result_payload={"task_input": payload, "last_error": str(exc)},
                 )
                 return {
                     "job_id": record_id,

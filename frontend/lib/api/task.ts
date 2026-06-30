@@ -94,7 +94,7 @@ export async function getTaskStatus(taskId: number, token?: string): Promise<Tas
 
 export async function getTaskResult(taskId: number, token?: string): Promise<TaskFullResult> {
   const apiV1 = ensureTaskApiBase();
-  const response = await fetch(`${apiV1}/tasks/${taskId}/result`, {
+  const response = await fetch(`${apiV1}/task/${taskId}/result`, {
     cache: "no-store",
     headers: {
       ...buildAuthHeaders(token),
@@ -108,7 +108,7 @@ export async function getTaskResult(taskId: number, token?: string): Promise<Tas
 
 export async function getTaskExplain(taskId: number, token?: string): Promise<TaskExplainResponse> {
   const apiV1 = ensureTaskApiBase();
-  const response = await fetch(`${apiV1}/tasks/${taskId}/explain`, {
+  const response = await fetch(`${apiV1}/task/${taskId}/explain`, {
     cache: "no-store",
     headers: {
       ...buildAuthHeaders(token),
@@ -122,7 +122,7 @@ export async function getTaskExplain(taskId: number, token?: string): Promise<Ta
 
 export async function getTaskTrace(taskId: number, token?: string): Promise<TaskTraceResponse> {
   const apiV1 = ensureTaskApiBase();
-  const response = await fetch(`${apiV1}/tasks/${taskId}/trace`, {
+  const response = await fetch(`${apiV1}/task/${taskId}/trace`, {
     cache: "no-store",
     headers: {
       ...buildAuthHeaders(token),

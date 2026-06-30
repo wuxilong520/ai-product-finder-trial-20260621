@@ -26,6 +26,7 @@
 - `DATABASE_URL=postgresql+psycopg://username:password@host:5432/product_mvp`
 - `OPENAI_API_KEY=你的真实key`
 - `OPENAI_MODEL=gpt-4o-mini`
+- `OPENAI_BASE_URL=`（如果腾讯云服务器不能直连 OpenAI，这里填可用的兼容网关地址）
 - `BACKEND_URL=https://api.your-domain.com`
 - `FRONTEND_URL=https://your-domain.com`
 - `FRONTEND_ORIGIN=https://your-domain.com`

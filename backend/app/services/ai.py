@@ -16,7 +16,8 @@ def analyze_title_with_ai(title: str) -> dict:
     if not api_key or api_key == "your_openai_api_key":
         raise AppError("MISSING_OPENAI_KEY", "请配置 OPENAI_API_KEY", "ai", 400)
 
-    client = OpenAI(api_key=api_key)
+    base_url = (os.getenv("OPENAI_BASE_URL") or settings.openai_base_url or "").strip() or None
+    client = OpenAI(api_key=api_key, base_url=base_url)
     model_name = os.getenv("OPENAI_MODEL") or settings.openai_model or "gpt-4o-mini"
     prompt = f"""
 你是跨境电商选品助理。请根据商品标题输出 JSON，不要输出任何解释。

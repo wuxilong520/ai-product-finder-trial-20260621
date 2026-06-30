@@ -94,6 +94,7 @@ Nginx 建议：
   - 执行 `deploy/tencent-cloud/deploy.sh`
 - 自动检查日志位置：
   - `/home/ubuntu/publish_repo/logs/auto-deploy.log`
+  - 实际运行文件已迁移到 `/home/ubuntu/publish_repo_runtime/auto-deploy.log`
 
 本地标准更新动作：
 

@@ -27,6 +27,7 @@
 - `OPENAI_API_KEY=你的真实key`
 - `OPENAI_MODEL=gpt-4o-mini`
 - `OPENAI_BASE_URL=`（如果腾讯云服务器不能直连 OpenAI，这里填可用的兼容网关地址）
+- `DEEPSEEK_API_KEY=`（如果你改走 DeepSeek，可直接配置这里）
 - `BACKEND_URL=https://api.your-domain.com`
 - `FRONTEND_URL=https://your-domain.com`
 - `FRONTEND_ORIGIN=https://your-domain.com`

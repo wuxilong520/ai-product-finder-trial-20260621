@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 from sqlalchemy import text
 
 from app.core.config import settings
@@ -41,7 +43,18 @@ def check_database_health() -> str:
 
 
 def check_ai_health() -> str:
-    if not settings.openai_api_key:
+    has_ai_key = any(
+        bool((os.getenv(key) or "").strip())
+        for key in [
+            "DEEPSEEK_API_KEY",
+            "DASHSCOPE_API_KEY",
+            "MOONSHOT_API_KEY",
+            "ARK_API_KEY",
+            "ZHIPU_API_KEY",
+            "OPENAI_API_KEY",
+        ]
+    ) or bool((settings.openai_api_key or "").strip())
+    if not has_ai_key:
         return "fail"
     if not settings.openai_model:
         return "fail"

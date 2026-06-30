@@ -1,24 +1,18 @@
 from __future__ import annotations
 
-import time
 import json
 import os
+import time
 from typing import Any
 
-from openai import OpenAI
-
-from app.core.config import settings
 from app.core.runtime import AppError, log_info
+from app.core.config import settings
+from app.services.ai_client import build_ai_client
 
 
 def analyze_title_with_ai(title: str) -> dict:
-    api_key = os.getenv("OPENAI_API_KEY") or settings.openai_api_key
-    if not api_key or api_key == "your_openai_api_key":
-        raise AppError("MISSING_OPENAI_KEY", "请配置 OPENAI_API_KEY", "ai", 400)
-
-    base_url = (os.getenv("OPENAI_BASE_URL") or settings.openai_base_url or "").strip() or None
-    client = OpenAI(api_key=api_key, base_url=base_url)
     model_name = os.getenv("OPENAI_MODEL") or settings.openai_model or "gpt-4o-mini"
+    client = build_ai_client()
     prompt = f"""
 你是跨境电商选品助理。请根据商品标题输出 JSON，不要输出任何解释。
 

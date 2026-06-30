@@ -33,17 +33,18 @@ jobs:
       - name: Package release bundle
         run: |
           set -euo pipefail
+          BUNDLE_PATH="${RUNNER_TEMP}/release.tgz"
           tar \
             --exclude=.git \
             --exclude=.github \
             --exclude=node_modules \
-            --exclude=release.tgz \
             --exclude=frontend/.next \
             --exclude=frontend/node_modules \
             --exclude=backend/__pycache__ \
             --exclude=backend/.pytest_cache \
             --exclude='*.pyc' \
-            -czf release.tgz .
+            -czf "${BUNDLE_PATH}" .
+          mv "${BUNDLE_PATH}" ./release.tgz
 
       - name: Upload release bundle to Tencent Cloud
         env:

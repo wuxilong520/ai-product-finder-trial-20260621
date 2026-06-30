@@ -30,24 +30,45 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -p "${TENCENT_CLOUD_PORT:-22}" -H "$TENCENT_CLOUD_HOST" >> ~/.ssh/known_hosts
 
-      - name: Deploy latest main to Tencent Cloud
+      - name: Package release bundle
+        run: |
+          set -euo pipefail
+          tar \
+            --exclude=.git \
+            --exclude=.github \
+            --exclude=node_modules \
+            --exclude=frontend/.next \
+            --exclude=frontend/node_modules \
+            --exclude=backend/__pycache__ \
+            --exclude=backend/.pytest_cache \
+            --exclude='*.pyc' \
+            -czf release.tgz .
+
+      - name: Upload release bundle to Tencent Cloud
         env:
           TENCENT_CLOUD_HOST: ${{ secrets.TENCENT_CLOUD_HOST }}
           TENCENT_CLOUD_PORT: ${{ secrets.TENCENT_CLOUD_PORT }}
           TENCENT_CLOUD_USER: ${{ secrets.TENCENT_CLOUD_USER }}
           TENCENT_CLOUD_PATH: ${{ secrets.TENCENT_CLOUD_PATH }}
-          GITHUB_REPOSITORY_URL: https://github.com/${{ github.repository }}.git
+        run: |
+          set -euo pipefail
+          ssh -p "${TENCENT_CLOUD_PORT:-22}" "${TENCENT_CLOUD_USER}@${TENCENT_CLOUD_HOST}" "mkdir -p '${TENCENT_CLOUD_PATH}'"
+          scp -P "${TENCENT_CLOUD_PORT:-22}" release.tgz "${TENCENT_CLOUD_USER}@${TENCENT_CLOUD_HOST}:${TENCENT_CLOUD_PATH}/release.tgz"
+
+      - name: Deploy release bundle on Tencent Cloud
+        env:
+          TENCENT_CLOUD_HOST: ${{ secrets.TENCENT_CLOUD_HOST }}
+          TENCENT_CLOUD_PORT: ${{ secrets.TENCENT_CLOUD_PORT }}
+          TENCENT_CLOUD_USER: ${{ secrets.TENCENT_CLOUD_USER }}
+          TENCENT_CLOUD_PATH: ${{ secrets.TENCENT_CLOUD_PATH }}
         run: |
           set -euo pipefail
           ssh -p "${TENCENT_CLOUD_PORT:-22}" "${TENCENT_CLOUD_USER}@${TENCENT_CLOUD_HOST}" <<EOF
           set -euo pipefail
-          if [ ! -d "${TENCENT_CLOUD_PATH}/.git" ]; then
-            rm -rf "${TENCENT_CLOUD_PATH}"
-            git clone "${GITHUB_REPOSITORY_URL}" "${TENCENT_CLOUD_PATH}"
-          fi
-          cd "${TENCENT_CLOUD_PATH}"
-          git remote set-url origin "${GITHUB_REPOSITORY_URL}"
-          git -c http.version=HTTP/1.1 fetch origin main
-          git reset --hard origin/main
+          mkdir -p "${TENCENT_CLOUD_PATH}"
+          find "${TENCENT_CLOUD_PATH}" -mindepth 1 -maxdepth 1 ! -name 'backend' ! -name 'deploy' -exec rm -rf {} +
+          rm -rf "${TENCENT_CLOUD_PATH}/frontend" "${TENCENT_CLOUD_PATH}/.github"
+          tar -xzf "${TENCENT_CLOUD_PATH}/release.tgz" -C "${TENCENT_CLOUD_PATH}"
+          rm -f "${TENCENT_CLOUD_PATH}/release.tgz"
           bash deploy/tencent-cloud/deploy.sh
           EOF

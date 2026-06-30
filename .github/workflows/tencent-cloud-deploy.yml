@@ -69,7 +69,7 @@ jobs:
           set -Eexuo pipefail
           echo "[remote] path=${TENCENT_CLOUD_PATH}"
           mkdir -p "${TENCENT_CLOUD_PATH}"
-          find "${TENCENT_CLOUD_PATH}" -mindepth 1 -maxdepth 1 ! -name 'backend' ! -name 'deploy' -exec rm -rf {} +
+          find "${TENCENT_CLOUD_PATH}" -mindepth 1 -maxdepth 1 ! -name 'backend' ! -name 'deploy' ! -name 'release.tgz' -exec rm -rf {} +
           rm -rf "${TENCENT_CLOUD_PATH}/frontend" "${TENCENT_CLOUD_PATH}/.github"
           tar -xzf "${TENCENT_CLOUD_PATH}/release.tgz" -C "${TENCENT_CLOUD_PATH}"
           rm -f "${TENCENT_CLOUD_PATH}/release.tgz"

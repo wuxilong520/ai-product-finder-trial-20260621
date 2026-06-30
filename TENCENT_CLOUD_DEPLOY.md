@@ -83,7 +83,23 @@ Nginx 建议：
 - 开启 HTTPS
 - WebSocket 路由 `/ws` 必须放行升级头
 
-## 七、上线前检查
+## 七、主仓自动部署规则
+
+- 国内主仓：Gitee
+- 国外备份仓：GitHub
+- 腾讯云服务器每分钟检查一次 Gitee `main`
+- 发现新提交后会自动：
+  - 拉取 Gitee 最新代码
+  - 同步 GitHub 备份仓
+  - 执行 `deploy/tencent-cloud/deploy.sh`
+
+本地标准更新动作：
+
+```bash
+./scripts/push-primary-then-backup.sh
+```
+
+## 八、上线前检查
 
 - 前端 `.env` 已填真实公网 API 地址
 - 后端 CORS 已允许前端域名
@@ -91,4 +107,3 @@ Nginx 建议：
 - OpenAI key 可正常使用
 - `https://your-domain.com/login` 可打开
 - `https://api.your-domain.com/health` 可返回成功
-

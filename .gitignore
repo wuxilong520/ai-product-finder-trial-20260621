@@ -21,6 +21,7 @@ deploy/tencent-cloud/diff_chunks/
 deploy/tencent-cloud/*.tar.gz
 deploy/tencent-cloud/*.diff
 deploy/tencent-cloud/*.patch
+.deploy-keys/
 
 frontend/node_modules/
 frontend/.next/

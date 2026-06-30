@@ -64,9 +64,9 @@ jobs:
           TENCENT_CLOUD_USER: ${{ secrets.TENCENT_CLOUD_USER }}
           TENCENT_CLOUD_PATH: ${{ secrets.TENCENT_CLOUD_PATH }}
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           ssh -p "${TENCENT_CLOUD_PORT:-22}" "${TENCENT_CLOUD_USER}@${TENCENT_CLOUD_HOST}" <<EOF
-          set -Eeuo pipefail
+          set -Eexuo pipefail
           trap 'echo "[remote] failed command: ${BASH_COMMAND}"' ERR
           echo "[remote] path=${TENCENT_CLOUD_PATH}"
           mkdir -p "${TENCENT_CLOUD_PATH}"
@@ -82,5 +82,5 @@ jobs:
           ls -la "${TENCENT_CLOUD_PATH}/deploy/tencent-cloud"
           echo "[remote] env file check"
           test -f "${TENCENT_CLOUD_PATH}/deploy/tencent-cloud/.env.tencent"
-          bash "${TENCENT_CLOUD_PATH}/deploy/tencent-cloud/deploy.sh"
+          bash -x "${TENCENT_CLOUD_PATH}/deploy/tencent-cloud/deploy.sh"
           EOF

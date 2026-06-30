@@ -4,6 +4,7 @@ export const ROUTES = {
   register: "/register",
   forgotPassword: "/forgot-password",
   admin: "/admin",
+  systemAdmin: "/system/admin",
   pricing: "/pricing",
   terms: "/terms",
   privacy: "/privacy",

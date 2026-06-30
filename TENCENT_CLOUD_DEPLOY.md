@@ -11,6 +11,7 @@
 
 - 前端：`https://your-domain.com`
 - 后端：`https://api.your-domain.com`
+- 后台：`https://admin.your-domain.com`
 
 ## 三、必须配置的环境变量
 
@@ -32,6 +33,8 @@
 - `FRONTEND_URL=https://your-domain.com`
 - `FRONTEND_ORIGIN=https://your-domain.com`
 - `WS_URL=wss://api.your-domain.com/ws`
+- `MAIN_HOST=your-domain.com`
+- `ADMIN_HOST=admin.your-domain.com`
 - `SECRET_KEY=一串足够长的随机密钥`
 - `ACCESS_TOKEN_EXPIRE_MINUTES=1440`
 - `JWT_ALGORITHM=HS256`
@@ -117,4 +120,5 @@ Nginx 建议：
 - 数据库公网或内网已连通
 - OpenAI key 可正常使用
 - `https://your-domain.com/login` 可打开
+- `https://admin.your-domain.com/system/admin` 可打开
 - `https://api.your-domain.com/health` 可返回成功

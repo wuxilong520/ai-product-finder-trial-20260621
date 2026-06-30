@@ -27,7 +27,8 @@ def analyze_product_intelligence(
     if not api_key or api_key == "your_openai_api_key":
         raise AppError("MISSING_OPENAI_KEY", "请配置 OPENAI_API_KEY", "ai", 400)
 
-    client = OpenAI(api_key=api_key)
+    base_url = (os.getenv("OPENAI_BASE_URL") or settings.openai_base_url or "").strip() or None
+    client = OpenAI(api_key=api_key, base_url=base_url)
     model_name = os.getenv("OPENAI_MODEL") or settings.openai_model or "gpt-4o-mini"
 
     payload = {

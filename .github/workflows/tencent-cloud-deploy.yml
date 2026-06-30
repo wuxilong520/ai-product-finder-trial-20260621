@@ -72,5 +72,6 @@ jobs:
           rm -rf "${TENCENT_CLOUD_PATH}/frontend" "${TENCENT_CLOUD_PATH}/.github"
           tar -xzf "${TENCENT_CLOUD_PATH}/release.tgz" -C "${TENCENT_CLOUD_PATH}"
           rm -f "${TENCENT_CLOUD_PATH}/release.tgz"
-          bash deploy/tencent-cloud/deploy.sh
+          cd "${TENCENT_CLOUD_PATH}"
+          bash "${TENCENT_CLOUD_PATH}/deploy/tencent-cloud/deploy.sh"
           EOF

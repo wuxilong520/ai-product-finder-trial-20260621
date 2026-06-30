@@ -36,6 +36,9 @@ export default async function AdminPage() {
           <p className="mt-2 text-sm leading-7 text-white/60">
             这里给你看真实用户、工作区、套餐和任务状态，方便你上线后自己运营，不给普通用户展示。
           </p>
+          <div className="mt-4 rounded-2xl border border-white/8 bg-white/5 px-4 py-3 text-sm text-white/70">
+            当前这套后台已经能看到真实用户、真实工作区、真实任务、真实订单和真实套餐状态。后面接入正式支付商户后，这里会继续显示支付宝 / 微信真实收款数据。
+          </div>
         </Card>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -132,6 +135,7 @@ export default async function AdminPage() {
                 <div className="font-medium text-white">订单 #{item.id}</div>
                 <div className="mt-1">套餐：{item.plan_name} · 状态：{item.status}</div>
                 <div className="mt-1">金额：{item.currency} {(item.amount_cents / 100).toFixed(2)}</div>
+                <div className="mt-1">支付方式：{item.provider_name || "未指定"}</div>
               </div>
             )) : (
               <div className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-white/60">

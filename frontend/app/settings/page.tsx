@@ -5,6 +5,7 @@ import { XBorderLayout } from "@/components/layouts/xborder-layout";
 import { Card, CardContent, CardHeader, CardTitle, InfoTile } from "@/design-system/components";
 import { ROUTES } from "@/config/routes";
 import { TOKEN_KEY } from "@/lib/auth";
+import { getBillingOrders, getCurrentBillingStatus } from "@/lib/api/billing";
 import { getServerLanguage } from "@/lib/i18n-server";
 
 export default async function SettingsPage() {
@@ -54,6 +55,11 @@ export default async function SettingsPage() {
     redirect(ROUTES.login);
   }
 
+  const [billing, orders] = await Promise.all([
+    getCurrentBillingStatus(token),
+    getBillingOrders(token),
+  ]);
+
   return (
     <XBorderLayout lang={lang} activePath="settings">
       <div className="space-y-6">
@@ -63,6 +69,17 @@ export default async function SettingsPage() {
         </Card>
 
         <div className="grid gap-6 xl:grid-cols-3">
+          <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+            <CardHeader>
+              <CardTitle>当前订阅</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <InfoTile label="套餐状态" value={billing.status} />
+              <InfoTile label="当前套餐" value={billing.plan_name} />
+              <InfoTile label="最近更新时间" value={billing.updated_at.replace("T", " ")} />
+            </CardContent>
+          </Card>
+
           <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
             <CardHeader>
               <CardTitle>{text.store}</CardTitle>
@@ -93,6 +110,25 @@ export default async function SettingsPage() {
             </CardContent>
           </Card>
         </div>
+
+        <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+          <CardHeader>
+            <CardTitle>最近订单</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {orders.orders.length ? orders.orders.slice(0, 5).map((item) => (
+              <div key={item.id} className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-white/75">
+                <div className="font-medium text-white">订单 #{item.id}</div>
+                <div className="mt-1">套餐：{item.plan_name} · 状态：{item.status}</div>
+                <div className="mt-1">支付方式：{item.provider_name || "未指定"} · 金额：{item.currency} {(item.amount_cents / 100).toFixed(2)}</div>
+              </div>
+            )) : (
+              <div className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-white/60">
+                你当前还没有订单记录，后面购买套餐后这里会自动展示。
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </XBorderLayout>
   );

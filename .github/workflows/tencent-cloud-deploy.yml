@@ -66,7 +66,8 @@ jobs:
         run: |
           set -euo pipefail
           ssh -p "${TENCENT_CLOUD_PORT:-22}" "${TENCENT_CLOUD_USER}@${TENCENT_CLOUD_HOST}" <<EOF
-          set -euo pipefail
+          set -Eeuo pipefail
+          trap 'echo "[remote] failed command: ${BASH_COMMAND}"' ERR
           echo "[remote] path=${TENCENT_CLOUD_PATH}"
           mkdir -p "${TENCENT_CLOUD_PATH}"
           find "${TENCENT_CLOUD_PATH}" -mindepth 1 -maxdepth 1 ! -name 'backend' ! -name 'deploy' -exec rm -rf {} +

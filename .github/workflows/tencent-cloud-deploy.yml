@@ -65,7 +65,7 @@ jobs:
           TENCENT_CLOUD_PATH: ${{ secrets.TENCENT_CLOUD_PATH }}
         run: |
           set -euxo pipefail
-          ssh -p "${TENCENT_CLOUD_PORT:-22}" "${TENCENT_CLOUD_USER}@${TENCENT_CLOUD_HOST}" <<EOF
+          ssh -p "${TENCENT_CLOUD_PORT:-22}" "${TENCENT_CLOUD_USER}@${TENCENT_CLOUD_HOST}" <<EOF | tee remote-deploy.log
           set -Eexuo pipefail
           echo "[remote] path=${TENCENT_CLOUD_PATH}"
           mkdir -p "${TENCENT_CLOUD_PATH}"
@@ -83,3 +83,10 @@ jobs:
           test -f "${TENCENT_CLOUD_PATH}/deploy/tencent-cloud/.env.tencent"
           bash -x "${TENCENT_CLOUD_PATH}/deploy/tencent-cloud/deploy.sh"
           EOF
+
+      - name: Upload remote deploy log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: remote-deploy-log
+          path: remote-deploy.log

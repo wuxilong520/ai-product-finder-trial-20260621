@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Button, Card, CardContent, CardHeader, CardTitle, StatusAlert } from "@/design-system/components";
 import { getToken } from "@/lib/auth";
@@ -22,8 +23,13 @@ export function PricingCards({
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const token = useMemo(() => getToken(), []);
+  const router = useRouter();
 
   async function handleCheckout(planName: string, providerName: "alipay" | "wechat_pay") {
+    if (!token) {
+      router.push("/login");
+      return;
+    }
     setLoadingKey(`${planName}:${providerName}`);
     setError("");
     setMessage("");
@@ -79,7 +85,7 @@ export function PricingCards({
                     <Button
                       className="w-full"
                       variant="primary"
-                      disabled={!token || loadingKey === `${plan.plan_name}:alipay`}
+                      disabled={loadingKey === `${plan.plan_name}:alipay`}
                       onClick={() => void handleCheckout(plan.plan_name, "alipay")}
                     >
                       {loadingKey === `${plan.plan_name}:alipay` ? "创建中..." : "支付宝购买"}
@@ -87,7 +93,7 @@ export function PricingCards({
                     <Button
                       className="w-full"
                       variant="secondary"
-                      disabled={!token || loadingKey === `${plan.plan_name}:wechat_pay`}
+                      disabled={loadingKey === `${plan.plan_name}:wechat_pay`}
                       onClick={() => void handleCheckout(plan.plan_name, "wechat_pay")}
                     >
                       {loadingKey === `${plan.plan_name}:wechat_pay` ? "创建中..." : "微信支付购买"}

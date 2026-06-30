@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Bell, ChevronDown, ChevronRight, Home, LineChart, Search, Settings, ShoppingBag, Sparkles, WalletCards } from "lucide-react";
+import { Bell, ChevronDown, ChevronRight, Crown, Home, LineChart, Search, Settings, ShoppingBag, Sparkles, WalletCards } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { ROUTES } from "@/config/routes";
@@ -198,6 +198,13 @@ export function NewDashboardLayout({ children, rightRail, lang }: DashboardLayou
             <div className="hidden rounded-full border border-white/10 bg-white/[0.02] p-1.5 md:block">
               <LanguageToggle lang={lang} />
             </div>
+            <Link
+              href={ROUTES.pricing}
+              className="hidden items-center gap-2 rounded-full border border-[#4F7CFF]/20 bg-[#4F7CFF]/10 px-4 py-2 text-sm text-[#D8E3FF] transition hover:bg-[#4F7CFF]/20 lg:flex"
+            >
+              <Crown className="h-4 w-4" />
+              <span>升级 / 充值</span>
+            </Link>
             <button className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-[#111A2E] text-white/70">
               <Bell className="h-4 w-4" />
             </button>

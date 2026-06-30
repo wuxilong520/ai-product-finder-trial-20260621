@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CheckCircle2, Loader2, Rocket, Sparkles } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState, InfoTile, StatusBadge } from "@/design-system/components";
+import { FeatureGateModal } from "@/components/billing/feature-gate-modal";
 import { productDetailRoute } from "@/config/routes";
 import { getP5Recommendations } from "@/lib/api-gateway";
 import { getToken } from "@/lib/auth";
@@ -44,6 +45,7 @@ export function OperationCenter({ lang }: { lang: Language }) {
   const [error, setError] = useState("");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [launchedIds, setLaunchedIds] = useState<number[]>([]);
+  const [gateOpen, setGateOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,6 +69,13 @@ export function OperationCenter({ lang }: { lang: Language }) {
 
   return (
     <div className="space-y-5">
+      <FeatureGateModal
+        open={gateOpen}
+        onClose={() => setGateOpen(false)}
+        title="这个功能需要开通更高权限"
+        description="当前这一键加入店铺还没有对接你的真实店铺系统。你可以先升级套餐，后面接入真实店铺后就能直接使用。"
+        requiredPlan="pro / enterprise"
+      />
       <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
         <CardHeader>
           <div className="flex flex-wrap items-center gap-3">
@@ -127,8 +136,7 @@ export function OperationCenter({ lang }: { lang: Language }) {
                           {text.operationObserve}
                         </Button>
                         <Button type="button" variant="ghost" onClick={() => {
-                          setSelectedIds((current) => current.includes(item.product_id) ? current : [...current, item.product_id]);
-                          setLaunchedIds((current) => current.includes(item.product_id) ? current : [...current, item.product_id]);
+                          setGateOpen(true);
                         }}>
                           <CheckCircle2 className="mr-2 h-4 w-4" />
                           {uiText.add}

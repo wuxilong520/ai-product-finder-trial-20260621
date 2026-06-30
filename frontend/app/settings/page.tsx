@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
 import { Card, CardContent, CardHeader, CardTitle, InfoTile } from "@/design-system/components";
+import { UpgradeEntry } from "@/components/billing/upgrade-entry";
 import { ROUTES } from "@/config/routes";
 import { TOKEN_KEY } from "@/lib/auth";
 import { getBillingOrders, getCurrentBillingStatus } from "@/lib/api/billing";
@@ -64,8 +65,13 @@ export default async function SettingsPage() {
     <XBorderLayout lang={lang} activePath="settings">
       <div className="space-y-6">
         <Card className="border-white/8 bg-[#121c2c] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
-          <h1 className="text-3xl font-semibold tracking-tight text-white">{text.title}</h1>
-          <p className="mt-2 text-sm leading-7 text-white/60">{text.desc}</p>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight text-white">{text.title}</h1>
+              <p className="mt-2 text-sm leading-7 text-white/60">{text.desc}</p>
+            </div>
+            <UpgradeEntry label="去充值 / 升级" />
+          </div>
         </Card>
 
         <div className="grid gap-6 xl:grid-cols-3">
@@ -86,7 +92,7 @@ export default async function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <InfoTile label={text.storeStatus} value={text.manageable} />
-              <InfoTile label={text.storeCount} value={text.pending} />
+              <InfoTile label={text.storeCount} value="接入后显示真实店铺数" />
             </CardContent>
           </Card>
 
@@ -106,7 +112,7 @@ export default async function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <InfoTile label={text.security} value={text.enabled} />
-              <InfoTile label={text.entry} value={text.coming} />
+              <InfoTile label={text.entry} value="使用忘记密码或邮箱验证码登录" />
             </CardContent>
           </Card>
         </div>

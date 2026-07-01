@@ -2,8 +2,11 @@ export type User = {
   id: number;
   email: string;
   full_name?: string | null;
+  role: string;
+  workspace_id?: number | null;
   is_active: boolean;
   is_superuser: boolean;
+  last_login_at?: string | null;
   created_at: string;
   updated_at: string;
 };

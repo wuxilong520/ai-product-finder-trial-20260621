@@ -17,11 +17,45 @@ APP_LABEL="ai-product-finder-tencent"
 DEPLOY_COMMIT="$(git -C "${ROOT_DIR}" rev-parse --short HEAD 2>/dev/null || echo unknown)"
 BUILD_BACKEND="${BUILD_BACKEND:-1}"
 BUILD_FRONTEND="${BUILD_FRONTEND:-1}"
+LOCK_FILE="/tmp/shanghang-ai-deploy.lock"
+
+release_lock() {
+  if command -v flock >/dev/null 2>&1; then
+    flock -u 9 >/dev/null 2>&1 || true
+  fi
+  rm -f "${LOCK_FILE}" >/dev/null 2>&1 || true
+}
+
+acquire_lock() {
+  if command -v flock >/dev/null 2>&1; then
+    exec 9>"${LOCK_FILE}"
+    if ! flock -n 9; then
+      echo "已有部署任务在运行，请等待上一轮完成后再重试"
+      exit 1
+    fi
+    printf '%s\n' "$$" 1>&9
+    trap release_lock EXIT
+    return
+  fi
+
+  if [ -f "${LOCK_FILE}" ]; then
+    existing_pid="$(cat "${LOCK_FILE}" 2>/dev/null || true)"
+    if [ -n "${existing_pid}" ] && kill -0 "${existing_pid}" >/dev/null 2>&1; then
+      echo "已有部署任务在运行，请等待上一轮完成后再重试"
+      exit 1
+    fi
+  fi
+
+  echo "$$" > "${LOCK_FILE}"
+  trap release_lock EXIT
+}
 
 if [ ! -f "${ENV_FILE}" ]; then
   echo "缺少 ${ENV_FILE}，请先从 .env.tencent.example 复制一份并填好真实值"
   exit 1
 fi
+
+acquire_lock
 
 cleanup_legacy_runtime() {
   echo "清理旧容器和脏状态..."

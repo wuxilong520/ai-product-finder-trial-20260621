@@ -15,7 +15,8 @@ export default async function AdminPage() {
 
   try {
     const user = await getCurrentUser(token);
-    if (user.is_superuser) {
+    const hasAdminAccess = Boolean(user.is_superuser || user.role === "owner" || user.role === "admin");
+    if (hasAdminAccess) {
       redirect(ROUTES.systemAdmin);
     }
     return <AdminEntrancePage isLoggedIn={true} hasAdminAccess={false} />;

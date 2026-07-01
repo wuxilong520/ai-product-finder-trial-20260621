@@ -26,7 +26,7 @@ check_container_running "${FRONTEND_CONTAINER}"
 check_container_running "${NGINX_CONTAINER}"
 
 echo "检查是否还有旧版遗留容器..."
-legacy_containers="$( (sudo docker ps -a --format '{{.Names}} {{.Label \"app\"}}' | grep 'tencent-cloud_' || true) | grep -v "${APP_LABEL}" || true )"
+legacy_containers="$( (sudo docker ps -a --format '{{.Names}} {{.Label "app"}}' | grep 'tencent-cloud_' || true) | grep -v "${APP_LABEL}" || true )"
 if [ -n "${legacy_containers}" ]; then
   echo "发现旧版遗留容器，请先清理："
   echo "${legacy_containers}"

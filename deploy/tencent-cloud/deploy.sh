@@ -23,10 +23,6 @@ fi
 
 cleanup_legacy_runtime() {
   echo "清理旧容器和脏状态..."
-  sudo docker rm -f "${BACKEND_CONTAINER}" >/dev/null 2>&1 || true
-  sudo docker rm -f "${FRONTEND_CONTAINER}" >/dev/null 2>&1 || true
-  sudo docker rm -f "${NGINX_CONTAINER}" >/dev/null 2>&1 || true
-
   (sudo docker ps -a --format '{{.Names}}' | grep -E 'tencent-cloud_.*_1$|.*_tencent-cloud_.*_1$' || true) | while read -r name; do
     if [ -n "${name}" ] && [ "${name}" != "${BACKEND_CONTAINER}" ] && [ "${name}" != "${FRONTEND_CONTAINER}" ] && [ "${name}" != "${NGINX_CONTAINER}" ]; then
       echo "删除遗留容器 ${name}"
@@ -76,6 +72,7 @@ sudo docker build \
 sudo docker network inspect "${NETWORK_NAME}" >/dev/null 2>&1 || sudo docker network create "${NETWORK_NAME}"
 
 echo "重启后端容器..."
+sudo docker rm -f "${BACKEND_CONTAINER}" >/dev/null 2>&1 || true
 sudo docker run -d \
   --name "${BACKEND_CONTAINER}" \
   --network "${NETWORK_NAME}" \
@@ -90,6 +87,7 @@ sudo docker run -d \
   "${BACKEND_IMAGE}" >/dev/null
 
 echo "重启前端容器..."
+sudo docker rm -f "${FRONTEND_CONTAINER}" >/dev/null 2>&1 || true
 sudo docker run -d \
   --name "${FRONTEND_CONTAINER}" \
   --network "${NETWORK_NAME}" \
@@ -106,6 +104,7 @@ sudo docker run -d \
   "${FRONTEND_IMAGE}" >/dev/null
 
 echo "重启 Nginx 容器..."
+sudo docker rm -f "${NGINX_CONTAINER}" >/dev/null 2>&1 || true
 sudo docker run -d \
   --name "${NGINX_CONTAINER}" \
   --network "${NETWORK_NAME}" \

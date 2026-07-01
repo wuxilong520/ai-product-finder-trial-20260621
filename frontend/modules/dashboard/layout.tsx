@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Bell, ChevronDown, ChevronRight, Crown, Home, LineChart, Search, Settings, ShoppingBag, Sparkles, WalletCards } from "lucide-react";
 import { usePathname } from "next/navigation";
 
+import { UserAvatarMenu } from "@/components/layouts/user-avatar-menu";
 import { ROUTES } from "@/config/routes";
 import { LanguageToggle } from "@/design-system/components/LanguageToggle";
 import { Language } from "@/lib/i18n";
@@ -205,6 +206,7 @@ export function NewDashboardLayout({ children, rightRail, lang }: DashboardLayou
               <Crown className="h-4 w-4" />
               <span>升级 / 充值</span>
             </Link>
+            <UserAvatarMenu />
             <button className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-[#111A2E] text-white/70">
               <Bell className="h-4 w-4" />
             </button>

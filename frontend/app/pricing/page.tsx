@@ -3,16 +3,26 @@ import { cookies } from "next/headers";
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
 import { Card } from "@/design-system/components";
 import { PricingCards } from "@/components/billing/pricing-cards";
+import { PricingOrdersPanel } from "@/components/billing/pricing-orders-panel";
 import { UpgradeEntry } from "@/components/billing/upgrade-entry";
 import { TOKEN_KEY } from "@/lib/auth";
-import { getBillingPlans, getCurrentBillingStatus } from "@/lib/api/billing";
+import { getBillingOrders, getBillingPlans, getCurrentBillingStatus } from "@/lib/api/billing";
 import { isAuthError } from "@/lib/api";
 import { getServerLanguage } from "@/lib/i18n-server";
 
-export default async function PricingPage() {
+export default async function PricingPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const lang = await getServerLanguage();
   const token = (await cookies()).get(TOKEN_KEY)?.value || "";
-  const [{ plans }, currentPlan] = await Promise.all([
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const payment = typeof resolvedSearchParams?.payment === "string" ? resolvedSearchParams.payment : undefined;
+  const orderIdValue = typeof resolvedSearchParams?.order_id === "string" ? Number(resolvedSearchParams.order_id) : NaN;
+  const orderId = Number.isFinite(orderIdValue) ? orderIdValue : undefined;
+
+  const [{ plans }, currentPlan, orders] = await Promise.all([
     getBillingPlans(),
     token
       ? getCurrentBillingStatus(token).catch((error) => {
@@ -22,6 +32,14 @@ export default async function PricingPage() {
           throw error;
         })
       : Promise.resolve(null),
+    token
+      ? getBillingOrders(token).catch((error) => {
+          if (isAuthError(error)) {
+            return { orders: [] };
+          }
+          throw error;
+        })
+      : Promise.resolve({ orders: [] }),
   ]);
 
   return (
@@ -47,6 +65,7 @@ export default async function PricingPage() {
         </Card>
 
         <PricingCards plans={plans} currentPlan={currentPlan} />
+        <PricingOrdersPanel initialOrders={orders.orders} payment={payment} orderId={orderId} />
       </div>
     </XBorderLayout>
   );

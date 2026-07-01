@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Crown, LogOut, Settings, User as UserIcon } from "lucide-react";
+import { Crown, LogOut, Settings, Shield, User as UserIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ROUTES } from "@/config/routes";
@@ -129,6 +129,16 @@ export function UserAvatarMenu() {
               <Settings className="h-4 w-4" />
               <span>账户中心</span>
             </Link>
+            {user?.is_superuser ? (
+              <Link
+                href={ROUTES.systemAdmin}
+                onClick={handleMenuNavigate}
+                className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-white/80 transition hover:bg-white/[0.06] hover:text-white"
+              >
+                <Shield className="h-4 w-4" />
+                <span>后台管理</span>
+              </Link>
+            ) : null}
             <button
               type="button"
               onClick={handleLogout}

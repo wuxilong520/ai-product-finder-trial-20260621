@@ -25,8 +25,12 @@ sudo find /var/lib/containerd/tmpmounts -mindepth 1 -maxdepth 1 -exec rm -rf {} 
 
 echo "4) 尝试安装更稳定的 buildx 插件"
 if ! sudo docker buildx version >/dev/null 2>&1; then
-  sudo apt-get update >/dev/null
-  sudo apt-get install -y docker-buildx-plugin >/dev/null
+  sudo apt-get update >/dev/null || true
+  if sudo apt-cache show docker-buildx-plugin >/dev/null 2>&1; then
+    sudo apt-get install -y docker-buildx-plugin >/dev/null
+  else
+    echo "当前腾讯云系统源里没有 docker-buildx-plugin，先跳过这一步"
+  fi
 fi
 
 echo "5) 输出当前 Docker 能力"

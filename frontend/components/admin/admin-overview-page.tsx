@@ -81,6 +81,24 @@ export async function AdminOverviewPage({ entranceLabel }: { entranceLabel: stri
 
           <Card className="border-white/8 bg-[#121c2c]">
             <CardHeader>
+              <CardTitle>最新工作区</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {data.recent_workspaces.map((item) => (
+                <div key={item.id} className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-white/75">
+                  <div className="font-medium text-white">工作区 #{item.id}</div>
+                  <div className="mt-1">名称：{item.name}</div>
+                  <div className="mt-1">Owner：{item.owner_id}</div>
+                  <div className="mt-1 text-white/45">创建时间：{item.created_at}</div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-2">
+          <Card className="border-white/8 bg-[#121c2c]">
+            <CardHeader>
               <CardTitle>最新任务</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">

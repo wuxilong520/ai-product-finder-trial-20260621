@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.billing.alipay_gateway import alipay_gateway
 from app.billing.plan import PLANS
 from app.billing.subscription import WorkspaceSubscription
 from app.core.config import settings
@@ -12,10 +15,33 @@ from app.repositories.billing_order import billing_order_repository
 
 
 class BillingService:
+    def _build_external_order_id(self, *, order_id: int, workspace_id: int) -> str:
+        stamp = datetime.now(UTC).strftime("%Y%m%d%H%M%S")
+        return f"SHAI{workspace_id}{order_id}{stamp}"
+
     def _build_payment_payload(self, *, order, provider_name: str, plan: dict):
-        is_alipay_ready = bool(settings.alipay_app_id) and bool(settings.alipay_private_key) and bool(settings.alipay_public_key)
+        has_alipay_callback = bool(settings.alipay_notify_url) or bool(settings.backend_url)
+        has_alipay_return = bool(settings.alipay_return_url) or bool(settings.frontend_url)
+        is_alipay_ready = (
+            bool(settings.alipay_app_id)
+            and bool(settings.alipay_private_key)
+            and bool(settings.alipay_public_key)
+            and has_alipay_callback
+            and has_alipay_return
+        )
         is_wechat_ready = bool(settings.wechat_pay_app_id) and bool(settings.wechat_pay_mch_id) and bool(settings.wechat_pay_api_v3_key) and bool(settings.wechat_pay_private_key)
         ready = is_alipay_ready if provider_name == "alipay" else is_wechat_ready
+        pay_url = None
+        if ready and provider_name == "alipay":
+            notify_url = settings.alipay_notify_url or f"{settings.backend_url.rstrip('/')}{settings.api_v1_prefix}/billing/alipay/notify"
+            return_url = settings.alipay_return_url or f"{settings.frontend_url.rstrip('/')}/pricing?payment=success&order_id={order.id}"
+            pay_url = alipay_gateway.build_page_pay_url(
+                external_order_id=order.external_order_id or "",
+                amount_cents=order.amount_cents,
+                subject=f"商航AI {order.plan_name} 套餐",
+                return_url=return_url,
+                notify_url=notify_url,
+            )
         return ready, {
             "provider_name": provider_name,
             "order_id": order.id,
@@ -24,7 +50,7 @@ class BillingService:
             "currency": order.currency,
             "display_price": plan["display_price"],
             "status": "ready" if ready else "pending_config",
-            "pay_url": None,
+            "pay_url": pay_url,
             "qr_code_url": None,
         }
 
@@ -82,6 +108,12 @@ class BillingService:
             status="pending",
             note=f"等待{provider_name}支付参数配置完成后发起真实扣款",
         )
+        order = billing_order_repository.update_status(
+            db,
+            record=order,
+            status="pending",
+            external_order_id=self._build_external_order_id(order_id=order.id, workspace_id=workspace_id),
+        )
         payment_ready, payment_payload = self._build_payment_payload(order=order, provider_name=provider_name, plan=plan)
         return order, payment_ready, payment_payload
 
@@ -94,6 +126,32 @@ class BillingService:
             record=order,
             status="paid",
             note="订单已确认支付，套餐已生效",
+        )
+        subscription = self.get_or_create_subscription(db, workspace_id=order.workspace_id)
+        subscription.plan_name = order.plan_name
+        subscription.status = "active"
+        db.add(subscription)
+        db.commit()
+        self.apply_plan_quota(db, workspace_id=order.workspace_id)
+        return order
+
+    def mark_order_paid_by_external_id(
+        self,
+        db: Session,
+        *,
+        external_order_id: str,
+        note: str | None = None,
+    ):
+        order = billing_order_repository.get_by_external_order_id(db, external_order_id)
+        if not order:
+            raise AppError("ORDER_NOT_FOUND", "没有找到这个订单", "billing", 404)
+        if order.status == "paid":
+            return order
+        billing_order_repository.update_status(
+            db,
+            record=order,
+            status="paid",
+            note=note or "支付宝异步通知确认成功",
         )
         subscription = self.get_or_create_subscription(db, workspace_id=order.workspace_id)
         subscription.plan_name = order.plan_name

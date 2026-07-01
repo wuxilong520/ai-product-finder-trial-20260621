@@ -49,6 +49,8 @@ class Settings(BaseSettings):
     alipay_private_key: str = os.getenv("ALIPAY_PRIVATE_KEY", "")
     alipay_public_key: str = os.getenv("ALIPAY_PUBLIC_KEY", "")
     alipay_notify_url: str = os.getenv("ALIPAY_NOTIFY_URL", "")
+    alipay_return_url: str = os.getenv("ALIPAY_RETURN_URL", "")
+    alipay_gateway_url: str = os.getenv("ALIPAY_GATEWAY_URL", "https://openapi.alipay.com/gateway.do")
     wechat_pay_app_id: str = os.getenv("WECHAT_PAY_APP_ID", "")
     wechat_pay_mch_id: str = os.getenv("WECHAT_PAY_MCH_ID", "")
     wechat_pay_api_v3_key: str = os.getenv("WECHAT_PAY_API_V3_KEY", "")

@@ -1,6 +1,10 @@
-from fastapi import APIRouter, Depends
+from urllib.parse import parse_qsl
+
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 
+from app.billing.alipay_gateway import alipay_gateway
 from app.api.deps import db_session, get_request_context
 from app.billing.plan import PLANS
 from app.billing.service import billing_service
@@ -102,3 +106,28 @@ def fail_billing_order(
         "message": "订单已更新为失败状态",
         "order": BillingOrderRead.model_validate(order).model_dump(mode="json"),
     }
+
+
+@router.post("/billing/alipay/notify")
+async def alipay_notify(
+    request: Request,
+    db: Session = Depends(db_session),
+):
+    body = (await request.body()).decode("utf-8")
+    payload = dict(parse_qsl(body, keep_blank_values=True))
+    sign = payload.pop("sign", "")
+    payload.pop("sign_type", None)
+    if not alipay_gateway.verify(payload, sign):
+        return PlainTextResponse("failure", status_code=400)
+
+    trade_status = payload.get("trade_status", "")
+    external_order_id = payload.get("out_trade_no", "")
+    if not external_order_id:
+        return PlainTextResponse("failure", status_code=400)
+    if trade_status in {"TRADE_SUCCESS", "TRADE_FINISHED"}:
+        billing_service.mark_order_paid_by_external_id(
+            db,
+            external_order_id=external_order_id,
+            note=f"支付宝通知成功，trade_no={payload.get('trade_no', '')}",
+        )
+    return PlainTextResponse("success")

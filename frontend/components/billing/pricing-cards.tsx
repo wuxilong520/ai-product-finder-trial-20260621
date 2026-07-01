@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Button, Card, CardContent, CardHeader, CardTitle, StatusAlert } from "@/design-system/components";
 import { getToken } from "@/lib/auth";
-import { confirmBillingOrder, createBillingCheckoutOrder, type BillingPlan, type CurrentBillingStatus } from "@/lib/api/billing";
+import { createBillingCheckoutOrder, type BillingPlan, type CurrentBillingStatus } from "@/lib/api/billing";
 
 function formatLimit(value: number) {
   if (value < 0) return "不限";
@@ -37,15 +37,13 @@ export function PricingCards({
     try {
       const result = await createBillingCheckoutOrder(planName, providerName, token);
       setLatestOrderId(result.order.id);
-      if (result.payment_ready) {
-        await confirmBillingOrder(result.order.id, token);
-        setMessage(
-          `订单 #${result.order.id} 已创建，当前系统已完成套餐权限切换验证。等你接入真实商户参数后，这里才会变成真实扣款。`
-        );
-        router.refresh();
+      const payUrl = typeof result.payment_payload?.pay_url === "string" ? result.payment_payload.pay_url : "";
+      if (result.payment_ready && providerName === "alipay" && payUrl) {
+        window.location.href = payUrl;
+        return;
       } else {
         setMessage(
-          `订单 #${result.order.id} 已创建，支付方式：${providerName === "alipay" ? "支付宝" : "微信支付"}。当前已打通下单入口，但还没有接入真实商户参数，所以现在还不是实际扣款。`
+          `订单 #${result.order.id} 已创建，支付方式：${providerName === "alipay" ? "支付宝" : "微信支付"}。${result.payment_message}`
         );
         router.refresh();
       }

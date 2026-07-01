@@ -40,6 +40,10 @@ class BillingOrderRepository:
     def get_by_id(self, db: Session, order_id: int) -> BillingOrder | None:
         return db.get(BillingOrder, order_id)
 
+    def get_by_external_order_id(self, db: Session, external_order_id: str) -> BillingOrder | None:
+        stmt = select(BillingOrder).where(BillingOrder.external_order_id == external_order_id)
+        return db.scalar(stmt)
+
     def list_by_workspace(self, db: Session, *, workspace_id: int, limit: int = 20) -> list[BillingOrder]:
         stmt = (
             select(BillingOrder)

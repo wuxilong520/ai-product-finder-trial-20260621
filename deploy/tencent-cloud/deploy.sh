@@ -27,7 +27,7 @@ cleanup_legacy_runtime() {
   sudo docker rm -f "${FRONTEND_CONTAINER}" >/dev/null 2>&1 || true
   sudo docker rm -f "${NGINX_CONTAINER}" >/dev/null 2>&1 || true
 
-  sudo docker ps -a --format '{{.Names}}' | grep -E 'tencent-cloud_.*_1$|.*_tencent-cloud_.*_1$' | while read -r name; do
+  (sudo docker ps -a --format '{{.Names}}' | grep -E 'tencent-cloud_.*_1$|.*_tencent-cloud_.*_1$' || true) | while read -r name; do
     if [ -n "${name}" ] && [ "${name}" != "${BACKEND_CONTAINER}" ] && [ "${name}" != "${FRONTEND_CONTAINER}" ] && [ "${name}" != "${NGINX_CONTAINER}" ]; then
       echo "删除遗留容器 ${name}"
       sudo docker rm -f "${name}" >/dev/null 2>&1 || true

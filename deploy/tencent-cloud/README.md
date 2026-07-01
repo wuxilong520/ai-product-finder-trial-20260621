@@ -10,6 +10,7 @@
 - `.env.tencent.example`：腾讯云环境变量模板
 - `deploy.sh`：一键启动命令
 - `check.sh`：部署后真实自检命令
+- `repair-docker-runtime.sh`：腾讯云 Docker 构建异常时的修复命令
 
 ## 一、服务器准备
 
@@ -112,7 +113,29 @@ docker compose build
 - 前端 `/login` 是否正常
 - 当前运行容器携带的版本标签
 
-## 六、HTTPS 说明
+## 六、如果腾讯云 Docker 构建报错怎么办
+
+如果你看到这类真实报错：
+
+- `failed to export layer`
+- `failed to commit`
+- `containerd ... no such file or directory`
+
+不要再用旧命令反复重试，直接执行：
+
+```bash
+./repair-docker-runtime.sh
+./deploy.sh
+```
+
+这套修复会做几件事：
+
+- 清掉异常退出的临时构建容器
+- 清掉无用构建缓存
+- 清掉 containerd 的临时挂载残留
+- 尝试补装更稳定的 `buildx`
+
+## 七、HTTPS 说明
 
 这份配置先走 `80` 端口。
 
@@ -121,7 +144,7 @@ docker compose build
 - 用腾讯云负载均衡或 CDN 配 HTTPS
 - 或者你自己在 Nginx 上补证书配置
 
-## 七、当前设计
+## 八、当前设计
 
 前端不会再显示：
 
@@ -134,7 +157,7 @@ docker compose build
 
 前端现在只保留业务页面。
 
-## 八、以后怎么自动同步
+## 九、以后怎么自动同步
 
 仓库里已经预留了 GitHub Actions 自动部署文件：
 

@@ -33,41 +33,41 @@ function getLayoutText(lang: Language) {
       ] as const,
       sideNavMap: {
         products: {
-          title: "Products",
-          items: [
-            { label: "Product List", hint: "Browse all products", href: ROUTES.products },
-            { label: "Product Detail", hint: "Review one product", href: ROUTES.products },
-            { label: "Product Compare", hint: "Compare side by side", href: ROUTES.products },
-          ],
-        },
-        insights: {
-          title: "Insights",
-          items: [
-            { label: "Market Trends", hint: "See trend changes", href: ROUTES.insights },
-            { label: "Hot Categories", hint: "See growing categories", href: ROUTES.insights },
-            { label: "Best Sellers", hint: "See hot directions", href: ROUTES.insights },
-            { label: "Risk Alerts", hint: "See possible risks", href: ROUTES.insights },
-            { label: "Future Outlook", hint: "See future signals", href: ROUTES.insights },
-          ],
-        },
-        action: {
-          title: "Action Center",
-          items: [
-            { label: "Top 10 Picks", hint: "See priority picks", href: ROUTES.actionCenter },
-            { label: "Profit Review", hint: "Check margin room", href: ROUTES.actionCenter },
-            { label: "Supplier Picks", hint: "Review source options", href: ROUTES.actionCenter },
-            { label: "Price Compare", hint: "Compare price ranges", href: ROUTES.actionCenter },
-            { label: "Launch Queue", hint: "Track execution status", href: ROUTES.actionCenter },
-          ],
-        },
-        settings: {
-          title: "Account",
-          items: [
-            { label: "Store Links", hint: "Manage store info", href: ROUTES.settings },
-            { label: "Profile", hint: "View account details", href: ROUTES.settings },
-            { label: "Password", hint: "Change login password", href: ROUTES.settings },
-          ],
-        },
+        title: "Products",
+        items: [
+          { label: "Product List", hint: "Browse all products", href: ROUTES.products },
+          { label: "Product Detail", hint: "Review one product", href: ROUTES.products },
+          { label: "Product Compare", hint: "Compare side by side", href: ROUTES.productCompare },
+        ],
+      },
+      insights: {
+        title: "Insights",
+        items: [
+          { label: "Market Trends", hint: "See trend changes", href: ROUTES.insightsTrends },
+          { label: "Hot Categories", hint: "See growing categories", href: ROUTES.insightsCategories },
+          { label: "Best Sellers", hint: "See hot directions", href: ROUTES.insightsBestSellers },
+          { label: "Risk Alerts", hint: "See possible risks", href: ROUTES.insightsRisks },
+          { label: "Future Outlook", hint: "See future signals", href: ROUTES.insightsForecast },
+        ],
+      },
+      action: {
+        title: "Action Center",
+        items: [
+          { label: "Top 10 Picks", hint: "See priority picks", href: ROUTES.actionTopPicks },
+          { label: "Profit Review", hint: "Check margin room", href: ROUTES.actionProfit },
+          { label: "Supplier Picks", hint: "Review source options", href: ROUTES.actionSuppliers },
+          { label: "Price Compare", hint: "Compare price ranges", href: ROUTES.actionPriceCompare },
+          { label: "Launch Queue", hint: "Track execution status", href: ROUTES.actionLaunchQueue },
+        ],
+      },
+      settings: {
+        title: "Account",
+        items: [
+          { label: "Store Links", hint: "Manage store info", href: ROUTES.settingsStoreLinks },
+          { label: "Profile", hint: "View account details", href: ROUTES.settingsProfile },
+          { label: "Password", hint: "Change login password", href: ROUTES.settingsSecurity },
+        ],
+      },
       } as Record<Exclude<TopNavKey, "home">, { title: string; items: Array<{ label: string; hint: string; href: string }> }>,
       productName: "AI Commerce Platform",
       productDesc: "AI Business Decision Platform",
@@ -92,35 +92,35 @@ function getLayoutText(lang: Language) {
         items: [
           { label: "商品列表", hint: "查看全部商品", href: ROUTES.products },
           { label: "商品详情", hint: "查看单个商品表现", href: ROUTES.products },
-          { label: "商品对比", hint: "做横向比较", href: ROUTES.products },
+          { label: "商品对比", hint: "做横向比较", href: ROUTES.productCompare },
         ],
       },
       insights: {
         title: "市场洞察",
         items: [
-          { label: "市场趋势", hint: "看趋势变化", href: ROUTES.insights },
-          { label: "热门类目", hint: "看增长类目", href: ROUTES.insights },
-          { label: "爆款榜单", hint: "看热销方向", href: ROUTES.insights },
-          { label: "风险提示", hint: "看潜在风险", href: ROUTES.insights },
-          { label: "未来趋势预测", hint: "看未来判断", href: ROUTES.insights },
+          { label: "市场趋势", hint: "看趋势变化", href: ROUTES.insightsTrends },
+          { label: "热门类目", hint: "看增长类目", href: ROUTES.insightsCategories },
+          { label: "爆款榜单", hint: "看热销方向", href: ROUTES.insightsBestSellers },
+          { label: "风险提示", hint: "看潜在风险", href: ROUTES.insightsRisks },
+          { label: "未来趋势预测", hint: "看未来判断", href: ROUTES.insightsForecast },
         ],
       },
       action: {
         title: "商业执行",
         items: [
-          { label: "推荐商品TOP10", hint: "查看优先推荐", href: ROUTES.actionCenter },
-          { label: "利润分析", hint: "查看利润空间", href: ROUTES.actionCenter },
-          { label: "供应商推荐", hint: "查看可合作货源", href: ROUTES.actionCenter },
-          { label: "价格对比", hint: "比较价格区间", href: ROUTES.actionCenter },
-          { label: "上架执行队列", hint: "查看执行状态", href: ROUTES.actionCenter },
+          { label: "推荐商品TOP10", hint: "查看优先推荐", href: ROUTES.actionTopPicks },
+          { label: "利润分析", hint: "查看利润空间", href: ROUTES.actionProfit },
+          { label: "供应商推荐", hint: "查看可合作货源", href: ROUTES.actionSuppliers },
+          { label: "价格对比", hint: "比较价格区间", href: ROUTES.actionPriceCompare },
+          { label: "上架执行队列", hint: "查看执行状态", href: ROUTES.actionLaunchQueue },
         ],
       },
       settings: {
         title: "账户",
         items: [
-          { label: "店铺绑定", hint: "管理店铺资料", href: ROUTES.settings },
-          { label: "账号信息", hint: "查看账号信息", href: ROUTES.settings },
-          { label: "密码修改", hint: "修改登录密码", href: ROUTES.settings },
+          { label: "店铺绑定", hint: "管理店铺资料", href: ROUTES.settingsStoreLinks },
+          { label: "账号信息", hint: "查看账号信息", href: ROUTES.settingsProfile },
+          { label: "密码修改", hint: "修改登录密码", href: ROUTES.settingsSecurity },
         ],
       },
     } as Record<Exclude<TopNavKey, "home">, { title: string; items: Array<{ label: string; hint: string; href: string }> }>,

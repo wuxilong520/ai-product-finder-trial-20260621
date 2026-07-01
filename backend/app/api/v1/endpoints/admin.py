@@ -77,6 +77,12 @@ def _provider_status(env_key: str) -> str:
     return "OK" if bool((os.getenv(env_key) or "").strip()) else "FAIL"
 
 
+def _as_utc_datetime(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
+
+
 @router.get("/admin/overview")
 def get_admin_overview(
     db: Session = Depends(db_session),
@@ -334,8 +340,12 @@ def get_admin_revenue(
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     paid_orders = [item for item in orders if item.status == "paid"]
-    today_revenue = sum(item.amount_cents for item in paid_orders if item.updated_at >= today_start)
-    month_revenue = sum(item.amount_cents for item in paid_orders if item.updated_at >= month_start)
+    today_revenue = sum(
+        item.amount_cents for item in paid_orders if _as_utc_datetime(item.updated_at) >= today_start
+    )
+    month_revenue = sum(
+        item.amount_cents for item in paid_orders if _as_utc_datetime(item.updated_at) >= month_start
+    )
     total_revenue = sum(item.amount_cents for item in paid_orders)
 
     return {

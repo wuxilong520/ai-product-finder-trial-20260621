@@ -38,11 +38,11 @@ export function PricingCards({
       if (result.payment_ready) {
         await confirmBillingOrder(result.order.id, token);
         setMessage(
-          `订单 #${result.order.id} 已创建并已模拟确认支付，套餐权限已经切换。下一步接入真实商户参数后，这里就会变成真实扣款。`
+          `订单 #${result.order.id} 已创建，当前系统已完成套餐权限切换验证。等你接入真实商户参数后，这里才会变成真实扣款。`
         );
       } else {
         setMessage(
-          `订单 #${result.order.id} 已创建，支付方式：${providerName === "alipay" ? "支付宝" : "微信支付"}。当前已打通下单入口，接入商户参数后即可发起真实扣款。`
+          `订单 #${result.order.id} 已创建，支付方式：${providerName === "alipay" ? "支付宝" : "微信支付"}。当前已打通下单入口，但还没有接入真实商户参数，所以现在还不是实际扣款。`
         );
       }
     } catch (err) {

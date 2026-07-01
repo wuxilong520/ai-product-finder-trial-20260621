@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
+import { UpgradeEntry } from "@/components/billing/upgrade-entry";
 import { ExplainPanel } from "@/components/ExplainPanel";
 import { ResultPanel } from "@/components/ResultPanel";
 import { TaskStatus } from "@/components/TaskStatus";
@@ -80,8 +81,10 @@ export default function TaskDetailPage() {
           <div>
             <div className="text-xs uppercase tracking-[0.24em] text-white/40">Task Detail</div>
             <h1 className="mt-2 text-3xl font-bold text-white">任务详情 #{taskId}</h1>
+            <p className="mt-2 text-sm text-white/55">如果当前任务需要更高套餐能力，你可以直接从这里去充值 / 升级。</p>
           </div>
           <div className="flex items-center gap-3">
+            <UpgradeEntry label="去充值 / 升级" compact />
             {data?.task.status === "failed" ? (
               <Button onClick={handleRetry} disabled={retrying}>
                 {retrying ? "重试中..." : "重试任务"}

@@ -5,11 +5,13 @@ import Link from "next/link";
 import { Bell, ChevronDown, ChevronRight, Crown, Home, LineChart, Search, Settings, ShoppingBag, Sparkles, WalletCards } from "lucide-react";
 import { usePathname } from "next/navigation";
 
+import { FeatureGateModal } from "@/components/billing/feature-gate-modal";
 import { UserAvatarMenu } from "@/components/layouts/user-avatar-menu";
 import { ROUTES } from "@/config/routes";
 import { LanguageToggle } from "@/design-system/components/LanguageToggle";
 import { Language } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 type LayoutActivePath = "home" | "products" | "insights" | "action" | "settings";
 
@@ -147,6 +149,7 @@ function getTopNavKey(pathname: string | null | undefined): TopNavKey {
 
 export function NewDashboardLayout({ children, rightRail, lang }: DashboardLayoutProps) {
   const pathname = usePathname();
+  const [noticeOpen, setNoticeOpen] = useState(false);
   const topNavKey = getTopNavKey(pathname);
   const showSideNav = topNavKey !== "home";
   const layoutText = getLayoutText(lang);
@@ -156,6 +159,14 @@ export function NewDashboardLayout({ children, rightRail, lang }: DashboardLayou
 
   return (
     <div className="min-h-screen bg-[#0B1220] text-white">
+      <FeatureGateModal
+        open={noticeOpen}
+        onClose={() => setNoticeOpen(false)}
+        title="消息中心即将开放"
+        description="这个入口先不做假功能。你确认后会先跳去套餐页，后面消息提醒、订单提醒、权限提醒都会统一接到这里。"
+        requiredPlan="free 也可访问，当前先做入口收口"
+        confirmLabel="先去看套餐"
+      />
       <header className="fixed inset-x-0 top-0 z-40 h-16 border-b border-white/6 bg-[rgba(11,18,32,0.88)] backdrop-blur-xl">
         <div className="flex h-full items-center justify-between gap-6 px-4 md:px-6 xl:px-8">
           <div className="flex min-w-0 items-center gap-4">
@@ -207,7 +218,12 @@ export function NewDashboardLayout({ children, rightRail, lang }: DashboardLayou
               <span>升级 / 充值</span>
             </Link>
             <UserAvatarMenu />
-            <button className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-[#111A2E] text-white/70">
+            <button
+              type="button"
+              onClick={() => setNoticeOpen(true)}
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-[#111A2E] text-white/70 transition hover:border-white/20 hover:bg-white/[0.06]"
+              aria-label="消息中心"
+            >
               <Bell className="h-4 w-4" />
             </button>
           </div>

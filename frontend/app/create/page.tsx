@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { UpgradeEntry } from "@/components/billing/upgrade-entry";
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
 import { Button, Card, Input } from "@/design-system/components";
 import { taskDetailRoute } from "@/config/routes";
@@ -48,11 +49,16 @@ export default function CreateTaskPage() {
     <XBorderLayout lang={"zh" as Language} activePath="action">
       <div className="space-y-6">
         <Card className="border-white/8 bg-[#111A2E] p-6">
-          <div className="text-xs uppercase tracking-[0.24em] text-white/40">Create Task</div>
-          <h1 className="mt-2 text-3xl font-bold text-white">创建一个新的 AI 决策任务</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-white/55">
-            提交后不会同步等结果，而是直接进入任务详情页，由系统后台继续跑。
-          </p>
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <div className="text-xs uppercase tracking-[0.24em] text-white/40">Create Task</div>
+              <h1 className="mt-2 text-3xl font-bold text-white">创建一个新的 AI 决策任务</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-white/55">
+                提交后不会同步等结果，而是直接进入任务详情页，由系统后台继续跑。
+              </p>
+            </div>
+            <UpgradeEntry label="去充值 / 升级" compact />
+          </div>
         </Card>
 
         <Card className="border-white/8 bg-[#111A2E] p-6">

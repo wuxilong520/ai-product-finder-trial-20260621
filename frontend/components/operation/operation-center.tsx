@@ -73,8 +73,9 @@ export function OperationCenter({ lang }: { lang: Language }) {
         open={gateOpen}
         onClose={() => setGateOpen(false)}
         title="这个功能需要开通更高权限"
-        description="当前这一键加入店铺还没有对接你的真实店铺系统。你可以先升级套餐，后面接入真实店铺后就能直接使用。"
+        description="当前这一键加入店铺还没有对接你的真实店铺系统。你确认后会跳到充值页面；如果不确认，就继续留在当前页面。"
         requiredPlan="pro / enterprise"
+        confirmLabel="确认并去开通"
       />
       <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
         <CardHeader>

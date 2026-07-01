@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LogOut, Settings, User as UserIcon } from "lucide-react";
+import { Crown, LogOut, Settings, User as UserIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ROUTES } from "@/config/routes";
@@ -112,6 +112,14 @@ export function UserAvatarMenu() {
             >
               <UserIcon className="h-4 w-4" />
               <span>个人设置</span>
+            </Link>
+            <Link
+              href={ROUTES.pricing}
+              onClick={handleMenuNavigate}
+              className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-[#D8E3FF] transition hover:bg-[#4F7CFF]/12 hover:text-white"
+            >
+              <Crown className="h-4 w-4" />
+              <span>套餐与充值</span>
             </Link>
             <Link
               href={ROUTES.settings}

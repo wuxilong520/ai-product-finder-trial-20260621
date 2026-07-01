@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 
+import { ROUTES } from "@/config/routes";
 import { Button, Modal, ModalBody, ModalDescription, ModalFooter, ModalHeader, ModalTitle } from "@/design-system/components";
 
 type FeatureGateModalProps = {
@@ -10,6 +11,8 @@ type FeatureGateModalProps = {
   title?: string;
   description?: string;
   requiredPlan?: string;
+  confirmLabel?: string;
+  targetHref?: string;
 };
 
 export function FeatureGateModal({
@@ -18,12 +21,14 @@ export function FeatureGateModal({
   title = "当前功能需要升级套餐",
   description = "开通后才能继续使用这个功能。你确认后会跳到套餐与充值页面，不确认就留在当前页面。",
   requiredPlan = "starter / pro / enterprise",
+  confirmLabel = "去开通",
+  targetHref = ROUTES.pricing,
 }: FeatureGateModalProps) {
   const router = useRouter();
 
   function handleUpgrade() {
     onClose();
-    router.push("/pricing");
+    router.push(targetHref);
   }
 
   return (
@@ -42,7 +47,7 @@ export function FeatureGateModal({
           暂不升级
         </Button>
         <Button onClick={handleUpgrade}>
-          去开通
+          {confirmLabel}
         </Button>
       </ModalFooter>
     </Modal>

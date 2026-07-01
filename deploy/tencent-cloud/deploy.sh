@@ -15,6 +15,8 @@ FRONTEND_IMAGE="tencent-cloud_frontend"
 NGINX_IMAGE="docker.m.daocloud.io/library/nginx:1.27-alpine"
 APP_LABEL="ai-product-finder-tencent"
 DEPLOY_COMMIT="$(git -C "${ROOT_DIR}" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+BUILD_BACKEND="${BUILD_BACKEND:-1}"
+BUILD_FRONTEND="${BUILD_FRONTEND:-1}"
 
 if [ ! -f "${ENV_FILE}" ]; then
   echo "缺少 ${ENV_FILE}，请先从 .env.tencent.example 复制一份并填好真实值"
@@ -48,26 +50,34 @@ set +a
 
 cleanup_legacy_runtime
 
-echo "开始构建后端镜像..."
-sudo docker build \
-  --label "app=${APP_LABEL}" \
-  --label "role=backend" \
-  --label "deploy_commit=${DEPLOY_COMMIT}" \
-  -t "${BACKEND_IMAGE}" \
-  -f "${SCRIPT_DIR}/backend.Dockerfile" \
-  "${ROOT_DIR}"
+if [ "${BUILD_BACKEND}" = "1" ]; then
+  echo "开始构建后端镜像..."
+  sudo docker build \
+    --label "app=${APP_LABEL}" \
+    --label "role=backend" \
+    --label "deploy_commit=${DEPLOY_COMMIT}" \
+    -t "${BACKEND_IMAGE}" \
+    -f "${SCRIPT_DIR}/backend.Dockerfile" \
+    "${ROOT_DIR}"
+else
+  echo "跳过后端镜像重建，继续复用当前后端镜像"
+fi
 
-echo "开始构建前端镜像..."
-sudo docker build \
-  --label "app=${APP_LABEL}" \
-  --label "role=frontend" \
-  --label "deploy_commit=${DEPLOY_COMMIT}" \
-  --build-arg NEXT_PUBLIC_API_BASE="${NEXT_PUBLIC_API_BASE:-}" \
-  --build-arg NEXT_PUBLIC_API_BASE_URL="${NEXT_PUBLIC_API_BASE_URL:-}" \
-  --build-arg NEXT_PUBLIC_WS_URL="${NEXT_PUBLIC_WS_URL:-}" \
-  -t "${FRONTEND_IMAGE}" \
-  -f "${SCRIPT_DIR}/frontend.Dockerfile" \
-  "${ROOT_DIR}"
+if [ "${BUILD_FRONTEND}" = "1" ]; then
+  echo "开始构建前端镜像..."
+  sudo docker build \
+    --label "app=${APP_LABEL}" \
+    --label "role=frontend" \
+    --label "deploy_commit=${DEPLOY_COMMIT}" \
+    --build-arg NEXT_PUBLIC_API_BASE="${NEXT_PUBLIC_API_BASE:-}" \
+    --build-arg NEXT_PUBLIC_API_BASE_URL="${NEXT_PUBLIC_API_BASE_URL:-}" \
+    --build-arg NEXT_PUBLIC_WS_URL="${NEXT_PUBLIC_WS_URL:-}" \
+    -t "${FRONTEND_IMAGE}" \
+    -f "${SCRIPT_DIR}/frontend.Dockerfile" \
+    "${ROOT_DIR}"
+else
+  echo "跳过前端镜像重建，继续复用当前前端镜像"
+fi
 
 sudo docker network inspect "${NETWORK_NAME}" >/dev/null 2>&1 || sudo docker network create "${NETWORK_NAME}"
 

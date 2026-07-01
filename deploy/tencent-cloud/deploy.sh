@@ -113,8 +113,10 @@ sudo docker run -d \
   --label "app=${APP_LABEL}" \
   --label "role=nginx" \
   --label "deploy_commit=${DEPLOY_COMMIT}" \
+  -e MAIN_HOST="${MAIN_HOST:-_}" \
+  -e ADMIN_HOST="${ADMIN_HOST:-admin.local}" \
   -p 80:80 \
-  -v "${SCRIPT_DIR}/nginx.conf:/etc/nginx/conf.d/default.conf:ro" \
+  -v "${SCRIPT_DIR}/nginx.conf:/etc/nginx/templates/default.conf.template:ro" \
   "${NGINX_IMAGE}" >/dev/null
 
 echo "等待服务启动..."

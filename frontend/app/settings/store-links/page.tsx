@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
+import { StoreLinkGate } from "@/components/settings/store-link-gate";
 import { HonestStatusPage } from "@/components/shared/honest-status-page";
 import { ROUTES } from "@/config/routes";
 import { TOKEN_KEY } from "@/lib/auth";
@@ -22,6 +23,8 @@ export default async function StoreLinksPage() {
       currentValue="查看账号订阅和后续接入准备状态"
       nextLabel="后续补齐"
       nextValue="接入 Amazon / Shopify / 1688 等真实店铺连接"
-    />
+    >
+      <StoreLinkGate />
+    </HonestStatusPage>
   );
 }

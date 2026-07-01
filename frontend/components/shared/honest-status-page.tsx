@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import { UpgradeEntry } from "@/components/billing/upgrade-entry";
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
@@ -19,10 +20,11 @@ type HonestStatusPageProps = {
   currentValue: string;
   nextLabel: string;
   nextValue: string;
+  children?: ReactNode;
 };
 
 export function HonestStatusPage(props: HonestStatusPageProps) {
-  const { lang, activePath, title, description, statusLabel, statusValue, currentLabel, currentValue, nextLabel, nextValue } = props;
+  const { lang, activePath, title, description, statusLabel, statusValue, currentLabel, currentValue, nextLabel, nextValue, children } = props;
 
   return (
     <XBorderLayout lang={lang} activePath={activePath}>
@@ -58,6 +60,7 @@ export function HonestStatusPage(props: HonestStatusPageProps) {
             <Button asChild><Link href={ROUTES.createTask}>去发起任务</Link></Button>
             <Button asChild variant="outline"><Link href={ROUTES.tasks}>查看任务结果</Link></Button>
             <Button asChild variant="secondary"><Link href={ROUTES.pricing}>查看套餐权限</Link></Button>
+            {children}
           </CardContent>
         </Card>
       </div>

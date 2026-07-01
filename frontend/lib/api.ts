@@ -69,7 +69,7 @@ export function isAuthError(error: unknown) {
   if (!(error instanceof Error)) {
     return false;
   }
-  return /token|登录|认证|unauthorized|401|未登录|失效|无效/i.test(error.message);
+  return /token|登录|认证|unauthorized|forbidden|401|403|未登录|失效|无效|权限/i.test(error.message);
 }
 
 function buildAuthHeaders(token?: string) {

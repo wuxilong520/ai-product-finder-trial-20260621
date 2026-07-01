@@ -7,6 +7,7 @@ import { UpgradeEntry } from "@/components/billing/upgrade-entry";
 import { ROUTES } from "@/config/routes";
 import { TOKEN_KEY } from "@/lib/auth";
 import { getBillingOrders, getCurrentBillingStatus } from "@/lib/api/billing";
+import { isAuthError } from "@/lib/api";
 import { getServerLanguage } from "@/lib/i18n-server";
 
 export default async function SettingsPage() {
@@ -56,10 +57,19 @@ export default async function SettingsPage() {
     redirect(ROUTES.login);
   }
 
-  const [billing, orders] = await Promise.all([
-    getCurrentBillingStatus(token),
-    getBillingOrders(token),
-  ]);
+  let billing;
+  let orders;
+  try {
+    [billing, orders] = await Promise.all([
+      getCurrentBillingStatus(token),
+      getBillingOrders(token),
+    ]);
+  } catch (error) {
+    if (isAuthError(error)) {
+      redirect(ROUTES.login);
+    }
+    throw error;
+  }
 
   return (
     <XBorderLayout lang={lang} activePath="settings">

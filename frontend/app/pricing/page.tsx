@@ -6,6 +6,7 @@ import { PricingCards } from "@/components/billing/pricing-cards";
 import { UpgradeEntry } from "@/components/billing/upgrade-entry";
 import { TOKEN_KEY } from "@/lib/auth";
 import { getBillingPlans, getCurrentBillingStatus } from "@/lib/api/billing";
+import { isAuthError } from "@/lib/api";
 import { getServerLanguage } from "@/lib/i18n-server";
 
 export default async function PricingPage() {
@@ -13,7 +14,14 @@ export default async function PricingPage() {
   const token = (await cookies()).get(TOKEN_KEY)?.value || "";
   const [{ plans }, currentPlan] = await Promise.all([
     getBillingPlans(),
-    token ? getCurrentBillingStatus(token) : Promise.resolve(null),
+    token
+      ? getCurrentBillingStatus(token).catch((error) => {
+          if (isAuthError(error)) {
+            return null;
+          }
+          throw error;
+        })
+      : Promise.resolve(null),
   ]);
 
   return (

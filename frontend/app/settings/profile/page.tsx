@@ -6,7 +6,7 @@ import { XBorderLayout } from "@/components/layouts/xborder-layout";
 import { Card, CardContent, CardHeader, CardTitle, InfoTile, Button } from "@/design-system/components";
 import { ROUTES } from "@/config/routes";
 import { TOKEN_KEY } from "@/lib/auth";
-import { getCurrentUser } from "@/lib/api";
+import { getCurrentUser, isAuthError } from "@/lib/api";
 import { getCurrentBillingStatus, getBillingOrders } from "@/lib/api/billing";
 import { getServerLanguage } from "@/lib/i18n-server";
 
@@ -14,11 +14,21 @@ export default async function SettingsProfilePage() {
   const token = (await cookies()).get(TOKEN_KEY)?.value || "";
   if (!token) redirect(ROUTES.login);
   const lang = await getServerLanguage();
-  const [user, billing, orders] = await Promise.all([
-    getCurrentUser(token),
-    getCurrentBillingStatus(token),
-    getBillingOrders(token),
-  ]);
+  let user;
+  let billing;
+  let orders;
+  try {
+    [user, billing, orders] = await Promise.all([
+      getCurrentUser(token),
+      getCurrentBillingStatus(token),
+      getBillingOrders(token),
+    ]);
+  } catch (error) {
+    if (isAuthError(error)) {
+      redirect(ROUTES.login);
+    }
+    throw error;
+  }
 
   return (
     <XBorderLayout lang={lang} activePath="settings">

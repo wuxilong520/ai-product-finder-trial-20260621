@@ -1,15 +1,15 @@
 # 腾讯云部署包
 
-这个目录是给腾讯云服务器直接用的。
+这个目录是给腾讯云服务器直接用的。现在已经统一为**单一生产部署入口**，后面只走这一套。
 
 ## 目录说明
 
-- `docker-compose.yml`：三服务启动文件
 - `frontend.Dockerfile`：前端镜像构建
 - `backend.Dockerfile`：后端镜像构建
 - `nginx.conf`：前后端反向代理
 - `.env.tencent.example`：腾讯云环境变量模板
 - `deploy.sh`：一键启动命令
+- `check.sh`：部署后真实自检命令
 
 ## 一、服务器准备
 
@@ -73,6 +73,7 @@ chmod +x deploy.sh
 - 重新构建后端镜像
 - 重新构建前端镜像
 - 按固定容器名重启公网服务
+- 自动执行真实自检
 
 这样可以避开旧版 `docker-compose` 在腾讯云机器上的兼容问题。
 
@@ -97,13 +98,19 @@ docker compose build
 
 ## 五、部署完成后检查
 
-前端：
+标准检查命令：
 
-- `http://your-domain.com/login`
+```bash
+./check.sh
+```
 
-后端：
+这一步会真实检查：
 
-- `http://api.your-domain.com/health`
+- 三个核心容器是否在运行
+- 是否还有旧版遗留容器
+- 后端 `/health` 是否正常
+- 前端 `/login` 是否正常
+- 当前运行容器携带的版本标签
 
 ## 六、HTTPS 说明
 
@@ -145,8 +152,9 @@ docker compose build
 
 - GitHub 仓库会先更新
 - Actions 会自动 SSH 到腾讯云
-- 服务器会自动拉到最新 `main`
+- 服务器会自动切到最新 `main`
 - 然后自动执行 `deploy/tencent-cloud/deploy.sh`
+- 最后自动执行 `deploy/tencent-cloud/check.sh`
 
 也就是说，后面要保持“仓库 + 公网”同步，标准动作就是：
 

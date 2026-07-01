@@ -62,6 +62,7 @@ git push github main
 
 echo "${LOG_PREFIX} run production deploy"
 /usr/bin/env bash "${REPO_DIR}/deploy/tencent-cloud/deploy.sh"
+/usr/bin/env bash "${REPO_DIR}/deploy/tencent-cloud/check.sh"
 
 echo "${REMOTE_COMMIT}" > "${LAST_DEPLOYED_FILE}"
 echo "${CURRENT_ENV_HASH}" > "${LAST_ENV_HASH_FILE}"

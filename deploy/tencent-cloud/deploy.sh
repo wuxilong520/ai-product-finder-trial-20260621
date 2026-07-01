@@ -121,10 +121,6 @@ sudo docker run -d \
 echo "等待服务启动..."
 sleep 5
 
-echo "当前容器状态："
-sudo docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
-
-echo "健康检查："
-curl -fsS http://127.0.0.1/health
-curl -fsS http://127.0.0.1/login >/dev/null
+echo "执行部署后自检..."
+bash "${SCRIPT_DIR}/check.sh"
 echo "部署完成，当前版本提交：${DEPLOY_COMMIT}"

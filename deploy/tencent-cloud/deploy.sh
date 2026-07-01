@@ -6,6 +6,10 @@ ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 ENV_FILE="${SCRIPT_DIR}/.env.tencent"
 DB_FILE="${ROOT_DIR}/backend/product_mvp.db"
 DB_BACKUP_DIR="${ROOT_DIR}/backend/db_backups"
+RUNTIME_DIR="${ROOT_DIR}_runtime"
+STATE_DIR="${RUNTIME_DIR}/state"
+LAST_DEPLOYED_FILE="${STATE_DIR}/last_deployed_commit"
+LAST_ENV_HASH_FILE="${STATE_DIR}/last_env_hash"
 NETWORK_NAME="tencent-cloud_default"
 BACKEND_CONTAINER="tencent-cloud_backend_1"
 FRONTEND_CONTAINER="tencent-cloud_frontend_1"
@@ -67,6 +71,14 @@ cleanup_legacy_runtime() {
   done
 
   sudo docker image prune -f >/dev/null 2>&1 || true
+}
+
+update_deploy_state() {
+  mkdir -p "${STATE_DIR}"
+  echo "${DEPLOY_COMMIT}" > "${LAST_DEPLOYED_FILE}"
+  if [ -f "${ENV_FILE}" ]; then
+    shasum -a 256 "${ENV_FILE}" | awk '{print $1}' > "${LAST_ENV_HASH_FILE}"
+  fi
 }
 
 mkdir -p "${DB_BACKUP_DIR}"
@@ -167,4 +179,5 @@ sleep 5
 
 echo "执行部署后自检..."
 bash "${SCRIPT_DIR}/check.sh"
+update_deploy_state
 echo "部署完成，当前版本提交：${DEPLOY_COMMIT}"

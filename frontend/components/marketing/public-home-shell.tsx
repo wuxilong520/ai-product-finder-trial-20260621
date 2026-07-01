@@ -21,7 +21,7 @@ export function PublicHomeShell({ lang }: { lang: Language }) {
               <Sparkles className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-sm text-app-text-muted">XBorder AI</p>
+              <p className="text-sm text-app-text-muted">商航AI</p>
               <p className="text-base font-semibold text-white">跨境商业决策平台</p>
             </div>
           </Link>

@@ -5,6 +5,8 @@ export const ROUTES = {
   forgotPassword: "/forgot-password",
   admin: "/admin",
   systemAdmin: "/system/admin",
+  systemAdminUsers: "/system/admin/users",
+  systemAdminRevenue: "/system/admin/revenue",
   pricing: "/pricing",
   terms: "/terms",
   privacy: "/privacy",

@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
+import time
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,12 +23,13 @@ from app.billing import order as billing_order  # noqa: F401
 from app.services.auth import auth_service
 from app.services.task_status import task_status_service
 from app.workspace.service import workspace_service
-from app.models import analysis, auth_identity, business_truth, category, crawl_run, decision_recommendation, market_intelligence, platform, product, product_intelligence, supplier_match, user  # noqa: F401
+from app.models import analysis, auth_identity, business_truth, category, crawl_run, decision_recommendation, market_intelligence, platform, product, product_intelligence, request_metric, supplier_match, user  # noqa: F401
 from app.workspace import model as workspace_model  # noqa: F401
 from app.api_key import model as api_key_model  # noqa: F401
 from app.quota import model as quota_model  # noqa: F401
 from app.billing import subscription as billing_subscription  # noqa: F401
 from app.ws_manager import task_ws_manager
+from app.models.request_metric import RequestMetricRecord
 
 
 @asynccontextmanager
@@ -76,6 +78,32 @@ app.add_middleware(
 )
 
 app.include_router(api_router)
+
+
+@app.middleware("http")
+async def record_request_metric(request, call_next):
+    started_at = time.perf_counter()
+    response = await call_next(request)
+    duration_ms = int((time.perf_counter() - started_at) * 1000)
+
+    if request.url.path.startswith("/api/") or request.url.path == "/health":
+        db = SessionLocal()
+        try:
+            db.add(
+                RequestMetricRecord(
+                    path=request.url.path,
+                    method=request.method,
+                    status_code=response.status_code,
+                    duration_ms=duration_ms,
+                )
+            )
+            db.commit()
+        except Exception:
+            db.rollback()
+        finally:
+            db.close()
+
+    return response
 
 
 @app.get("/health")

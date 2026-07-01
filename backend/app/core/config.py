@@ -9,7 +9,7 @@ PROJECT_ROOT = BACKEND_DIR.parent
 
 
 class Settings(BaseSettings):
-    app_name: str = "Cross Border Product MVP"
+    app_name: str = "商航AI"
     app_env: str = os.getenv("APP_ENV", "development")
     app_debug: bool = os.getenv("APP_DEBUG", "true").lower() == "true"
     api_v1_prefix: str = "/api/v1"

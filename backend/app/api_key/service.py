@@ -25,5 +25,17 @@ class ApiKeyService:
         stmt = select(ApiKeyRecord).where(ApiKeyRecord.key == raw_key)
         return db.scalar(stmt)
 
+    def list_by_user(self, db: Session, *, user_id: int) -> list[ApiKeyRecord]:
+        stmt = select(ApiKeyRecord).where(ApiKeyRecord.user_id == user_id).order_by(ApiKeyRecord.id.desc())
+        return list(db.scalars(stmt))
+
+    def reset_user_keys(self, db: Session, *, workspace_id: int, user_id: int) -> ApiKeyRecord:
+        records = self.list_by_user(db, user_id=user_id)
+        for item in records:
+            item.status = "revoked"
+            db.add(item)
+        db.commit()
+        return self.create_key(db, workspace_id=workspace_id, user_id=user_id)
+
 
 api_key_service = ApiKeyService()

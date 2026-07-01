@@ -21,9 +21,9 @@ export function AdminEntrancePage({
           <CardContent className="p-0">
             <div className="inline-flex items-center gap-2 rounded-full border border-app-border bg-white/8 px-4 py-2 text-sm text-app-brand-secondary">
               <ShieldCheck className="h-4 w-4" />
-              独立后台入口
+              商航AI独立后台入口
             </div>
-            <h1 className="mt-5 text-4xl font-semibold tracking-tight text-white">运营后台 / Admin Console</h1>
+            <h1 className="mt-5 text-4xl font-semibold tracking-tight text-white">商航AI运营管理后台</h1>
             <p className="mt-4 max-w-3xl text-sm leading-8 text-app-text-secondary">
               这个网址只给你自己和管理员看，用来查看真实用户、工作区、任务、订单、套餐和额度。普通用户继续走主站，不会进这里。
             </p>

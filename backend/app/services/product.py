@@ -256,6 +256,7 @@ class ProductService:
             except AppError as exc:
                 if exc.stage != "ai":
                     raise
+                log_info(f"ANALYZE_FALLBACK | url={url} | title={title}")
                 result = self._build_ai_fallback_result(extracted, lang)
 
             await task_status_service.update(

@@ -78,6 +78,7 @@ class UserRead(BaseModel):
     workspace_id: int | None = None
     is_active: bool
     is_superuser: bool
+    last_login_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 

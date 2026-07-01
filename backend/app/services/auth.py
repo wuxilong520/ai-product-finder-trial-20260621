@@ -121,6 +121,8 @@ class AuthService:
             return None
         if not verify_password(password, user.password_hash):
             return None
+        user.last_login_at = datetime.now(UTC)
+        user_repository.save(db, user)
         return user
 
     def login_with_code(self, db: Session, email: str, code: str):
@@ -128,6 +130,8 @@ class AuthService:
         user = user_repository.get_by_email(db, email)
         if not user:
             raise AppError("USER_NOT_FOUND", "这个邮箱还没有注册，请先注册", "auth", 404)
+        user.last_login_at = datetime.now(UTC)
+        user_repository.save(db, user)
         return user
 
     def reset_password(self, db: Session, email: str, code: str, new_password: str):

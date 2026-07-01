@@ -4,7 +4,7 @@ export const LANGUAGE_COOKIE = "cbp_lang";
 
 export const messages = {
   zh: {
-    siteTitle: "XBorder AI 决策流系统",
+    siteTitle: "商航AI",
     siteDescription: "面向跨境电商的 AI 选品与决策工作台",
     navProducts: "商品列表",
     navCrawl: "商品采集",
@@ -448,7 +448,7 @@ export const messages = {
     loadingPageText: "正在加载页面...",
   },
   en: {
-    siteTitle: "XBorder AI Decision Flow",
+    siteTitle: "ShangHang AI",
     siteDescription: "AI product intelligence workspace for cross-border commerce",
     navProducts: "Products",
     navCrawl: "Extract",

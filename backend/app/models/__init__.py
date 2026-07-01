@@ -11,6 +11,7 @@ from app.models.market_intelligence import MarketIntelligence
 from app.models.platform import Platform
 from app.models.product import Product, ProductImage, ProductKeyword, SourcingLink
 from app.models.product_intelligence import ProductIntelligence
+from app.models.request_metric import RequestMetricRecord
 from app.models.supplier_match import SupplierMatch
 from app.models.user import User
 
@@ -32,6 +33,7 @@ __all__ = [
     "ProductImage",
     "ProductIntelligence",
     "ProductKeyword",
+    "RequestMetricRecord",
     "SourcingLink",
     "SupplierMatch",
     "SyncJobRecord",

@@ -69,11 +69,31 @@ chmod +x deploy.sh
 这份脚本会自动做 4 件事：
 
 - 先备份当前 SQLite 数据库
+- 先清理旧版 `docker-compose` 留下的脏容器
 - 重新构建后端镜像
 - 重新构建前端镜像
 - 按固定容器名重启公网服务
 
 这样可以避开旧版 `docker-compose` 在腾讯云机器上的兼容问题。
+
+### 重要规则
+
+以后腾讯云**不要再手动执行**：
+
+```bash
+docker-compose up
+docker-compose build
+docker compose up
+docker compose build
+```
+
+统一只执行：
+
+```bash
+./deploy.sh
+```
+
+因为当前腾讯云机器上的旧 `docker-compose` 和新 Docker 版本混用时，容易留下脏容器状态，导致前端重建失败。
 
 ## 五、部署完成后检查
 

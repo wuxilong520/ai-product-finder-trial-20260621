@@ -5,7 +5,7 @@ from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 
 from app.billing.alipay_gateway import alipay_gateway
-from app.api.deps import db_session, get_request_context
+from app.api.deps import db_session, get_request_context_no_quota
 from app.billing.plan import PLANS
 from app.billing.service import billing_service
 from app.schemas.billing import BillingCheckoutRequest, BillingCheckoutResponse, BillingConfirmPaymentRequest, BillingOrderRead
@@ -33,7 +33,7 @@ def get_billing_plans():
 @router.get("/billing/current")
 def get_current_billing_status(
     db: Session = Depends(db_session),
-    auth_context=Depends(get_request_context),
+    auth_context=Depends(get_request_context_no_quota),
 ):
     subscription = billing_service.get_or_create_subscription(db, workspace_id=auth_context.workspace_id)
     return {
@@ -48,7 +48,7 @@ def get_current_billing_status(
 def create_checkout_order(
     payload: BillingCheckoutRequest,
     db: Session = Depends(db_session),
-    auth_context=Depends(get_request_context),
+    auth_context=Depends(get_request_context_no_quota),
 ):
     order, payment_ready, payment_payload = billing_service.create_checkout_order(
         db,
@@ -68,7 +68,7 @@ def create_checkout_order(
 @router.get("/billing/orders")
 def get_billing_orders(
     db: Session = Depends(db_session),
-    auth_context=Depends(get_request_context),
+    auth_context=Depends(get_request_context_no_quota),
 ):
     orders = billing_service.list_orders(db, workspace_id=auth_context.workspace_id)
     return {"orders": [BillingOrderRead.model_validate(item).model_dump(mode="json") for item in orders]}
@@ -79,7 +79,7 @@ def confirm_billing_order(
     order_id: int,
     payload: BillingConfirmPaymentRequest,
     db: Session = Depends(db_session),
-    auth_context=Depends(get_request_context),
+    auth_context=Depends(get_request_context_no_quota),
 ):
     order = billing_service.mark_order_paid(db, order_id=order_id)
     if order.workspace_id != auth_context.workspace_id:
@@ -96,7 +96,7 @@ def fail_billing_order(
     order_id: int,
     payload: BillingConfirmPaymentRequest,
     db: Session = Depends(db_session),
-    auth_context=Depends(get_request_context),
+    auth_context=Depends(get_request_context_no_quota),
 ):
     order = billing_service.mark_order_failed(db, order_id=order_id, note=payload.note)
     if order.workspace_id != auth_context.workspace_id:

@@ -49,6 +49,34 @@ def get_request_context(
     db: Session = Depends(db_session),
     authorization: str | None = Header(default=None),
 ) -> RequestAuthContext:
+    return _build_request_context(
+        current_user=current_user,
+        db=db,
+        authorization=authorization,
+        consume_api_quota=True,
+    )
+
+
+def get_request_context_no_quota(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(db_session),
+    authorization: str | None = Header(default=None),
+) -> RequestAuthContext:
+    return _build_request_context(
+        current_user=current_user,
+        db=db,
+        authorization=authorization,
+        consume_api_quota=False,
+    )
+
+
+def _build_request_context(
+    *,
+    current_user: User,
+    db: Session,
+    authorization: str | None,
+    consume_api_quota: bool,
+) -> RequestAuthContext:
     workspace = workspace_service.get_or_create_default(db, current_user)
     api_key_id = None
     if authorization and authorization.startswith("Bearer cbp_"):
@@ -62,7 +90,8 @@ def get_request_context(
     from app.billing.service import billing_service
 
     billing_service.apply_plan_quota(db, workspace_id=workspace.id)
-    quota_service.consume_api(db, workspace_id=workspace.id)
+    if consume_api_quota:
+        quota_service.consume_api(db, workspace_id=workspace.id)
     return RequestAuthContext(
         user_id=current_user.id,
         workspace_id=workspace.id,

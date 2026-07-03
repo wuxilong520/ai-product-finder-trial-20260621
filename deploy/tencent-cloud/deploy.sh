@@ -18,10 +18,73 @@ BACKEND_IMAGE="tencent-cloud_backend"
 FRONTEND_IMAGE="tencent-cloud_frontend"
 NGINX_IMAGE="docker.m.daocloud.io/library/nginx:1.27-alpine"
 APP_LABEL="ai-product-finder-tencent"
-DEPLOY_COMMIT="$(git -C "${ROOT_DIR}" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+RELEASE_VERSION_FILE="${ROOT_DIR}/.release-version"
 BUILD_BACKEND="${BUILD_BACKEND:-1}"
 BUILD_FRONTEND="${BUILD_FRONTEND:-1}"
 LOCK_FILE="/tmp/shanghang-ai-deploy.lock"
+ENABLE_HTTPS="${ENABLE_HTTPS:-false}"
+SSL_CERT_PATH="${SSL_CERT_PATH:-}"
+SSL_CERT_KEY_PATH="${SSL_CERT_KEY_PATH:-}"
+NGINX_PORT_ARGS=(-p 80:80)
+NGINX_VOLUME_ARGS=(-v "${SCRIPT_DIR}/nginx.http.conf:/etc/nginx/templates/default.conf.template:ro")
+
+configure_nginx_mode() {
+  local enable_https_normalized
+  enable_https_normalized="$(printf '%s' "${ENABLE_HTTPS}" | tr '[:upper:]' '[:lower:]')"
+
+  if [ "${enable_https_normalized}" != "true" ]; then
+    echo "当前使用 HTTP 网关模式（未开启 HTTPS）"
+    return
+  fi
+
+  if [ -z "${SSL_CERT_PATH}" ] || [ -z "${SSL_CERT_KEY_PATH}" ]; then
+    echo "ENABLE_HTTPS=true 时必须同时提供 SSL_CERT_PATH 和 SSL_CERT_KEY_PATH"
+    exit 1
+  fi
+
+  if [ ! -f "${SSL_CERT_PATH}" ] || [ ! -f "${SSL_CERT_KEY_PATH}" ]; then
+    echo "HTTPS 证书文件不存在，请检查 SSL_CERT_PATH 和 SSL_CERT_KEY_PATH"
+    exit 1
+  fi
+
+  NGINX_PORT_ARGS=(-p 80:80 -p 443:443)
+  NGINX_VOLUME_ARGS=(
+    -v "${SCRIPT_DIR}/nginx.conf:/etc/nginx/templates/default.conf.template:ro"
+    -v "${SSL_CERT_PATH}:${SSL_CERT_PATH}:ro"
+    -v "${SSL_CERT_KEY_PATH}:${SSL_CERT_KEY_PATH}:ro"
+  )
+  echo "当前使用 HTTPS 网关模式"
+}
+
+resolve_deploy_commit() {
+  local override_commit=""
+  local git_commit=""
+  local file_commit=""
+
+  override_commit="$(printf '%s' "${DEPLOY_COMMIT_OVERRIDE:-${DEPLOY_COMMIT:-}}" | tr -d '[:space:]')"
+  if [ -n "${override_commit}" ]; then
+    echo "${override_commit}"
+    return
+  fi
+
+  git_commit="$(git -C "${ROOT_DIR}" rev-parse --short HEAD 2>/dev/null || true)"
+  if [ -n "${git_commit}" ]; then
+    echo "${git_commit}"
+    return
+  fi
+
+  if [ -f "${RELEASE_VERSION_FILE}" ]; then
+    file_commit="$(tr -d '[:space:]' < "${RELEASE_VERSION_FILE}")"
+    if [ -n "${file_commit}" ]; then
+      echo "${file_commit}"
+      return
+    fi
+  fi
+
+  echo "unknown"
+}
+
+DEPLOY_COMMIT="$(resolve_deploy_commit)"
 
 release_lock() {
   if command -v flock >/dev/null 2>&1; then
@@ -93,6 +156,8 @@ fi
 set -a
 . "${ENV_FILE}"
 set +a
+
+configure_nginx_mode
 
 cleanup_legacy_runtime
 
@@ -170,8 +235,10 @@ sudo docker run -d \
   --label "deploy_commit=${DEPLOY_COMMIT}" \
   -e MAIN_HOST="${MAIN_HOST:-_}" \
   -e ADMIN_HOST="${ADMIN_HOST:-admin.local}" \
-  -p 80:80 \
-  -v "${SCRIPT_DIR}/nginx.conf:/etc/nginx/templates/default.conf.template:ro" \
+  -e SSL_CERT_PATH="${SSL_CERT_PATH:-}" \
+  -e SSL_CERT_KEY_PATH="${SSL_CERT_KEY_PATH:-}" \
+  "${NGINX_PORT_ARGS[@]}" \
+  "${NGINX_VOLUME_ARGS[@]}" \
   "${NGINX_IMAGE}" >/dev/null
 
 echo "等待服务启动..."

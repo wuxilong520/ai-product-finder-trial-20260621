@@ -5,16 +5,27 @@ import secrets
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.audit_logger import audit_logger
 from app.core.runtime import AppError
 from app.core.security import create_access_token, get_password_hash, verify_password
+from app.api_key.service import api_key_service
 from app.repositories.auth_identity import auth_identity_repository
 from app.repositories.user import user_repository
 from app.schemas.auth import AuthChallengeResponse, UserCreate, UserRegisterRequest
+from app.billing.service import billing_service
 from app.services.email_service import email_service
 from app.workspace.service import workspace_service
 
 
 class AuthService:
+    def _resolve_registration_role(self, *, requested_role: str | None = None, system_init: bool = False) -> str:
+        role = (requested_role or "user").strip().lower()
+        if role == "owner" and not system_init:
+            raise PermissionError("owner 只能由系统初始化创建")
+        if not system_init:
+            return "user"
+        return role
+
     def _generate_code(self) -> str:
         return f"{random.randint(100000, 999999)}"
 
@@ -55,7 +66,7 @@ class AuthService:
             email=payload.email,
             password_hash=get_password_hash(payload.password),
             full_name=payload.full_name,
-            role="owner",
+            role=self._resolve_registration_role(system_init=False),
             is_active=True,
             is_superuser=False,
         )
@@ -64,6 +75,8 @@ class AuthService:
         db.add(user)
         db.commit()
         db.refresh(user)
+        api_key_service.create_key(db, workspace_id=workspace.id, user_id=user.id)
+        billing_service.apply_plan_quota(db, workspace_id=workspace.id)
         return user
 
     def send_verification_code(self, db: Session, email: str, purpose: str, challenge_answer: str | None = None, challenge_token: str | None = None):
@@ -88,10 +101,10 @@ class AuthService:
             code_hash=get_password_hash(code),
             expires_at=datetime.now(UTC) + timedelta(minutes=settings.auth_code_expire_minutes),
         )
-        email_service.send_verification_code(email, code, "登录" if purpose == "login" else "注册")
+        delivery_result = email_service.send_verification_code(email, code, purpose)
         return {
             "success": True,
-            "message": f"验证码已发送到 {email}",
+            "message": delivery_result.get("message", f"验证码已发送到 {email}"),
             "challenge": None,
         }
 
@@ -121,8 +134,15 @@ class AuthService:
             return None
         if not verify_password(password, user.password_hash):
             return None
+        if not user.is_active:
+            raise AppError("USER_BANNED", "你的账号已被封号，请联系团队处理", "auth", 403)
         user.last_login_at = datetime.now(UTC)
         user_repository.save(db, user)
+        audit_logger.write(
+            user_id=user.id,
+            action="user_login_password",
+            payload={"email": user.email, "workspace_id": user.workspace_id},
+        )
         return user
 
     def login_with_code(self, db: Session, email: str, code: str):
@@ -130,8 +150,15 @@ class AuthService:
         user = user_repository.get_by_email(db, email)
         if not user:
             raise AppError("USER_NOT_FOUND", "这个邮箱还没有注册，请先注册", "auth", 404)
+        if not user.is_active:
+            raise AppError("USER_BANNED", "你的账号已被封号，请联系团队处理", "auth", 403)
         user.last_login_at = datetime.now(UTC)
         user_repository.save(db, user)
+        audit_logger.write(
+            user_id=user.id,
+            action="user_login_code",
+            payload={"email": user.email, "workspace_id": user.workspace_id},
+        )
         return user
 
     def reset_password(self, db: Session, email: str, code: str, new_password: str):
@@ -151,7 +178,7 @@ class AuthService:
             expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
             extra_payload={
                 "workspace_id": user.workspace_id,
-                "role": getattr(user, "role", "owner"),
+                "role": getattr(user, "role", "user"),
             },
         )
 
@@ -164,7 +191,7 @@ class AuthService:
             email=settings.first_superuser_email,
             password_hash=get_password_hash(settings.first_superuser_password),
             full_name="System Admin",
-            role="owner",
+            role=self._resolve_registration_role(requested_role="owner", system_init=True),
             is_active=True,
             is_superuser=True,
         )

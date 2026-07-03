@@ -1,3 +1,3 @@
-export const PRODUCT_VERSION = "0.1.3";
-export const PRODUCT_VERSION_NAME = "商航AI V0.1.3";
-export const PRODUCT_VERSION_NOTE = "补齐登录后首页→市场页→商品机会页→供应链匹配页主链路，并把供应链筛选正式接回产品流程。";
+export const PRODUCT_VERSION = "0.1.4";
+export const PRODUCT_VERSION_NAME = "商航AI V0.1.4";
+export const PRODUCT_VERSION_NOTE = "重新从第1步收口官网首页与注册登录页，并补上注册后默认 API Key 与免费额度初始化。";

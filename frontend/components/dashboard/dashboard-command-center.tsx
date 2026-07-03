@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, Flame, ShoppingBag, Sparkles, TrendingUp } from "lucide-react";
 
 import { PlanAccessPanel } from "@/components/billing/plan-access-panel";
+import { MarketAnalysisCard } from "@/components/market/market-analysis-card";
 import { ROUTES, productDetailRoute } from "@/config/routes";
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, InfoTile } from "@/design-system/components";
 import type { CurrentBillingStatus } from "@/lib/api/billing";
@@ -116,6 +117,7 @@ export function DashboardCommandCenter({
   const topRecommendations = recommendations?.items.slice(0, 8) || [];
   const categoryCards = summary.top_categories.slice(0, 6);
   const marketOpportunities = rankings?.growth_ranking.top_10.slice(0, 3) || [];
+  const riskOpportunities = rankings?.risk_ranking.top_10.slice(0, 3) || [];
   const totalProfit = topRecommendations.reduce((sum, item) => sum + Number(item.estimated_profit || 0), 0);
   const avgAiScore = topRecommendations.length
     ? Math.round(topRecommendations.reduce((sum, item) => sum + item.recommendation_score, 0) / topRecommendations.length)
@@ -123,6 +125,16 @@ export function DashboardCommandCenter({
   const avgMarketHeat = marketOpportunities.length
     ? Math.round(marketOpportunities.reduce((sum, item) => sum + item.score, 0) / marketOpportunities.length)
     : 0;
+  const marketStatus = avgMarketHeat >= 70 ? "偏强" : avgMarketHeat >= 45 ? "中等" : "偏弱";
+  const profitStatus = totalProfit > 0 ? "有利润空间" : "待形成";
+  const riskStatus = riskOpportunities.length
+    ? (() => {
+        const avgRisk = Math.round(riskOpportunities.reduce((sum, item) => sum + item.score, 0) / riskOpportunities.length);
+        if (avgRisk <= 35) return "偏低";
+        if (avgRisk <= 65) return "中等";
+        return "偏高";
+      })()
+    : "待判断";
 
   return (
     <div className="space-y-6">
@@ -144,6 +156,65 @@ export function DashboardCommandCenter({
           </div>
         </CardContent>
       </Card>
+
+      <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+        <Card className="border-white/6 bg-[#111A2E]">
+          <CardHeader>
+            <CardTitle>系统总览</CardTitle>
+            <CardDescription>这块回答的是：今天的市场、利润、风险状态大概怎么样。</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-3">
+              <StatusMetric
+                label="Market"
+                value={marketStatus}
+                desc={marketOpportunities.length ? `当前热度均值 ${avgMarketHeat}/100` : "当前还没有足够热度结果"}
+                tone={marketStatus === "偏强" ? "green" : marketStatus === "中等" ? "orange" : "neutral"}
+              />
+              <StatusMetric
+                label="Profit"
+                value={profitStatus}
+                desc={topRecommendations.length ? `当前推荐利润累计 ${totalProfit.toFixed(2)}` : "当前还没有足够利润结果"}
+                tone={profitStatus === "有利润空间" ? "green" : "neutral"}
+              />
+              <StatusMetric
+                label="Risk"
+                value={riskStatus}
+                desc={riskOpportunities.length ? "基于当前风险榜单结果" : "当前还没有足够风险结果"}
+                tone={riskStatus === "偏低" ? "green" : riskStatus === "中等" ? "orange" : riskStatus === "偏高" ? "red" : "neutral"}
+              />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <QuickEntry
+                title="市场分析页"
+                desc="先判断需求、趋势、竞争、饱和度。"
+                href={ROUTES.insights}
+                label="去做关键词分析"
+              />
+              <QuickEntry
+                title="商品机会页"
+                desc="从类目往下找更值得做的具体商品。"
+                href={ROUTES.insightsOpportunities}
+                label="去看商品机会"
+              />
+              <QuickEntry
+                title="利润决策页"
+                desc="继续看利润、风险和最后的商业判断。"
+                href={ROUTES.actionProfit}
+                label="去看利润决策"
+              />
+              <QuickEntry
+                title="供应链页"
+                desc="继续筛 1688 供应结果，再决定要不要推进。"
+                href={ROUTES.actionSuppliers}
+                label="去看供应链"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <MarketAnalysisCard lang={lang} />
+      </section>
 
       <Card className="border-white/6 bg-[#111A2E]">
         <CardHeader>
@@ -248,8 +319,8 @@ export function DashboardCommandCenter({
 
       <Card className="border-white/6 bg-[#111A2E]">
         <CardHeader>
-          <CardTitle>直接进入市场分析</CardTitle>
-          <CardDescription>你如果已经确定类目，比如家电，就从这里继续往下走。</CardDescription>
+          <CardTitle>直接进入下一步</CardTitle>
+          <CardDescription>你如果已经知道自己现在要看什么，就从这里直接跳过去。</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 xl:grid-cols-4">
           {[
@@ -465,6 +536,59 @@ export function DashboardCommandCenter({
       </section>
 
     </div>
+  );
+}
+
+function StatusMetric({
+  label,
+  value,
+  desc,
+  tone,
+}: {
+  label: string;
+  value: string;
+  desc: string;
+  tone: "green" | "orange" | "red" | "neutral";
+}) {
+  const toneMap = {
+    green: "border-emerald-500/20 bg-emerald-500/10 text-emerald-300",
+    orange: "border-amber-500/20 bg-amber-500/10 text-amber-300",
+    red: "border-rose-500/20 bg-rose-500/10 text-rose-300",
+    neutral: "border-white/8 bg-white/5 text-white",
+  } as const;
+
+  return (
+    <div className={`rounded-2xl border p-4 ${toneMap[tone]}`}>
+      <div className="text-xs uppercase tracking-[0.18em] text-white/45">{label}</div>
+      <div className="mt-2 text-2xl font-semibold">{value}</div>
+      <div className="mt-2 text-sm text-white/60">{desc}</div>
+    </div>
+  );
+}
+
+function QuickEntry({
+  title,
+  desc,
+  href,
+  label,
+}: {
+  title: string;
+  desc: string;
+  href: string;
+  label: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="rounded-2xl border border-white/6 bg-[rgba(255,255,255,0.02)] p-4 transition hover:-translate-y-0.5 hover:border-[#4F7CFF]/30 hover:bg-[rgba(79,124,255,0.06)]"
+    >
+      <div className="text-base font-semibold text-white">{title}</div>
+      <div className="mt-2 min-h-[48px] text-sm leading-7 text-white/60">{desc}</div>
+      <div className="mt-4 inline-flex items-center text-sm font-medium text-[#9CC0FF]">
+        {label}
+        <ArrowRight className="ml-2 h-4 w-4" />
+      </div>
+    </Link>
   );
 }
 

@@ -124,6 +124,7 @@ export type DecisionRecommendResponse = {
   lineage_chain?: string[];
   truth_level?: string | null;
   confidence_score?: number | null;
+  execution_allowed?: boolean | null;
   freshness_score?: number | null;
   market_fit_score?: number | null;
   supplier_fit_score?: number | null;
@@ -136,6 +137,51 @@ export type DecisionRecommendResponse = {
   recommendation: string;
   recommendation_level: string;
   reasons: string[];
+  action_level?: string | null;
+  execution_block_reason?: string | null;
+  platform_execution_status?: string | null;
+  execution_queue_status?: string | null;
+  execution_target_platform?: string | null;
+  feedback_signal?: Record<string, unknown>;
+  ai_adjustment_suggestion?: Record<string, unknown>;
+};
+
+export type TaskMarketIntelligence = {
+  market_score: number;
+  recommendation: "BUY" | "TEST" | "IGNORE";
+  confidence: number;
+  reasoning: {
+    demand_reason: string;
+    competition_reason: string;
+    trend_reason: string;
+  };
+  risk_flags: string[];
+  market_intelligence: {
+    demand_score: number;
+    trend_strength: number;
+    competition_level: "low" | "medium" | "high";
+    market_saturation: number;
+    entry_barrier: "low" | "medium" | "high";
+    platform_signals: {
+      google_trends_score: number;
+      amazon_search_volume: number;
+      tiktok_viral_score: number;
+      shopify_category_activity: number;
+    };
+    keyword_cluster: {
+      related_keywords: string[];
+      long_tail_keywords: string[];
+    };
+    platform_compatibility: {
+      shopify_ready: boolean;
+      alibaba_match: string[];
+      tiktok_potential: number;
+    };
+    is_mock: boolean;
+    mock_penalty: number;
+    confidence: number;
+    data_source_map: Record<string, string>;
+  };
 };
 
 export type BusinessTruthRecommendResponse = {
@@ -191,6 +237,9 @@ export type P5RecommendationItem = {
   recommendation_score: number;
   estimated_profit: number;
   recommendation: string;
+  truth_level?: string | null;
+  source_type?: string | null;
+  freshness_score?: number | null;
   reasons: string[];
 };
 
@@ -329,7 +378,7 @@ export type TaskJobStatus = "pending" | "running" | "success" | "failed" | "retr
 
 export type TaskSubmitPayload = {
   keyword: string;
-  market_type: "amazon" | "1688" | "shopee";
+  market_type: "amazon" | "1688" | "shopify";
   supplier_strategy: "cheapest" | "quality" | "balanced";
   cost_mode: "strict" | "estimated";
   decision_mode: "fast" | "deep";
@@ -416,6 +465,19 @@ export type TaskFullResult = {
     truth_result?: BusinessTruthRecommendResponse;
     explain_result?: TaskExplainResponse["explain_result"];
     governance_trace?: TaskTraceResponse["governance_trace"];
+    market_intelligence?: TaskMarketIntelligence;
+    shopify_candidates?: Array<Record<string, unknown>>;
+    alibaba_suppliers?: Array<Record<string, unknown>>;
+    shopify_real_products?: Array<Record<string, unknown>>;
+    ["1688_real_suppliers"]?: Array<Record<string, unknown>>;
+    cost_estimate?: number;
+    profit_margin?: number;
+    data_trust_score?: number;
+    profit_truth_score?: number;
+    execution_recommendation?: string;
+    platform_recommendation?: string;
+    execution_target_platform?: string;
+    publish_decision?: string;
   } | null;
 };
 
@@ -508,4 +570,60 @@ export type DashboardSourcesResponse = {
     total_runs: number;
   };
   generated_at: string;
+};
+
+
+export type ExecutionDashboardRecord = {
+  keyword: string;
+  market: string;
+  decision: Record<string, unknown>;
+  execution_level: string;
+  blocked_reason: string;
+  override_history: Array<Record<string, unknown>>;
+  platform_action?: string;
+  success?: boolean;
+  rollback_reason?: string;
+  platform_execution_status?: string;
+};
+
+export type ExecutionDashboardResponse = {
+  records: ExecutionDashboardRecord[];
+  insight: {
+    most_blocked_decisions: Array<{ reason: string; count: number }>;
+    highest_listing_success: Array<{ keyword: string; success_rate: number }>;
+    most_profitable_items: Array<{ keyword: string; profit_actual: number }>;
+    risk_distribution: Record<string, number>;
+    growth_metrics: {
+      gmv_estimate: number;
+      conversion_rate: number;
+      execution_success_rate: number;
+      ai_decision_accuracy: number;
+    };
+  };
+  growth_metrics: {
+    gmv_estimate: number;
+    conversion_rate: number;
+    execution_success_rate: number;
+    ai_decision_accuracy: number;
+  };
+};
+
+
+export type ProductDashboardResponse = {
+  ready_to_launch: boolean;
+  billing_safe: boolean;
+  scale_ready: boolean;
+  risk_level: "low" | "medium" | "high";
+  blocking_factors: string[];
+  system_maturity_score: number;
+  profit_reliability_score: number;
+  execution_stability_score: number;
+  product_mode: string;
+  product_state: Record<string, unknown>;
+  launch_allowed: boolean;
+  launch_checklist: { checks: Record<string, boolean>; launch_allowed: boolean; blocking_factors: string[] };
+  guardrail: { allowed: boolean; blocking_factors: string[] };
+  platform_integration_status: Record<string, unknown>;
+  commercial_readiness_score: number;
+  scale_recommendation: string;
 };

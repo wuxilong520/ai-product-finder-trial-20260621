@@ -1,3 +1,3 @@
-export const PRODUCT_VERSION = "0.1.6";
-export const PRODUCT_VERSION_NAME = "商航AI V0.1.6";
-export const PRODUCT_VERSION_NOTE = "收口市场智能页，补上需求评分、趋势强度、竞争强度、市场饱和度、市场结论和风险提示。";
+export const PRODUCT_VERSION = "0.1.7";
+export const PRODUCT_VERSION_NAME = "商航AI V0.1.7";
+export const PRODUCT_VERSION_NOTE = "收口商品机会页，补上机会评分、利润潜力、风险等级、TOP 商品推荐和推送到供应链匹配。";

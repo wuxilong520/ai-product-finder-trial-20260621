@@ -286,7 +286,7 @@ class AIGlobalProductDecisionEngine:
         source_type: str | None = None,
         freshness_min: float | None = None,
     ) -> list[P5ProductSnapshot]:
-        result = snapshots
+        result = [item for item in snapshots if self._is_valid_snapshot(item)]
         if keyword:
             needle = keyword.lower()
             result = [
@@ -309,6 +309,28 @@ class AIGlobalProductDecisionEngine:
                 if item.supplier_matches and max(float(match.get("freshness_score") or 0) for match in item.supplier_matches[:3]) >= freshness_min
             ]
         return result
+
+    def _is_valid_snapshot(self, snapshot: P5ProductSnapshot) -> bool:
+        title_parts = [
+            snapshot.product.title or "",
+            snapshot.product.title_zh or "",
+            snapshot.keyword or "",
+        ]
+        text = " ".join(part.strip().lower() for part in title_parts if part).strip()
+        if not text:
+            return False
+
+        blocked_patterns = (
+            "this store is currently unavailable",
+            "store is currently unavailable",
+            "currently unavailable",
+            "temporarily unavailable",
+            "shop is unavailable",
+            "页面不存在",
+            "店铺不可用",
+            "店铺已下线",
+        )
+        return not any(pattern in text for pattern in blocked_patterns)
 
     def _supplier_score(self, suppliers: list[dict]) -> float:
         if not suppliers:

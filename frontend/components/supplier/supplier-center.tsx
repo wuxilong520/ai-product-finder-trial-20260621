@@ -74,7 +74,7 @@ export function SupplierCenter({
         <CardHeader>
           <CardTitle>供应链匹配页</CardTitle>
           <p className="text-sm text-white/55">
-            这一步就是把你选中的商品，继续往 1688 这类供货入口去匹配。你先筛价格、匹配分、是否有货，再决定要不要进入利润决策和半自动上架。
+            这一步就是把你在前面看中的商品，继续往 1688 这类供货入口去匹配。你先筛价格、匹配分、是否有货，再决定要不要进入利润决策和半自动上架。
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -82,6 +82,17 @@ export function SupplierCenter({
             <InfoTile label="当前类目" value={initialCategory || "未指定"} />
             <InfoTile label="当前商品" value={keyword || "未指定"} />
             <InfoTile label="当前阶段" value="筛供应链" />
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            <InfoTile label="当前结果数" value={`${filteredItems.length} 个`} />
+            <InfoTile
+              label="当前最低匹配分"
+              value={`${Number.isNaN(Number(minScore || 0)) ? 0 : Number(minScore || 0)} 分`}
+            />
+            <InfoTile
+              label="当前筛选重点"
+              value={availableOnly ? "只看可供货" : "全部供应结果"}
+            />
           </div>
           <div className="flex gap-3">
             <div className="relative flex-1">
@@ -107,6 +118,20 @@ export function SupplierCenter({
           </div>
           <div className="rounded-2xl border border-[#4F7CFF]/20 bg-[#4F7CFF]/10 px-4 py-3 text-sm leading-7 text-[#D8E3FF]">
             当前这页能真实筛的是：关键词、价格、匹配分、是否有货。供应商评分、MOQ、真实工厂认证这几个字段，现在后端还没有完整返回，所以我不假装已经接通了。
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <HintCard
+              title="先筛价格"
+              desc="先把你能接受的供货价格卡住，避免后面利润算半天，最后发现进货价根本不合适。"
+            />
+            <HintCard
+              title="再看匹配分"
+              desc="匹配分越高，说明它和你当前关键词、商品方向越接近，优先看前面的。"
+            />
+            <HintCard
+              title="最后进利润页"
+              desc="这里只是找货和比价，不是最终拍板。筛完供应链，再去利润决策页做最后判断。"
+            />
           </div>
           {error ? <div className="rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">{error}</div> : null}
         </CardContent>
@@ -136,6 +161,20 @@ export function SupplierCenter({
                   <InfoTile label={text.supplierPrice} value={item.supplier_price != null ? `${item.currency || ""} ${Number(item.supplier_price).toFixed(2)}` : text.supplierPending} />
                   <InfoTile label="成本空间" value={item.supplier_price != null ? `${Math.max(0, 100 - Math.round(item.supplier_price)).toString()}%` : "待核算"} />
                   <InfoTile label={text.supplierStatus} value={item.availability} />
+                </div>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <Link
+                    href={`${ROUTES.actionProfit}${keyword ? `?keyword=${encodeURIComponent(keyword)}` : ""}`}
+                    className="rounded-2xl border border-[#4F7CFF]/20 bg-[#4F7CFF]/10 px-4 py-2 text-sm font-medium text-[#D8E3FF] transition hover:bg-[#4F7CFF]/16"
+                  >
+                    用这个结果继续做利润决策
+                  </Link>
+                  <Link
+                    href={`${ROUTES.createTask}?keyword=${encodeURIComponent(keyword || item.supplier_title)}`}
+                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10"
+                  >
+                    重新跑这个商品
+                  </Link>
                 </div>
               </a>
             )) : <EmptyState text={items.length ? "当前筛选条件下没有结果，你可以放宽价格或匹配分。" : text.supplierEmpty} />}
@@ -195,8 +234,28 @@ export function SupplierCenter({
               </Link>
             </CardContent>
           </Card>
+
+          <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+            <CardHeader>
+              <CardTitle>这一页现在的真实边界</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm leading-7 text-white/60">
+              <div>1. 现在已经能做：关键词匹配、1688 供货结果查看、价格筛选、匹配分筛选、是否有货筛选。</div>
+              <div>2. 现在还没完全打通：真实供应商评分、MOQ、工厂认证、履约稳定性。</div>
+              <div>3. 所以你现在最适合的真实流程是：市场页 → 商品机会页 → 供应链匹配页 → 利润决策页。</div>
+            </CardContent>
+          </Card>
         </div>
       </div>
+    </div>
+  );
+}
+
+function HintCard({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div className="rounded-2xl border border-white/8 bg-white/5 p-4">
+      <div className="text-base font-semibold text-white">{title}</div>
+      <div className="mt-2 text-sm leading-7 text-white/60">{desc}</div>
     </div>
   );
 }

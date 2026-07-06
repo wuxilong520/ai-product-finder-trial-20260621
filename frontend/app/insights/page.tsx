@@ -11,28 +11,28 @@ export default async function InsightsPage({
   const { lang } = await loadFlowPageData();
   const text = lang === "en"
     ? {
-        title: "Insights",
-        desc: "Review market trends, hot categories, breakout opportunities, risk alerts, and future outlook in one place.",
-        trend: "Market Trends",
-        category: "Hot Categories",
-        ranking: "Best Sellers",
-        risk: "Risk Alerts",
-        chart: "Charts",
-        compare: "Compare",
-        dynamic: "Live updates",
-        watch: "Watch now",
+        title: "Market Intelligence",
+        desc: "This page answers one thing first: does this keyword truly have enough demand to keep going?",
+        trend: "Trend Strength",
+        demand: "Demand Score",
+        competition: "Competition",
+        conclusion: "Go / Watch",
+        chart: "Need to judge",
+        compare: "Need to compare",
+        dynamic: "Need confidence",
+        watch: "Need conclusion",
       }
     : {
-        title: "市场洞察",
-        desc: "这里统一查看市场趋势、热门类目、爆款机会、风险提示和未来趋势判断。",
-        trend: "市场趋势",
-        category: "热门类目",
-        ranking: "爆款榜单",
-        risk: "风险提示",
-        chart: "图表展示",
-        compare: "横向对比",
-        dynamic: "动态更新",
-        watch: "实时关注",
+        title: "市场智能页",
+        desc: "这一页先回答一件事：这个关键词到底有没有真实市场需求，值不值得继续做下去。",
+        trend: "趋势强度",
+        demand: "需求判断",
+        competition: "竞争强度",
+        conclusion: "市场结论",
+        chart: "先判断趋势",
+        compare: "先判断需求",
+        dynamic: "先判断竞争",
+        watch: "先给结论",
       };
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const productId = resolvedSearchParams?.productId;
@@ -47,9 +47,20 @@ export default async function InsightsPage({
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-4">
             <MetricCard label={text.trend} value={text.chart} />
-            <MetricCard label={text.category} value={text.compare} />
-            <MetricCard label={text.ranking} value={text.dynamic} />
-            <MetricCard label={text.risk} value={text.watch} />
+            <MetricCard label={text.demand} value={text.compare} />
+            <MetricCard label={text.competition} value={text.dynamic} />
+            <MetricCard label={text.conclusion} value={text.watch} />
+          </CardContent>
+        </Card>
+
+        <Card className="border-white/6 bg-[#111A2E]">
+          <CardHeader>
+            <CardTitle>这页到底是干什么的</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-3">
+            <MetricCard label="第一步" value="先看有没有需求" />
+            <MetricCard label="第二步" value="再看竞争强不强" />
+            <MetricCard label="第三步" value="最后决定继续还是放弃" />
           </CardContent>
         </Card>
 

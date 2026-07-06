@@ -53,6 +53,25 @@ export function MarketAnalysisCard({ lang = "zh", initialKeyword }: { lang?: Lan
   }
 
   const currentKeyword = keyword.trim();
+  const competitionLevel =
+    result == null
+      ? "—"
+      : result.competition_score >= 70
+        ? "high"
+        : result.competition_score >= 45
+          ? "medium"
+          : "low";
+  const saturation =
+    result == null
+      ? "—"
+      : `${Math.round(result.competition_score)} / 100`;
+  const riskHints = result
+    ? [
+        result.source.toLowerCase().includes("mock") ? "mock_data_used" : null,
+        result.recommendation_score < 48 ? "low_confidence" : null,
+        result.trend_score < 45 ? "unstable_trend" : null,
+      ].filter(Boolean)
+    : [];
 
   return (
     <Card className="border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
@@ -89,6 +108,13 @@ export function MarketAnalysisCard({ lang = "zh", initialKeyword }: { lang?: Lan
         {error ? <div className="rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">{error}</div> : null}
         {result ? (
           <>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+              <MetricInfoTile label="需求评分" value={`${Math.round(result.demand_score)} / 100`} icon={<Activity className="h-4 w-4" />} />
+              <MetricInfoTile label="趋势强度" value={`${Math.round(result.trend_score)} / 100`} icon={<TrendingUp className="h-4 w-4" />} />
+              <MetricInfoTile label="竞争强度" value={competitionLevel} icon={<BarChart3 className="h-4 w-4" />} />
+              <MetricInfoTile label="市场饱和度" value={saturation} icon={<BarChart3 className="h-4 w-4" />} />
+              <MetricInfoTile label="市场结论" value={result.recommendation} icon={<TrendingUp className="h-4 w-4" />} />
+            </div>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <MetricInfoTile label={text.marketTrendScore} value={`${Math.round(result.trend_score)} / 100`} icon={<TrendingUp className="h-4 w-4" />} />
               <MetricInfoTile label={text.marketDemandScore} value={`${Math.round(result.demand_score)} / 100`} icon={<Activity className="h-4 w-4" />} />
@@ -98,6 +124,16 @@ export function MarketAnalysisCard({ lang = "zh", initialKeyword }: { lang?: Lan
             <div className="grid gap-4 md:grid-cols-2">
               <InfoTile label={text.marketRecommendationScore} value={`${Math.round(result.recommendation_score)} / 100`} />
               <InfoTile label={text.marketCategory} value={result.category || text.marketUnknownCategory} />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <InfoTile
+                label="当前风险提示"
+                value={riskHints.length ? riskHints.join(" / ") : "当前没有明显风险提示"}
+              />
+              <InfoTile
+                label="当前页说真话"
+                value="这页当前真实接的是旧版市场分析接口，已经能做关键词判断，但还没有把新市场智能引擎的全部字段完整打到前端。"
+              />
             </div>
             {currentKeyword ? (
               <div className="grid gap-4 md:grid-cols-2">

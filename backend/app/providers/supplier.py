@@ -57,6 +57,9 @@ class MockSupplierProvider(SupplierProviderBase):
         return list(db.scalars(stmt))
 
     def _build_generated_offers(self, keyword: str, products: list[Product]) -> list[SupplierOfferSchema]:
+        if not products:
+            return self._build_keyword_fallback_offers(keyword)
+
         grouped: dict[str, list[SupplierOfferSchema]] = defaultdict(list)
         for product in products:
             links = list(product.sourcing_links or [])
@@ -111,6 +114,48 @@ class MockSupplierProvider(SupplierProviderBase):
         offers = grouped.get("1688", []) + grouped.get("pdd", [])
         offers.sort(key=lambda item: item.match_score, reverse=True)
         return offers[:12]
+
+    def _build_keyword_fallback_offers(self, keyword: str) -> list[SupplierOfferSchema]:
+        generated_links = build_source_links(keyword)
+        fallback_offers: list[SupplierOfferSchema] = []
+
+        link_configs = [
+            ("1688", "1688 搜索入口", generated_links.get("1688_url")),
+            ("PDD", "拼多多 搜索入口", generated_links.get("pdd_url")),
+        ]
+
+        for index, (platform, supplier_name, search_url) in enumerate(link_configs, start=1):
+            if not search_url:
+                continue
+            fallback_offers.append(
+                SupplierOfferSchema(
+                    id=f"fallback:{platform.lower()}:{abs(hash(search_url))}",
+                    product_keyword=keyword,
+                    supplier_name=supplier_name,
+                    platform=platform,
+                    price=None,
+                    moq=None,
+                    shipping_time="待确认",
+                    location=None,
+                    rating=None,
+                    match_score=round(72 - ((index - 1) * 6), 2),
+                    profit_estimate=None,
+                    supplier_title=f"{keyword} {platform} 搜索结果",
+                    supplier_url=search_url,
+                    availability="search_link_ready",
+                    currency=None,
+                    product_id=None,
+                    source_type="mock",
+                    source_id=f"fallback:{platform.lower()}",
+                    truth_level="simulated",
+                    sync_status="success",
+                    provider_name=self.provider_name,
+                    lineage_chain=[self.provider_name, "keyword_fallback"],
+                    transform_steps=["keyword_fallback_link_build"],
+                )
+            )
+
+        return fallback_offers
 
     def _platform_from_url(self, url: str) -> str | None:
         if "1688.com" in url:

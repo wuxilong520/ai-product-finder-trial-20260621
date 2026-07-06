@@ -1,3 +1,3 @@
-export const PRODUCT_VERSION = "0.1.8";
-export const PRODUCT_VERSION_NAME = "商航AI V0.1.8";
-export const PRODUCT_VERSION_NOTE = "修掉商品机会页脏数据，并把供应链匹配页收口成可筛价格、匹配分、有货状态并继续推进利润决策的产品页。";
+export const PRODUCT_VERSION = "0.1.9";
+export const PRODUCT_VERSION_NAME = "商航AI V0.1.9";
+export const PRODUCT_VERSION_NOTE = "修复供应链页空结果问题：当商品库里暂时没有该关键词时，按关键词直接补 1688 / 拼多多搜索入口，不再整页空掉。";

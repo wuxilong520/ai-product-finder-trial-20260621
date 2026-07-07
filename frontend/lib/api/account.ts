@@ -67,6 +67,25 @@ export type AccountOverview = {
     latest_key_created_at?: string | null;
     latest_key_status?: string | null;
   };
+  store_links: {
+    shopify: {
+      store_base_url_configured: boolean;
+      admin_read_ready: boolean;
+      execution_mode: string;
+      oauth_status: string;
+      publish_ready: boolean;
+      status_text: string;
+      publish_text: string;
+    };
+  };
+  payment_status: {
+    wechat_pay: {
+      configured: boolean;
+      manual_confirm_enabled: boolean;
+      checkout_ready: boolean;
+      status_text: string;
+    };
+  };
 };
 
 export type AccountApiKeyItem = {

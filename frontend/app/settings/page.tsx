@@ -96,7 +96,7 @@ export default async function SettingsPage() {
             <CardContent className="space-y-3">
               <InfoTile label="套餐状态" value={overview.billing.status} />
               <InfoTile label="当前套餐" value={overview.billing.plan_name} />
-              <InfoTile label="最近更新时间" value={overview.billing.updated_at.replace("T", " ")} />
+              <InfoTile label="支付通道状态" value={overview.payment_status.wechat_pay.status_text} />
             </CardContent>
           </Card>
 
@@ -105,8 +105,8 @@ export default async function SettingsPage() {
               <CardTitle>{text.store}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <InfoTile label={text.storeStatus} value="Shopify 系统接入已存在，用户自助绑定还没收口" />
-              <InfoTile label={text.storeCount} value="当前页还不展示你的真实店铺数量" />
+              <InfoTile label={text.storeStatus} value={overview.store_links.shopify.status_text} />
+              <InfoTile label={text.storeCount} value={overview.store_links.shopify.publish_text} />
             </CardContent>
           </Card>
 

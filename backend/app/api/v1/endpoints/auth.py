@@ -1,3 +1,5 @@
+import os
+
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -6,6 +8,7 @@ from app.api.deps import db_session, get_current_user, get_request_context_no_qu
 from app.api_key.service import api_key_service
 from app.billing.plan import PLANS
 from app.billing.service import billing_service
+from app.core.config import settings
 from app.core.runtime import AppError
 from app.schemas.auth import (
     LoginResponse,
@@ -23,6 +26,58 @@ from app.workspace.service import workspace_service
 
 
 router = APIRouter()
+
+
+def _build_store_link_status() -> dict:
+    shopify_read_ready = bool(
+        str(settings.shopify_store_base_url or "").strip()
+        and str(settings.shopify_api_key or "").strip()
+        and str(settings.shopify_api_secret or "").strip()
+    )
+    execution_mode = (os.getenv("SHOPIFY_EXECUTION_MODE") or "mock").strip().lower()
+    publish_ready = execution_mode == "real"
+
+    return {
+        "shopify": {
+            "store_base_url_configured": bool(str(settings.shopify_store_base_url or "").strip()),
+            "admin_read_ready": shopify_read_ready,
+            "execution_mode": execution_mode,
+            "oauth_status": "reserved",
+            "publish_ready": publish_ready,
+            "status_text": (
+                "已配置 Shopify 真实读取，可拉店铺商品"
+                if shopify_read_ready
+                else "还没配好 Shopify 真实读取参数"
+            ),
+            "publish_text": (
+                "真实发布已开放"
+                if publish_ready
+                else "真实发布还没开放，当前仍是占位执行模式"
+            ),
+        }
+    }
+
+
+def _build_payment_status() -> dict:
+    wechat_ready = bool(
+        str(settings.wechat_pay_app_id or "").strip()
+        and str(settings.wechat_pay_mch_id or "").strip()
+        and str(settings.wechat_pay_api_v3_key or "").strip()
+        and str(settings.wechat_pay_private_key or "").strip()
+        and str(settings.wechat_pay_notify_url or "").strip()
+    )
+    return {
+        "wechat_pay": {
+            "configured": wechat_ready,
+            "manual_confirm_enabled": False,
+            "checkout_ready": wechat_ready,
+            "status_text": (
+                "微信支付参数已配置，可进入真实支付收口"
+                if wechat_ready
+                else "微信支付参数还没完整配齐，当前只能先创建订单"
+            ),
+        }
+    }
 
 
 @router.post("/register", response_model=UserRead)
@@ -137,4 +192,6 @@ def me_overview(
             "latest_key_created_at": latest_key.created_at.isoformat() if latest_key else None,
             "latest_key_status": latest_key.status if latest_key else None,
         },
+        "store_links": _build_store_link_status(),
+        "payment_status": _build_payment_status(),
     }

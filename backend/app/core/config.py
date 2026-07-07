@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from urllib.parse import urlparse
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -45,18 +46,15 @@ class Settings(BaseSettings):
     auth_challenge_expire_minutes: int = int(os.getenv("AUTH_CHALLENGE_EXPIRE_MINUTES", "10"))
     auth_challenge_rate: float = float(os.getenv("AUTH_CHALLENGE_RATE", "0.15"))
     auth_challenge_fail_threshold: int = int(os.getenv("AUTH_CHALLENGE_FAIL_THRESHOLD", "2"))
-    alipay_app_id: str = os.getenv("ALIPAY_APP_ID", "")
-    alipay_private_key: str = os.getenv("ALIPAY_PRIVATE_KEY", "")
-    alipay_public_key: str = os.getenv("ALIPAY_PUBLIC_KEY", "")
-    alipay_notify_url: str = os.getenv("ALIPAY_NOTIFY_URL", "")
-    alipay_return_url: str = os.getenv("ALIPAY_RETURN_URL", "")
-    alipay_gateway_url: str = os.getenv("ALIPAY_GATEWAY_URL", "https://openapi.alipay.com/gateway.do")
     wechat_pay_app_id: str = os.getenv("WECHAT_PAY_APP_ID", "")
     wechat_pay_mch_id: str = os.getenv("WECHAT_PAY_MCH_ID", "")
     wechat_pay_api_v3_key: str = os.getenv("WECHAT_PAY_API_V3_KEY", "")
     wechat_pay_cert_serial: str = os.getenv("WECHAT_PAY_CERT_SERIAL", "")
     wechat_pay_private_key: str = os.getenv("WECHAT_PAY_PRIVATE_KEY", "")
     wechat_pay_notify_url: str = os.getenv("WECHAT_PAY_NOTIFY_URL", "")
+    shopify_store_base_url: str = os.getenv("SHOPIFY_STORE_BASE_URL", "")
+    shopify_api_key: str = os.getenv("SHOPIFY_API_KEY", "")
+    shopify_api_secret: str = os.getenv("SHOPIFY_API_SECRET", "")
 
     model_config = SettingsConfigDict(
         env_file=(str(PROJECT_ROOT / ".env"), str(BACKEND_DIR / ".env")),
@@ -87,6 +85,19 @@ class Settings(BaseSettings):
             "NEXT_PUBLIC_WS_URL": self.next_public_ws_url,
         }
         return [key for key, value in env_map.items() if not str(value or "").strip()]
+
+    def cors_origins(self) -> list[str]:
+        raw_value = str(self.frontend_origin or "").strip()
+        if not raw_value:
+            return []
+        return [item.strip().rstrip("/") for item in raw_value.split(",") if item.strip()]
+
+    def has_local_address(self, value: str | None) -> bool:
+        text = str(value or "").strip().lower()
+        if not text:
+            return False
+        host = urlparse(text).hostname or text
+        return host in {"127.0.0.1", "localhost", "0.0.0.0"}
 
 
 settings = Settings()

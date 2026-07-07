@@ -7,6 +7,7 @@ from sqlalchemy import text
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.runtime import AppError, log_info
+from app.core.production_detector import production_detector
 
 
 def validate_startup_env() -> dict:
@@ -18,6 +19,31 @@ def validate_startup_env() -> dict:
             "env",
             500,
         )
+    if settings.is_production():
+        invalid_items = []
+        for label, value in {
+            "BACKEND_URL": settings.backend_url,
+            "FRONTEND_URL": settings.frontend_url,
+            "FRONTEND_ORIGIN": settings.frontend_origin,
+            "WS_URL": settings.ws_url,
+            "NEXT_PUBLIC_API_BASE_URL": settings.next_public_api_base_url,
+            "NEXT_PUBLIC_WS_URL": settings.next_public_ws_url,
+        }.items():
+            if settings.has_local_address(value):
+                invalid_items.append(label)
+        if invalid_items:
+            raise AppError(
+                "PRODUCTION_ENV_INVALID",
+                f"生产环境不能使用本地地址：{', '.join(invalid_items)}",
+                "env",
+                500,
+            )
+        if settings.secret_key == "change_me_to_a_secure_secret":
+            raise AppError("PRODUCTION_SECRET_INVALID", "生产环境 SECRET_KEY 不能使用默认值", "env", 500)
+        if settings.first_superuser_password == "change_this_password":
+            raise AppError("PRODUCTION_ADMIN_INVALID", "生产环境管理员密码不能使用默认值", "env", 500)
+        if not settings.cors_origins():
+            raise AppError("PRODUCTION_CORS_INVALID", "生产环境必须配置 FRONTEND_ORIGIN", "env", 500)
 
     return {
         "app_env": settings.app_env,
@@ -79,6 +105,7 @@ def collect_runtime_summary() -> dict:
         "ws_url": bool(settings.ws_url),
         "next_public_api_base_url": bool(settings.next_public_api_base_url),
         "next_public_ws_url": bool(settings.next_public_ws_url),
+        "cors_origins": settings.cors_origins(),
     }
     services = {
         "database": check_database_health(),
@@ -91,4 +118,5 @@ def collect_runtime_summary() -> dict:
         "version": "v2",
         "env_status": env_status,
         "services": services,
+        "production_detector": production_detector.detect(),
     }

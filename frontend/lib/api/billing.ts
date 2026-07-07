@@ -23,6 +23,10 @@ export type BillingPlan = {
   api_limit: number;
   price_cents: number;
   display_price: string;
+  allowed_ai_providers: string[];
+  allowed_ai_models: string[];
+  ai_policy_note: string;
+  supports_custom_model: boolean;
 };
 
 export type CurrentBillingStatus = {
@@ -30,6 +34,10 @@ export type CurrentBillingStatus = {
   plan_name: string;
   status: string;
   updated_at: string;
+  allowed_ai_providers: string[];
+  allowed_ai_models: string[];
+  ai_policy_note: string;
+  supports_custom_model: boolean;
 };
 
 export type BillingOrder = {
@@ -87,7 +95,7 @@ export async function getCurrentBillingStatus(token?: string): Promise<CurrentBi
 
 export async function createBillingCheckoutOrder(
   planName: string,
-  providerName: "alipay" | "wechat_pay",
+  providerName: "wechat_pay",
   token?: string
 ): Promise<BillingCheckoutResponse> {
   const apiV1 = getApiV1BaseUrl();

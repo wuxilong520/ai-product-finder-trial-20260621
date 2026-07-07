@@ -16,11 +16,14 @@ def publish_listing(payload: PublishV1Request):
         shop_domain=payload.shop_domain,
         oauth_code=payload.oauth_code,
     )
+    oauth_payload = result.get("oauth") if isinstance(result, dict) else None
+    if not isinstance(oauth_payload, dict):
+        oauth_payload = {}
     return ApiEnvelope(
         data=result,
         meta={
             "version": "shanghang-ai-v1",
             "channel": payload.channel,
-            "oauth_connected": bool(result.get("oauth", {}).get("connected")),
+            "oauth_connected": bool(oauth_payload.get("connected")),
         },
     )

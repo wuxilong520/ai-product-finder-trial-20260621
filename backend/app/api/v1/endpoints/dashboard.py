@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Query, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from app.api.deps import db_session, get_current_user
+from app.api.deps import db_session, get_request_context
 from app.core.database import SessionLocal
 from app.core.runtime import AppError, error_response
 from app.core.security import decode_access_token
@@ -19,6 +19,11 @@ from app.schemas.dashboard import (
     DashboardTrendsResponse,
 )
 from app.services.dashboard_service import dashboard_service
+from app.core.execution_log_layer import execution_log_layer
+from app.core.execution_insight_layer import execution_insight_layer
+from app.core.execution_queue import execution_queue
+from app.core.feedback_loop_v2 import feedback_loop_v2
+from app.core.commercial_readiness_engine import commercial_readiness_engine
 
 
 router = APIRouter()
@@ -27,7 +32,7 @@ router = APIRouter()
 @router.get("/dashboard/summary", response_model=DashboardSummaryResponse)
 def get_dashboard_summary(
     db: Session = Depends(db_session),
-    current_user=Depends(get_current_user),
+    auth_context=Depends(get_request_context),
 ):
     return dashboard_service.summary(db)
 
@@ -35,7 +40,7 @@ def get_dashboard_summary(
 @router.get("/dashboard/trends", response_model=DashboardTrendsResponse)
 def get_dashboard_trends(
     db: Session = Depends(db_session),
-    current_user=Depends(get_current_user),
+    auth_context=Depends(get_request_context),
 ):
     return dashboard_service.trends(db)
 
@@ -43,7 +48,7 @@ def get_dashboard_trends(
 @router.get("/dashboard/tasks", response_model=DashboardTasksResponse)
 def get_dashboard_tasks(
     db: Session = Depends(db_session),
-    current_user=Depends(get_current_user),
+    auth_context=Depends(get_request_context),
 ):
     return dashboard_service.tasks(db)
 
@@ -51,7 +56,7 @@ def get_dashboard_tasks(
 @router.get("/dashboard/sources", response_model=DashboardSourcesResponse)
 def get_dashboard_sources(
     db: Session = Depends(db_session),
-    current_user=Depends(get_current_user),
+    auth_context=Depends(get_request_context),
 ):
     return dashboard_service.sources(db)
 
@@ -102,3 +107,20 @@ async def stream_dashboard(
             await asyncio.sleep(5)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+@router.get("/dashboard/execution")
+def get_execution_dashboard(auth_context=Depends(get_request_context)):
+    logs = execution_log_layer.list_logs()
+    insight = execution_insight_layer.summarize()
+    return {
+        "records": logs,
+        "insight": insight,
+        "growth_metrics": feedback_loop_v2.metrics(),
+        "queue_snapshot": execution_queue.snapshot(),
+    }
+
+
+@router.get("/dashboard/product")
+def get_product_dashboard(auth_context=Depends(get_request_context)):
+    return commercial_readiness_engine.evaluate()

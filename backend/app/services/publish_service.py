@@ -17,10 +17,45 @@ class PublishServiceBase(ABC):
 
 
 class PublishService(PublishServiceBase):
+    def _write_execution_log(
+        self,
+        *,
+        keyword: str,
+        market: str,
+        channel: str,
+        shop_domain: str,
+        decision: dict,
+        blocked_reason: str,
+        platform_action: str,
+        success: bool,
+        rollback_reason: str,
+        platform_execution_status: str,
+        execution_queue_status: str,
+        shopify_product_id: str = "",
+        publish_receipt: dict | None = None,
+    ) -> None:
+        execution_log_layer.write(
+            keyword=keyword,
+            market=market,
+            decision=decision,
+            execution_level=str(decision.get("action_level") or "WATCH"),
+            blocked_reason=blocked_reason,
+            override_history=list(decision.get("override_history") or []),
+            platform_action=platform_action,
+            success=success,
+            rollback_reason=rollback_reason,
+            platform_execution_status=platform_execution_status,
+            execution_queue_status=execution_queue_status,
+            channel=channel,
+            shop_domain=shop_domain,
+            shopify_product_id=shopify_product_id,
+            publish_receipt=publish_receipt,
+        )
+
     def publish(self, *, keyword: str, market: str, channel: str, shop_domain: str, oauth_code: str | None) -> dict:
         bootstrap_status = production_bootstrap_layer.status()
         if not bootstrap_status["production_ready"]:
-            return {
+            result = {
                 "oauth": None,
                 "listing": None,
                 "publish": None,
@@ -32,6 +67,20 @@ class PublishService(PublishServiceBase):
                 "blocking_items": bootstrap_status["blocking_items"],
                 "product_mode": bootstrap_status["product_mode"],
             }
+            self._write_execution_log(
+                keyword=keyword,
+                market=market,
+                channel=channel,
+                shop_domain=shop_domain,
+                decision={},
+                blocked_reason=str(result["message"]),
+                platform_action="block_listing",
+                success=False,
+                rollback_reason=str(result["message"]),
+                platform_execution_status=str(result["platform_execution_status"]),
+                execution_queue_status=str(result["execution_queue_status"]),
+            )
+            return result
         listing_bundle = listing_service.build_listing(keyword=keyword, market=market, channel=channel)
         bridge_result = execution_bridge_layer.execute(
             decision=listing_bundle["decision"],
@@ -65,17 +114,18 @@ class PublishService(PublishServiceBase):
                 "platform_performance": {"channel": channel, "reason": result["message"]},
             })
             result["feedback_signal"] = feedback["feedback_signal"]
-            execution_log_layer.write(
+            self._write_execution_log(
                 keyword=keyword,
                 market=market,
+                channel=channel,
+                shop_domain=shop_domain,
                 decision=listing_bundle["decision"],
-                execution_level=str(listing_bundle["decision"].get("action_level") or "WATCH"),
                 blocked_reason=str(result["message"]),
-                override_history=list(listing_bundle["decision"].get("override_history") or []),
                 platform_action=str(bridge_result.get("platform_action") or "log_only"),
                 success=False,
                 rollback_reason=str(result["message"]),
                 platform_execution_status=str(result["platform_execution_status"]),
+                execution_queue_status=str(result["execution_queue_status"]),
             )
             return result
         if not oauth_session.connected:
@@ -89,6 +139,19 @@ class PublishService(PublishServiceBase):
                 "execution_bridge_mapping": bridge_result["execution_bridge_mapping"],
                 "execution_queue_status": bridge_result.get("execution_queue_status", "idle"),
             }
+            self._write_execution_log(
+                keyword=keyword,
+                market=market,
+                channel=channel,
+                shop_domain=shop_domain,
+                decision=listing_bundle["decision"],
+                blocked_reason="等待 Shopify OAuth 授权完成",
+                platform_action=str(bridge_result.get("platform_action") or "oauth_wait"),
+                success=False,
+                rollback_reason="当前未完成 OAuth 授权",
+                platform_execution_status=str(result["platform_execution_status"]),
+                execution_queue_status=str(result["execution_queue_status"]),
+            )
             return result
         receipt = execution_adapter.publish_listing(
             shop_domain=shop_domain,
@@ -116,6 +179,21 @@ class PublishService(PublishServiceBase):
             "platform_performance": {"channel": channel, "receipt_status": receipt.status},
         })
         result["feedback_signal"] = feedback["feedback_signal"]
+        self._write_execution_log(
+            keyword=keyword,
+            market=market,
+            channel=channel,
+            shop_domain=shop_domain,
+            decision=listing_bundle["decision"],
+            blocked_reason="",
+            platform_action=str(bridge_result.get("platform_action") or "publish_listing"),
+            success=True,
+            rollback_reason="",
+            platform_execution_status=str(result["platform_execution_status"]),
+            execution_queue_status=str(result["execution_queue_status"]),
+            shopify_product_id=str(result["shopify_product_id"] or ""),
+            publish_receipt=receipt.model_dump(mode="json"),
+        )
         audit_logger.write(
             user_id=None,
             action="publish_action",

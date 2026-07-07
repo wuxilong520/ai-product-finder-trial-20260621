@@ -2,14 +2,16 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Bell, ChevronDown, ChevronRight, Crown, Home, LineChart, Search, Settings, ShoppingBag, Sparkles, WalletCards } from "lucide-react";
+import { Bell, ChevronDown, ChevronRight, Crown, Home, LineChart, Search, Settings, ShoppingBag, WalletCards } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { FeatureGateModal } from "@/components/billing/feature-gate-modal";
+import { BrandLockup } from "@/components/branding/brand-lockup";
 import { UserAvatarMenu } from "@/components/layouts/user-avatar-menu";
 import { ROUTES } from "@/config/routes";
 import { LanguageToggle } from "@/design-system/components/LanguageToggle";
 import { Language } from "@/lib/i18n";
+import { PRODUCT_VERSION, PRODUCT_VERSION_NOTE } from "@/lib/product-version";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
@@ -60,7 +62,7 @@ function getLayoutText(lang: Language) {
           { label: "Profit Review", hint: "Check margin room", href: ROUTES.actionProfit },
           { label: "Supplier Picks", hint: "Review source options", href: ROUTES.actionSuppliers },
           { label: "Price Compare", hint: "Compare price ranges", href: ROUTES.actionPriceCompare },
-          { label: "Launch Queue", hint: "Track execution status", href: ROUTES.actionLaunchQueue },
+          { label: "Shopify Execution", hint: "Track publish status", href: ROUTES.actionLaunchQueue },
         ],
       },
       settings: {
@@ -115,7 +117,7 @@ function getLayoutText(lang: Language) {
           { label: "利润分析", hint: "查看利润空间", href: ROUTES.actionProfit },
           { label: "供应商推荐", hint: "查看可合作货源", href: ROUTES.actionSuppliers },
           { label: "价格对比", hint: "比较价格区间", href: ROUTES.actionPriceCompare },
-          { label: "上架执行队列", hint: "查看执行状态", href: ROUTES.actionLaunchQueue },
+          { label: "Shopify执行页", hint: "查看发布状态", href: ROUTES.actionLaunchQueue },
         ],
       },
       settings: {
@@ -127,8 +129,8 @@ function getLayoutText(lang: Language) {
         ],
       },
     } as Record<Exclude<TopNavKey, "home">, { title: string; items: Array<{ label: string; hint: string; href: string }> }>,
-    productName: "AI跨境电商系统",
-    productDesc: "AI Business Decision Platform",
+    productName: "商航AI",
+    productDesc: "AI驱动的跨境商业决策系统",
     searchPlaceholder: "搜索商品",
     allSites: "全部站点",
     currentModule: "当前模块",
@@ -170,13 +172,7 @@ export function NewDashboardLayout({ children, rightRail, lang }: DashboardLayou
       <header className="fixed inset-x-0 top-0 z-40 h-16 border-b border-white/6 bg-[rgba(11,18,32,0.88)] backdrop-blur-xl">
         <div className="flex h-full items-center justify-between gap-6 px-4 md:px-6 xl:px-8">
           <div className="flex min-w-0 items-center gap-4">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#4F7CFF,#6C5CE7)] shadow-[0_0_28px_rgba(79,124,255,0.24)]">
-              <Sparkles className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <div className="truncate text-[17px] font-semibold leading-none text-white">{layoutText.productName}</div>
-              <div className="mt-1 truncate text-xs text-white/45">{layoutText.productDesc}</div>
-            </div>
+            <BrandLockup size="sm" />
           </div>
 
           <nav className="hidden min-w-0 items-center gap-1 overflow-x-auto lg:flex">
@@ -267,7 +263,13 @@ export function NewDashboardLayout({ children, rightRail, lang }: DashboardLayou
 
         <div className="min-w-0 flex-1 bg-[radial-gradient(circle_at_top,rgba(79,124,255,0.10),transparent_24%),linear-gradient(180deg,#0B1220,#0B1220)]">
           <div className="flex min-h-[calc(100vh-64px)] gap-6 px-4 py-6 md:px-6 xl:px-8">
-            <main className="min-w-0 flex-1">{children}</main>
+            <main className="min-w-0 flex-1">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/6 bg-white/[0.02] px-4 py-3 text-sm text-white/55">
+                <div>当前版本：V{PRODUCT_VERSION}</div>
+                <div className="max-w-3xl text-right">{PRODUCT_VERSION_NOTE}</div>
+              </div>
+              {children}
+            </main>
             {rightRail ? <aside className="hidden w-[360px] shrink-0 xl:block">{rightRail}</aside> : null}
           </div>
         </div>

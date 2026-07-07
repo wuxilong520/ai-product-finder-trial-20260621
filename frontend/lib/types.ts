@@ -706,6 +706,7 @@ export type DashboardSourcesResponse = {
 
 
 export type ExecutionDashboardRecord = {
+  created_at?: string;
   keyword: string;
   market: string;
   decision: Record<string, unknown>;
@@ -716,6 +717,11 @@ export type ExecutionDashboardRecord = {
   success?: boolean;
   rollback_reason?: string;
   platform_execution_status?: string;
+  execution_queue_status?: string;
+  channel?: string;
+  shop_domain?: string;
+  shopify_product_id?: string;
+  publish_receipt?: Record<string, unknown>;
 };
 
 export type ExecutionDashboardResponse = {
@@ -738,6 +744,7 @@ export type ExecutionDashboardResponse = {
     execution_success_rate: number;
     ai_decision_accuracy: number;
   };
+  queue_snapshot: Record<string, { count: number; latest?: Record<string, unknown> | null }>;
 };
 
 

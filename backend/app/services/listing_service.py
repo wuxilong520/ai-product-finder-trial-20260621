@@ -17,6 +17,27 @@ class ListingServiceBase(ABC):
 
 
 class ListingService(ListingServiceBase):
+    def _normalize_text(self, ai_result: dict, primary_key: str, fallback: str) -> str:
+        value = ai_result.get(primary_key)
+        if value is None:
+            if primary_key == "seo_title":
+                value = ai_result.get("listing_title")
+            elif primary_key == "listing_title":
+                value = ai_result.get("seo_title")
+            elif primary_key == "listing_description":
+                value = ai_result.get("description")
+            elif primary_key == "description":
+                value = ai_result.get("listing_description")
+        if value is None:
+            value = fallback
+        return str(value)
+
+    def _normalize_list(self, ai_result: dict, key: str, fallback: list[str]) -> list[str]:
+        value = ai_result.get(key)
+        if isinstance(value, list) and value:
+            return [str(item) for item in value if str(item).strip()]
+        return fallback
+
     def build_listing(self, *, keyword: str, market: str, channel: str) -> dict:
         analysis = analyze_service.analyze(keyword=keyword, market=market)
         decision = decision_service.decide(
@@ -44,18 +65,36 @@ class ListingService(ListingServiceBase):
                 "decision": decision.model_dump(mode="json"),
             },
         )
+        default_title = f"{keyword.title()} | 商航AI推荐上架"
+        default_description = f"围绕 {keyword} 生成的基础上架文案，当前可用于最小验证。"
         draft = ListingDraft(
             channel=channel,
             product_title=analysis.selected_offer.product_title,
-            seo_title=str(ai_result["seo_title"]),
-            listing_title=str(ai_result["listing_title"]),
-            listing_description=str(ai_result["listing_description"]),
-            description=str(ai_result["description"]),
-            keywords=list(ai_result["keywords"]),
-            bullet_points=list(ai_result["bullet_points"]),
-            image_structure=list(ai_result["image_structure"]),
-            selling_points=list(ai_result["selling_points"]),
-            tags=list(ai_result["tags"]),
+            seo_title=self._normalize_text(ai_result, "seo_title", default_title),
+            listing_title=self._normalize_text(ai_result, "listing_title", default_title),
+            listing_description=self._normalize_text(ai_result, "listing_description", default_description),
+            description=self._normalize_text(ai_result, "description", default_description),
+            keywords=self._normalize_list(ai_result, "keywords", [keyword, market, channel]),
+            bullet_points=self._normalize_list(
+                ai_result,
+                "bullet_points",
+                [
+                    "先做小单验证，再看是否放量",
+                    "当前利润测算已完成基础校验",
+                    "建议结合供应稳定性再决定是否正式上架",
+                ],
+            ),
+            image_structure=self._normalize_list(
+                ai_result,
+                "image_structure",
+                ["主图", "场景图", "细节图"],
+            ),
+            selling_points=self._normalize_list(
+                ai_result,
+                "selling_points",
+                ["标题围绕需求词生成", "保留基础利润空间", "支持后续接真实平台发布"],
+            ),
+            tags=self._normalize_list(ai_result, "tags", [keyword, market, channel, "shanghang-ai"]),
             price_suggestion=decision.recommended_price,
             suggested_price=decision.recommended_price,
         )

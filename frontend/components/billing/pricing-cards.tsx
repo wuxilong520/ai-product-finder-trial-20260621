@@ -26,7 +26,7 @@ export function PricingCards({
   const token = useMemo(() => getToken(), []);
   const router = useRouter();
 
-  async function handleCheckout(planName: string, providerName: "alipay" | "wechat_pay") {
+  async function handleCheckout(planName: string, providerName: "wechat_pay") {
     if (!token) {
       router.push("/login");
       return;
@@ -37,16 +37,8 @@ export function PricingCards({
     try {
       const result = await createBillingCheckoutOrder(planName, providerName, token);
       setLatestOrderId(result.order.id);
-      const payUrl = typeof result.payment_payload?.pay_url === "string" ? result.payment_payload.pay_url : "";
-      if (result.payment_ready && providerName === "alipay" && payUrl) {
-        window.location.href = payUrl;
-        return;
-      } else {
-        setMessage(
-          `订单 #${result.order.id} 已创建，支付方式：${providerName === "alipay" ? "支付宝" : "微信支付"}。${result.payment_message}`
-        );
-        router.refresh();
-      }
+      setMessage(`订单 #${result.order.id} 已创建，支付方式：微信支付。${result.payment_message}`);
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "创建订单失败");
     } finally {
@@ -77,6 +69,10 @@ export function PricingCards({
                   <div className="text-lg font-semibold text-white">{plan.display_price}</div>
                   <div className="mt-3">每日任务数：{formatLimit(plan.task_limit)}</div>
                   <div className="mt-2">每日接口数：{formatLimit(plan.api_limit)}</div>
+                  <div className="mt-2">可用模型：{plan.allowed_ai_models.join(" / ") || "未开放"}</div>
+                  <div className="mt-2">可用通道：{plan.allowed_ai_providers.join(" / ") || "未开放"}</div>
+                  <div className="mt-3 text-white/55">{plan.ai_policy_note}</div>
+                  {plan.supports_custom_model ? <div className="mt-2 text-xs text-[#9CC0FF]">支持企业专属模型接入</div> : null}
                 </div>
 
                 {isCurrent ? (
@@ -92,14 +88,6 @@ export function PricingCards({
                     <Button
                       className="w-full"
                       variant="primary"
-                      disabled={loadingKey === `${plan.plan_name}:alipay`}
-                      onClick={() => void handleCheckout(plan.plan_name, "alipay")}
-                    >
-                      {loadingKey === `${plan.plan_name}:alipay` ? "创建中..." : "支付宝购买"}
-                    </Button>
-                    <Button
-                      className="w-full"
-                      variant="secondary"
                       disabled={loadingKey === `${plan.plan_name}:wechat_pay`}
                       onClick={() => void handleCheckout(plan.plan_name, "wechat_pay")}
                     >

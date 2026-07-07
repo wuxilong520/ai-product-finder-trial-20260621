@@ -146,6 +146,138 @@ export type DecisionRecommendResponse = {
   ai_adjustment_suggestion?: Record<string, unknown>;
 };
 
+export type DecisionV1Payload = {
+  keyword: string;
+  market: "amazon" | "shopify" | "shopee" | "tiktok";
+  strategy_mode?: "sourcing" | "listing" | "scaling";
+  business_constraints?: Record<string, unknown>;
+};
+
+export type DecisionV1Response = {
+  analysis: {
+    market_insight?: {
+      summary?: string;
+    };
+    selected_offer?: {
+      product_title?: string;
+      platform?: string;
+      price?: number;
+      currency?: string;
+    };
+    profit_breakdown?: {
+      estimated_sell_price?: number;
+      estimated_profit?: number;
+      estimated_margin_rate?: number;
+      supply_cost?: number;
+      shipping_cost?: number;
+      platform_fee?: number;
+      ad_cost?: number;
+      cost_estimate?: number;
+      profit_margin?: number;
+      profit_truth_score?: number;
+    };
+    trust_report?: {
+      trust_level?: number;
+      confidence?: number;
+      is_mock?: boolean;
+      is_expired?: boolean;
+      data_trust_score?: number;
+    };
+  };
+  decision: {
+    decision_score?: number;
+    strategy_mode?: string;
+    trust_adjusted_score?: number;
+    real_profit_estimate?: number;
+    risk_level?: string;
+    listing_recommendation?: string;
+    action_level?: string;
+    execution_allowed?: boolean;
+    execution_block_reason?: string | null;
+    execution_steps?: string[];
+    feedback_keys?: string[];
+  };
+  explain: {
+    summary?: string;
+    reasons?: string[];
+    next_actions?: string[];
+  };
+};
+
+export type ListingV1Payload = {
+  keyword: string;
+  market: "amazon" | "shopify" | "shopee" | "tiktok";
+  channel: "shopify" | "amazon" | "shopee" | "tiktok";
+};
+
+export type ListingV1Response = {
+  analysis?: {
+    selected_offer?: {
+      product_title?: string;
+    };
+    profit_breakdown?: {
+      cost_estimate?: number;
+      profit_margin?: number;
+      profit_truth_score?: number;
+    };
+  };
+  decision?: Record<string, unknown>;
+  listing?: {
+    product_title?: string;
+    seo_title?: string;
+    listing_title?: string;
+    listing_description?: string;
+    description?: string;
+    keywords?: string[];
+    bullet_points?: string[];
+    image_structure?: string[];
+    selling_points?: string[];
+    tags?: string[];
+    price_suggestion?: number;
+    suggested_price?: number;
+  };
+  execution?: {
+    execution_bridge_mapping?: Record<string, unknown>;
+    platform_execution_status?: string;
+    execution_queue_status?: string;
+  };
+  production_bootstrap_status?: {
+    production_ready?: boolean;
+    product_mode?: string;
+    blocking_items?: string[];
+  };
+  execution_target_platform?: string;
+  publish_decision?: string;
+};
+
+export type PublishV1Payload = {
+  keyword: string;
+  market: "amazon" | "shopify" | "shopee" | "tiktok";
+  channel: "shopify" | "amazon" | "shopee" | "tiktok";
+  shop_domain: string;
+  oauth_code?: string;
+};
+
+export type PublishV1Response = {
+  oauth?: {
+    connected?: boolean;
+    authorize_url?: string | null;
+  } | null;
+  listing?: Record<string, unknown> | null;
+  publish?: Record<string, unknown> | null;
+  shopify_product_id?: string | null;
+  message?: string;
+  platform_execution_status?: string;
+  execution_bridge_mapping?: {
+    platform_action?: string;
+    publish_allowed?: boolean;
+  };
+  execution_queue_status?: string;
+  blocking_items?: string[];
+  product_mode?: string;
+  feedback_signal?: Record<string, unknown>;
+};
+
 export type TaskMarketIntelligence = {
   market_score: number;
   recommendation: "BUY" | "TEST" | "IGNORE";

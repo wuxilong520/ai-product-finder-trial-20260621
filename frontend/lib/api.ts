@@ -3,12 +3,16 @@ import {
   AnalyzeResponse,
   BusinessTruthRecommendResponse,
   CrawlResult,
+  DecisionV1Payload,
+  DecisionV1Response,
   DecisionRecommendResponse,
   DashboardSourcesResponse,
   DashboardSummaryResponse,
   DashboardTasksResponse,
   DashboardTrendsResponse,
   HealthResponse,
+  ListingV1Payload,
+  ListingV1Response,
   LoginResponse,
   MarketAnalyzeResponse,
   Product,
@@ -19,6 +23,8 @@ import {
   P5PredictionResponse,
   P5RankingsResponse,
   P5RecommendationsResponse,
+  PublishV1Payload,
+  PublishV1Response,
   SupplierMatchResponse,
   SendCodeResponse,
   TaskStatusResponse,
@@ -69,7 +75,14 @@ export function isAuthError(error: unknown) {
   if (!(error instanceof Error)) {
     return false;
   }
-  return /token|登录|认证|unauthorized|forbidden|401|403|未登录|失效|无效|权限/i.test(error.message);
+  return /token|登录|认证|unauthorized|forbidden|401|403|未登录|失效|无效|权限|用户不存在|已停用/i.test(error.message);
+}
+
+export function isBannedError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+  return /封号|封禁|banned/i.test(error.message);
 }
 
 function buildAuthHeaders(token?: string) {
@@ -221,15 +234,16 @@ export async function resetPassword(email: string, code: string, newPassword: st
 
 export async function getCurrentUser(token: string): Promise<User> {
   ensureApiBase();
-  const response = await fetch(`${API_V1}/auth/me`, {
+  const response = await fetchWithTimeout(`${API_V1}/auth/me`, {
     headers: {
       ...buildAuthHeaders(token),
     },
     cache: "no-store",
-  });
+  }, 15000);
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, "读取当前用户失败"));
+    const message = await readErrorMessage(response, "读取当前用户失败");
+    throw new Error(`[${response.status}] ${message}`);
   }
 
   return response.json();
@@ -392,6 +406,57 @@ export async function recommendBusinessTruth(productId: number, token?: string):
     throw new Error(await readErrorMessage(response, "商业真实性评分失败"));
   }
   return response.json();
+}
+
+export async function runDecisionV1(payload: DecisionV1Payload, token?: string): Promise<DecisionV1Response> {
+  ensureApiBase();
+  const response = await fetch(`${API_V1}/decision`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...buildAuthHeaders(token),
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "利润决策失败"));
+  }
+  const data = await response.json();
+  return data.data;
+}
+
+export async function runListingV1(payload: ListingV1Payload, token?: string): Promise<ListingV1Response> {
+  ensureApiBase();
+  const response = await fetch(`${API_V1}/listing`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...buildAuthHeaders(token),
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "上架草稿生成失败"));
+  }
+  const data = await response.json();
+  return data.data;
+}
+
+export async function runPublishV1(payload: PublishV1Payload, token?: string): Promise<PublishV1Response> {
+  ensureApiBase();
+  const response = await fetch(`${API_V1}/publish`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...buildAuthHeaders(token),
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "发布检查失败"));
+  }
+  const data = await response.json();
+  return data.data;
 }
 
 export async function analyzeTitle(title: string, token?: string): Promise<AnalyzeResponse> {

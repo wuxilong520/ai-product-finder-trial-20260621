@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { TaskDrivenPageShell } from "@/components/action-center/task-driven-page-shell";
+import { ProfitPublishCenter } from "@/components/action-center/profit-publish-center";
 import { Card, CardContent, CardHeader, CardTitle, EmptyState } from "@/design-system/components";
 import { ROUTES, taskDetailRoute } from "@/config/routes";
 import { TOKEN_KEY } from "@/lib/auth";
@@ -13,6 +14,7 @@ export default async function ProfitReviewPage() {
   if (!token) redirect(ROUTES.login);
 
   const lang = await getServerLanguage();
+  const keyword = "air fryer";
   const { tasks, fulls } = await getTaskSnapshots(token, 6);
   const latestSuccess = fulls.find((item) => item.task.status === "success");
   const currentTaskId = tasks[0]?.task_id;
@@ -30,10 +32,10 @@ export default async function ProfitReviewPage() {
     <TaskDrivenPageShell
       lang={lang}
       activePath="action"
-      title="利润分析"
-      description="这里不再只是说明页。现在直接把最近任务里已经算出来的利润、风险和可信度汇总出来，方便你快速判断值不值得继续做。"
-      badge="Profit Review"
-      notice="当前利润数据来自已跑完的任务结果和 explain / truth。更细的运费、平台抽佣、真实物流成本拆分，还要等真实平台和真实报价源接入。"
+      title="利润决策 + 上架准备"
+      description="这一步就是你真正拍板的地方：先算利润，再看风险和执行等级，再生成 Shopify 上架草稿，最后检查当前能不能真的往发布走。"
+      badge="Profit & Publish"
+      notice="当前这页已经接上真实决策、上架草稿、发布前检查三条接口。当前唯一不能假装完成的地方，是 production_ready 没通过时，真实发布仍会被系统锁住。"
       currentTaskId={currentTaskId}
       metrics={[
         { label: "最近任务数", value: `${tasks.length} 个` },
@@ -43,8 +45,13 @@ export default async function ProfitReviewPage() {
       ]}
       highlights={[
         {
+          title: "先做最终拍板",
+          description: "直接在这一页跑利润决策、生成上架草稿、做发布前检查。",
+          badge: "第 7 页主流程",
+        },
+        {
           title: "看完整任务结果",
-          description: "直接进入最新任务，查看利润、解释、追踪和重试。",
+          description: "如果你想追查历史任务里的 explain、trace、结果明细，可以回任务流看。",
           href: currentTaskId ? taskDetailRoute(currentTaskId) : ROUTES.tasks,
           hrefLabel: "进入任务流",
           badge: currentTaskId ? `任务 #${currentTaskId}` : "任务中心",
@@ -63,6 +70,8 @@ export default async function ProfitReviewPage() {
         },
       ]}
     >
+      <ProfitPublishCenter initialKeyword={keyword} />
+
       <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
         <CardHeader>
           <CardTitle>最近几次利润判断</CardTitle>

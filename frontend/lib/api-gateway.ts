@@ -26,12 +26,16 @@ export {
   getTaskStatus,
   getWsBaseUrl,
   isAuthError,
+  isBannedError,
   isNewDashboardEnabled,
   login,
   matchSuppliers,
   predictP5Product,
   recommendBusinessTruth,
   recommendDecision,
+  runDecisionV1,
+  runListingV1,
+  runPublishV1,
 } from "@/lib/api";
 export {
   getTaskExplain as getDecisionTaskExplain,

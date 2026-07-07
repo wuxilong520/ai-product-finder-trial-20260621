@@ -2,7 +2,10 @@ from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from app.api.deps import db_session, get_current_user
+from app.api.deps import db_session, get_current_user, get_request_context_no_quota
+from app.api_key.service import api_key_service
+from app.billing.plan import PLANS
+from app.billing.service import billing_service
 from app.core.runtime import AppError
 from app.schemas.auth import (
     LoginResponse,
@@ -16,6 +19,7 @@ from app.schemas.auth import (
     VerifyCodeLoginRequest,
 )
 from app.services.auth import auth_service
+from app.workspace.service import workspace_service
 
 
 router = APIRouter()
@@ -72,3 +76,65 @@ def reset_password(payload: PasswordResetRequest, db: Session = Depends(db_sessi
 @router.get("/me", response_model=UserRead)
 def me(current_user=Depends(get_current_user)):
     return UserRead.model_validate(current_user)
+
+
+@router.get("/me/overview")
+def me_overview(
+    db: Session = Depends(db_session),
+    current_user=Depends(get_current_user),
+    auth_context=Depends(get_request_context_no_quota),
+):
+    workspace = None
+    if current_user.workspace_id:
+        workspace = workspace_service.get_by_id(db, current_user.workspace_id)
+
+    subscription = billing_service.get_or_create_subscription(db, workspace_id=auth_context.workspace_id)
+    plan = PLANS.get(subscription.plan_name, PLANS["free"])
+    orders = billing_service.list_orders(db, workspace_id=auth_context.workspace_id, limit=5)
+    api_keys = api_key_service.list_by_user(db, user_id=current_user.id)
+    active_keys = [item for item in api_keys if item.status == "active"]
+    latest_key = api_keys[0] if api_keys else None
+
+    return {
+        "user": UserRead.model_validate(current_user).model_dump(mode="json"),
+        "workspace": {
+            "id": workspace.id,
+            "name": workspace.name,
+            "owner_id": workspace.owner_id,
+            "created_at": workspace.created_at.isoformat(),
+            "updated_at": workspace.updated_at.isoformat(),
+        } if workspace else None,
+        "billing": {
+            "workspace_id": auth_context.workspace_id,
+            "plan_name": subscription.plan_name,
+            "status": subscription.status,
+            "updated_at": subscription.updated_at.isoformat(),
+            "allowed_ai_providers": plan.get("allowed_ai_providers", []),
+            "allowed_ai_models": plan.get("allowed_ai_models", []),
+            "ai_policy_note": plan.get("ai_policy_note", ""),
+            "supports_custom_model": plan.get("supports_custom_model", False),
+        },
+        "recent_orders": [
+            {
+                "id": item.id,
+                "workspace_id": item.workspace_id,
+                "user_id": item.user_id,
+                "plan_name": item.plan_name,
+                "status": item.status,
+                "amount_cents": item.amount_cents,
+                "currency": item.currency,
+                "provider_name": item.provider_name,
+                "external_order_id": item.external_order_id,
+                "note": item.note,
+                "created_at": item.created_at.isoformat(),
+                "updated_at": item.updated_at.isoformat(),
+            }
+            for item in orders
+        ],
+        "api_key_summary": {
+            "total_keys": len(api_keys),
+            "active_keys": len(active_keys),
+            "latest_key_created_at": latest_key.created_at.isoformat() if latest_key else None,
+            "latest_key_status": latest_key.status if latest_key else None,
+        },
+    }

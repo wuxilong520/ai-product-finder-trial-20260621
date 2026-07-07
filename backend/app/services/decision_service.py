@@ -32,6 +32,60 @@ class DecisionServiceBase(ABC):
 
 
 class DecisionService(DecisionServiceBase):
+    def _normalize_confidence_score(self, ai_result: dict, *, default_score: float = 50) -> int:
+        raw_score = ai_result.get("confidence_score")
+        if raw_score is None:
+            raw_score = ai_result.get("decision_score")
+        if raw_score is None:
+            raw_score = ai_result.get("trust_adjusted_score")
+        try:
+            normalized = int(round(float(raw_score)))
+        except (TypeError, ValueError):
+            normalized = int(round(float(default_score)))
+        return max(0, min(100, normalized))
+
+    def _normalize_trust_adjusted_score(self, ai_result: dict, *, confidence_score: int) -> float:
+        raw_score = ai_result.get("trust_adjusted_score")
+        if raw_score is None:
+            raw_score = ai_result.get("confidence_score")
+        if raw_score is None:
+            raw_score = ai_result.get("decision_score")
+        try:
+            return float(raw_score)
+        except (TypeError, ValueError):
+            return float(confidence_score)
+
+    def _normalize_verdict(self, ai_result: dict, *, confidence_score: int) -> str:
+        verdict = str(ai_result.get("verdict", "")).strip().lower()
+        if verdict:
+            return verdict
+        if confidence_score >= 75:
+            return "go"
+        if confidence_score >= 55:
+            return "watch"
+        return "ignore"
+
+    def _normalize_risk_level(self, ai_result: dict, *, confidence_score: int) -> str:
+        risk_level = str(ai_result.get("risk_level", ai_result.get("risk", ""))).strip().lower()
+        if risk_level:
+            return risk_level
+        if confidence_score >= 75:
+            return "low"
+        if confidence_score >= 55:
+            return "medium"
+        return "high"
+
+    def _normalize_reasons(self, ai_result: dict, *, fallback_reason: str) -> list[str]:
+        reasons = ai_result.get("reasons")
+        if isinstance(reasons, list) and reasons:
+            normalized = [str(item) for item in reasons if str(item).strip()]
+            if normalized:
+                return normalized
+        reasoning = str(ai_result.get("reasoning", "")).strip()
+        if reasoning:
+            return [reasoning]
+        return [fallback_reason]
+
     def decide(
         self,
         *,
@@ -106,14 +160,24 @@ class DecisionService(DecisionServiceBase):
             currency_loss=float(normalized_constraints["currency_loss"]),
         )
         feedback_keys = feedback_loop.register_feedback_keys(keyword=keyword, market=market, strategy_mode=strategy_plan.strategy_mode)
-        trust_adjusted_score = float(ai_result.get("trust_adjusted_score", ai_result["confidence_score"]))
+        confidence_score = self._normalize_confidence_score(
+            ai_result,
+            default_score=normalized_analysis_context.get("analysis_score") or 50,
+        )
+        trust_adjusted_score = self._normalize_trust_adjusted_score(
+            ai_result,
+            confidence_score=confidence_score,
+        )
         is_mock = bool(overall_trust.get("is_mock"))
         if is_mock:
             trust_adjusted_score = round(trust_adjusted_score * 0.72, 2)
-        verdict = str(ai_result["verdict"])
-        risk_level = str(ai_result["risk_level"])
+        verdict = self._normalize_verdict(ai_result, confidence_score=confidence_score)
+        risk_level = self._normalize_risk_level(ai_result, confidence_score=confidence_score)
         listing_recommendation = str(ai_result.get("listing_recommendation", strategy_plan.listing_recommendation))
-        reasons = list(ai_result["reasons"])
+        reasons = self._normalize_reasons(
+            ai_result,
+            fallback_reason=f"{keyword} 在 {market} 已完成基础决策分析，但当前 AI 返回缺少完整理由字段。",
+        )
         if is_mock:
             verdict = "watch"
             risk_level = "high" if risk_level != "high" else risk_level
@@ -144,11 +208,11 @@ class DecisionService(DecisionServiceBase):
             keyword=keyword,
             market=market,
             verdict=verdict,
-            confidence_score=int(ai_result["confidence_score"]),
-            recommended_price=float(ai_result["recommended_price"]),
+            confidence_score=confidence_score,
+            recommended_price=float(ai_result.get("recommended_price", normalized_constraints["selling_price"])),
             risk_level=risk_level,
             reasons=reasons,
-            decision_score=float(ai_result.get("decision_score", ai_result["confidence_score"])),
+            decision_score=float(ai_result.get("decision_score", confidence_score)),
             strategy_mode=str(ai_result.get("strategy_mode", strategy_plan.strategy_mode)),
             trust_adjusted_score=trust_adjusted_score,
             real_profit_estimate=float(ai_result.get("real_profit_estimate", truth_profit["real_profit_estimate"])),

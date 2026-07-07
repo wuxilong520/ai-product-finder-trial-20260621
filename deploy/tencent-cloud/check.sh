@@ -1,11 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENV_FILE="${SCRIPT_DIR}/.env.tencent"
 NETWORK_NAME="tencent-cloud_default"
 BACKEND_CONTAINER="tencent-cloud_backend_1"
 FRONTEND_CONTAINER="tencent-cloud_frontend_1"
 NGINX_CONTAINER="tencent-cloud_nginx_1"
 APP_LABEL="ai-product-finder-tencent"
+
+if [ -f "${ENV_FILE}" ]; then
+  set -a
+  . "${ENV_FILE}"
+  set +a
+fi
 
 check_container_running() {
   local name="$1"
@@ -34,12 +42,24 @@ if [ -n "${legacy_containers}" ]; then
 fi
 
 echo "检查后端健康状态..."
-curl -fsS http://127.0.0.1/health >/tmp/tencent-health.json
-cat /tmp/tencent-health.json
+health_tmp="$(mktemp /tmp/tencent-health.XXXXXX.json)"
+health_status="$(curl -sS -o "${health_tmp}" -w '%{http_code}' http://127.0.0.1/health)"
+if [ "${health_status}" != "200" ]; then
+  echo "后端健康检查失败，HTTP 状态码：${health_status}"
+  cat "${health_tmp}" || true
+  exit 1
+fi
+cat "${health_tmp}"
 
 echo "检查前端登录页..."
-curl -fsS http://127.0.0.1/login >/tmp/tencent-login.html
-if ! grep -qi "<html" /tmp/tencent-login.html; then
+login_tmp="$(mktemp /tmp/tencent-login.XXXXXX.html)"
+login_status="$(curl -sS -o "${login_tmp}" -w '%{http_code}' http://127.0.0.1/login)"
+if [ "${login_status}" != "200" ]; then
+  echo "前端登录页状态异常，HTTP 状态码：${login_status}"
+  cat "${login_tmp}" || true
+  exit 1
+fi
+if ! grep -qi "商航AI\\|登录你的选品工作台" "${login_tmp}"; then
   echo "前端登录页返回异常"
   exit 1
 fi
@@ -48,5 +68,10 @@ echo "检查当前运行版本标签..."
 sudo docker ps \
   --filter "label=app=${APP_LABEL}" \
   --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Label "deploy_commit"}}'
+
+if [ "${ENABLE_HTTPS:-false}" = "true" ]; then
+  echo "检查 HTTPS 端口..."
+  curl -kfsS https://127.0.0.1/health >/dev/null
+fi
 
 echo "部署自检通过"

@@ -26,7 +26,10 @@ ENABLE_HTTPS="${ENABLE_HTTPS:-false}"
 SSL_CERT_PATH="${SSL_CERT_PATH:-}"
 SSL_CERT_KEY_PATH="${SSL_CERT_KEY_PATH:-}"
 NGINX_PORT_ARGS=(-p 80:80)
-NGINX_VOLUME_ARGS=(-v "${SCRIPT_DIR}/nginx.http.conf:/etc/nginx/templates/default.conf.template:ro")
+NGINX_TEMPLATE_PATH="${SCRIPT_DIR}/nginx.http.conf"
+RENDERED_NGINX_DIR="${RUNTIME_DIR}/nginx"
+RENDERED_NGINX_CONF="${RENDERED_NGINX_DIR}/default.conf"
+NGINX_VOLUME_ARGS=(-v "${RENDERED_NGINX_CONF}:/etc/nginx/conf.d/default.conf:ro")
 
 configure_nginx_mode() {
   local enable_https_normalized
@@ -48,12 +51,35 @@ configure_nginx_mode() {
   fi
 
   NGINX_PORT_ARGS=(-p 80:80 -p 443:443)
+  NGINX_TEMPLATE_PATH="${SCRIPT_DIR}/nginx.conf"
   NGINX_VOLUME_ARGS=(
-    -v "${SCRIPT_DIR}/nginx.conf:/etc/nginx/templates/default.conf.template:ro"
+    -v "${RENDERED_NGINX_CONF}:/etc/nginx/conf.d/default.conf:ro"
     -v "${SSL_CERT_PATH}:${SSL_CERT_PATH}:ro"
     -v "${SSL_CERT_KEY_PATH}:${SSL_CERT_KEY_PATH}:ro"
   )
   echo "当前使用 HTTPS 网关模式"
+}
+
+render_nginx_config() {
+  mkdir -p "${RENDERED_NGINX_DIR}"
+  MAIN_HOST="${MAIN_HOST:-_}" \
+  ADMIN_HOST="${ADMIN_HOST:-admin.local}" \
+  SSL_CERT_PATH="${SSL_CERT_PATH:-}" \
+  SSL_CERT_KEY_PATH="${SSL_CERT_KEY_PATH:-}" \
+  NGINX_TEMPLATE_PATH="${NGINX_TEMPLATE_PATH}" \
+  RENDERED_NGINX_CONF="${RENDERED_NGINX_CONF}" \
+  python3 <<'PY'
+from pathlib import Path
+import os
+
+template_path = Path(os.environ["NGINX_TEMPLATE_PATH"])
+output_path = Path(os.environ["RENDERED_NGINX_CONF"])
+content = template_path.read_text()
+for key in ("MAIN_HOST", "ADMIN_HOST", "SSL_CERT_PATH", "SSL_CERT_KEY_PATH"):
+    content = content.replace("${" + key + "}", os.environ.get(key, ""))
+output_path.write_text(content)
+PY
+  echo "已生成 Nginx 配置：${RENDERED_NGINX_CONF}"
 }
 
 resolve_deploy_commit() {
@@ -158,6 +184,7 @@ set -a
 set +a
 
 configure_nginx_mode
+render_nginx_config
 
 cleanup_legacy_runtime
 

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { DashboardCommandCenter } from "@/components/dashboard/dashboard-command-center";
 import { getCurrentUser, getDashboardSources, getDashboardSummary, getDashboardTasks, getDashboardTrends, getP5Rankings, getP5Recommendations, getProducts, isAuthError } from "@/lib/api-gateway";
+import { getCurrentBillingStatus } from "@/lib/api/billing";
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
 import { ROUTES } from "@/config/routes";
 import { Language } from "@/lib/i18n";
@@ -34,7 +35,7 @@ export async function NewDashboard({
     throw error;
   }
 
-  const [rankings, recommendations, user] = await Promise.all([
+  const [rankings, recommendations, user, currentPlan] = await Promise.all([
     getP5Rankings(token).catch(() => null),
     getP5Recommendations({ limit: 10 }, token).catch(() => null),
     getCurrentUser(token).catch((error) => {
@@ -43,6 +44,7 @@ export async function NewDashboard({
       }
       return null;
     }),
+    getCurrentBillingStatus(token).catch(() => null),
   ]);
 
   return (
@@ -56,6 +58,7 @@ export async function NewDashboard({
         rankings={rankings}
         recommendations={recommendations}
         isAdmin={Boolean(user?.is_superuser)}
+        currentPlan={currentPlan}
       />
     </XBorderLayout>
   );

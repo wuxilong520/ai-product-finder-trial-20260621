@@ -95,7 +95,7 @@ export async function getCurrentBillingStatus(token?: string): Promise<CurrentBi
 
 export async function createBillingCheckoutOrder(
   planName: string,
-  providerName: "wechat_pay",
+  providerName: "wechat_pay" | "alipay",
   token?: string
 ): Promise<BillingCheckoutResponse> {
   const apiV1 = getApiV1BaseUrl();

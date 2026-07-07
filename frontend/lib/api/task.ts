@@ -3,6 +3,8 @@ import {
   TaskExplainResponse,
   TaskFullResponse,
   TaskFullResult,
+  ExecutionDashboardResponse,
+  ProductDashboardResponse,
   TaskListItem,
   TaskSubmitPayload,
   TaskSubmitResponse,
@@ -160,6 +162,36 @@ export async function retryTask(taskId: number, token?: string): Promise<TaskSub
   });
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "重试任务失败"));
+  }
+  return response.json();
+}
+
+
+export async function getExecutionDashboard(token?: string): Promise<ExecutionDashboardResponse> {
+  const apiV1 = ensureTaskApiBase();
+  const response = await fetch(`${apiV1}/dashboard/execution`, {
+    cache: "no-store",
+    headers: {
+      ...buildAuthHeaders(token),
+    },
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "读取执行看板失败"));
+  }
+  return response.json();
+}
+
+
+export async function getProductDashboard(token?: string): Promise<ProductDashboardResponse> {
+  const apiV1 = ensureTaskApiBase();
+  const response = await fetch(`${apiV1}/dashboard/product`, {
+    cache: "no-store",
+    headers: {
+      ...buildAuthHeaders(token),
+    },
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "读取产品化总览失败"));
   }
   return response.json();
 }

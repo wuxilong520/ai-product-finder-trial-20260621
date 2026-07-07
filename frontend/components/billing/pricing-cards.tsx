@@ -59,6 +59,9 @@ export function PricingCards({
       <div className="grid gap-6 xl:grid-cols-4">
         {plans.map((plan) => {
           const isCurrent = currentPlan?.plan_name === plan.plan_name;
+          const allowedModels = Array.isArray(plan.allowed_ai_models) ? plan.allowed_ai_models : [];
+          const allowedProviders = Array.isArray(plan.allowed_ai_providers) ? plan.allowed_ai_providers : [];
+          const aiPolicyNote = typeof plan.ai_policy_note === "string" ? plan.ai_policy_note : "";
           return (
             <Card key={plan.plan_name} className="border-white/8 bg-[#121c2c]">
               <CardHeader>
@@ -69,9 +72,9 @@ export function PricingCards({
                   <div className="text-lg font-semibold text-white">{plan.display_price}</div>
                   <div className="mt-3">每日任务数：{formatLimit(plan.task_limit)}</div>
                   <div className="mt-2">每日接口数：{formatLimit(plan.api_limit)}</div>
-                  <div className="mt-2">可用模型：{plan.allowed_ai_models.join(" / ") || "未开放"}</div>
-                  <div className="mt-2">可用通道：{plan.allowed_ai_providers.join(" / ") || "未开放"}</div>
-                  <div className="mt-3 text-white/55">{plan.ai_policy_note}</div>
+                  <div className="mt-2">可用模型：{allowedModels.join(" / ") || "未开放"}</div>
+                  <div className="mt-2">可用通道：{allowedProviders.join(" / ") || "未开放"}</div>
+                  <div className="mt-3 text-white/55">{aiPolicyNote || "当前套餐说明待补充"}</div>
                   {plan.supports_custom_model ? <div className="mt-2 text-xs text-[#9CC0FF]">支持企业专属模型接入</div> : null}
                 </div>
 

@@ -89,9 +89,9 @@ export function MarketAnalysisCard({ lang = "zh", initialKeyword }: { lang?: Lan
                 <StatusBadge status={toStatus(result.recommendation)} label={toRecommendationLabel(result.recommendation)} />
               ) : null}
             </div>
-            <CardTitle className="mt-4">先判断这个方向值不值得做</CardTitle>
+            <CardTitle className="mt-4">先判断这个方向值不值得继续投入时间</CardTitle>
             <p className="mt-2 text-sm leading-7 text-app-text-muted">
-              先看需求、趋势、竞争和进入难度，再决定要不要继续进入商品机会页和 1688 匹配页。
+              你可以把这一步理解成“先排雷”。先看需求、趋势、竞争和进入难度，再决定要不要继续往商品机会页和 1688 匹配页走。
             </p>
           </div>
           <div className="flex w-full max-w-xl gap-2">
@@ -112,9 +112,9 @@ export function MarketAnalysisCard({ lang = "zh", initialKeyword }: { lang?: Lan
           </div>
         </div>
         <div className="grid gap-4 md:grid-cols-4">
-          <InfoTile label="这页回答什么" value="这个方向能不能做" />
-          <InfoTile label="先看什么" value="需求、趋势、竞争" />
-          <InfoTile label="再做什么" value="筛商品和供应链" />
+          <InfoTile label="这页先回答" value="这个方向值不值得看" />
+          <InfoTile label="看完之后" value="再去筛单品" />
+          <InfoTile label="再往后" value="继续比 1688 货源" />
           <InfoTile label="最后目标" value="找到能卖的 SKU" />
         </div>
       </CardHeader>
@@ -132,6 +132,33 @@ export function MarketAnalysisCard({ lang = "zh", initialKeyword }: { lang?: Lan
               <MetricInfoTile label="市场饱和度" value={formatScore(marketSaturation)} icon={<BarChart3 className="h-4 w-4" />} />
               <MetricInfoTile label="市场结论" value={result.recommendation} icon={<ShoppingBag className="h-4 w-4" />} />
             </div>
+
+            <Card className="border-white/8 bg-white/5">
+              <CardHeader>
+                <CardTitle className="text-lg">一句话判断</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+                <div className="rounded-2xl border border-white/8 bg-black/10 p-4 text-sm leading-7 text-white/72">
+                  {buildVerdictText({
+                    recommendation: result.recommendation,
+                    demandScore: result.demand_score,
+                    trendScore: result.trend_score,
+                    competitionLevel,
+                    category: result.category,
+                  })}
+                </div>
+                <div className="grid gap-3">
+                  <ActionHintCard
+                    title="如果结论不错"
+                    desc="下一步直接去商品机会页，继续筛更值得做的单品。"
+                  />
+                  <ActionHintCard
+                    title="如果你想直接比货"
+                    desc="可以继续去供应链页看 1688 报价、评分、MOQ 和发货周期。"
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
             <div className="grid gap-4 xl:grid-cols-3">
               <Card className="border-white/8 bg-white/5">
@@ -211,12 +238,12 @@ export function MarketAnalysisCard({ lang = "zh", initialKeyword }: { lang?: Lan
 
               <Card className="border-white/8 bg-white/5">
                 <CardHeader>
-                  <CardTitle className="text-lg">这页当前说真话</CardTitle>
+                  <CardTitle className="text-lg">这页现在能帮你做什么判断</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm leading-7 text-white/68">
-                  <p>当前市场页已经能真实展示：需求、趋势、竞争、市场分、风险标记、平台兼容性和关键词扩展。</p>
-                  <p>但它现在还不是“真实外部平台全量数据”，因为 Google / Amazon / TikTok / Shopify 市场源里仍然有 mock 或 partial 情况。</p>
-                  <p>所以这页现在能用来做第一层商业判断，但还不能假装等同于完全真实全网市场数据。</p>
+                  <p>这页现在已经能帮你做第一层判断：这个方向有没有需求、趋势是不是在涨、竞争是不是太强、值不值得继续做。</p>
+                  <p>如果这一步结果就不行，你就不用浪费时间再往商品、货源和利润页走。</p>
+                  <p>如果这一步结果不错，你再继续进入商品机会页和供应链页，会更像真实做生意的顺序。</p>
                 </CardContent>
               </Card>
             </div>
@@ -290,6 +317,15 @@ export function MarketAnalysisCard({ lang = "zh", initialKeyword }: { lang?: Lan
   );
 }
 
+function ActionHintCard({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div className="rounded-2xl border border-white/8 bg-black/10 p-4">
+      <div className="text-sm font-medium text-white">{title}</div>
+      <div className="mt-2 text-sm leading-7 text-white/62">{desc}</div>
+    </div>
+  );
+}
+
 function toStatus(value: string) {
   if (value === "BUY" || value === "推荐关注" || value === "Recommend" || value === "Recommended") return "success";
   if (value === "TEST" || value === "继续观察" || value === "Monitor") return "warning";
@@ -347,6 +383,33 @@ function KeywordGroup({ title, items, emptyText }: { title: string; items: strin
       </div>
     </div>
   );
+}
+
+function buildVerdictText({
+  recommendation,
+  demandScore,
+  trendScore,
+  competitionLevel,
+  category,
+}: {
+  recommendation?: string;
+  demandScore?: number | null;
+  trendScore?: number | null;
+  competitionLevel?: string | null;
+  category?: string | null;
+}) {
+  const categoryText = category || "这个方向";
+  const demandText = demandScore != null && demandScore >= 70 ? "需求比较明显" : demandScore != null && demandScore >= 40 ? "需求还需要继续观察" : "需求偏弱";
+  const trendText = trendScore != null && trendScore >= 70 ? "趋势在往上走" : trendScore != null && trendScore >= 40 ? "趋势一般" : "趋势偏弱";
+  const competitionText = competitionLevel === "low" ? "竞争还不算太挤" : competitionLevel === "medium" ? "竞争中等" : "竞争已经偏强";
+
+  if (recommendation === "BUY" || recommendation === "推荐关注") {
+    return `${categoryText}目前${demandText}，${trendText}，而且${competitionText}，可以继续往商品机会和供应链方向深挖。`;
+  }
+  if (recommendation === "TEST" || recommendation === "继续观察") {
+    return `${categoryText}目前不是特别差，但还没有强到可以直接推进。它现在更适合先观察，再看单品层面能不能找到更低竞争的切入口。`;
+  }
+  return `${categoryText}目前${demandText}，${trendText}，同时${competitionText}，现在不适合继续投入太多时间，建议先换方向再看。`;
 }
 
 function formatSupplierPrice(supplier: SupplierMatchItem, fallback: string) {

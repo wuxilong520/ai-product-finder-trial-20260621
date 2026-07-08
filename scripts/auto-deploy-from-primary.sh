@@ -34,10 +34,12 @@ echo "${LOG_PREFIX} fetch latest from Gitee origin"
 git fetch origin main
 
 REMOTE_COMMIT="$(git rev-parse origin/main)"
-LOCAL_COMMIT="$(git rev-parse HEAD)"
+REMOTE_COMMIT_SHORT="$(git rev-parse --short origin/main)"
+LOCAL_COMMIT="$(git rev-parse --short HEAD)"
 LAST_DEPLOYED_COMMIT=""
 CURRENT_ENV_HASH="missing"
 LAST_ENV_HASH=""
+CODE_CHANGED="1"
 
 if [ -f "${LAST_DEPLOYED_FILE}" ]; then
   LAST_DEPLOYED_COMMIT="$(cat "${LAST_DEPLOYED_FILE}")"
@@ -51,13 +53,17 @@ if [ -f "${LAST_ENV_HASH_FILE}" ]; then
   LAST_ENV_HASH="$(cat "${LAST_ENV_HASH_FILE}")"
 fi
 
-if [ "${REMOTE_COMMIT}" = "${LAST_DEPLOYED_COMMIT}" ] && [ "${CURRENT_ENV_HASH}" = "${LAST_ENV_HASH}" ]; then
-  echo "${LOG_PREFIX} no code or env change, commit=${REMOTE_COMMIT} env_hash=${CURRENT_ENV_HASH}"
+if [ "${LAST_DEPLOYED_COMMIT}" = "${REMOTE_COMMIT}" ] || [ "${LAST_DEPLOYED_COMMIT}" = "${REMOTE_COMMIT_SHORT}" ]; then
+  CODE_CHANGED="0"
+fi
+
+if [ "${CODE_CHANGED}" = "0" ] && [ "${CURRENT_ENV_HASH}" = "${LAST_ENV_HASH}" ]; then
+  echo "${LOG_PREFIX} no code or env change, commit=${REMOTE_COMMIT_SHORT} env_hash=${CURRENT_ENV_HASH}"
   exit 0
 fi
 
-if [ "${REMOTE_COMMIT}" != "${LAST_DEPLOYED_COMMIT}" ]; then
-  echo "${LOG_PREFIX} detected code change: ${LAST_DEPLOYED_COMMIT} -> ${REMOTE_COMMIT}"
+if [ "${CODE_CHANGED}" = "1" ]; then
+  echo "${LOG_PREFIX} detected code change: ${LAST_DEPLOYED_COMMIT} -> ${REMOTE_COMMIT_SHORT}"
 else
   echo "${LOG_PREFIX} detected env change: ${LAST_ENV_HASH} -> ${CURRENT_ENV_HASH}"
 fi
@@ -77,6 +83,6 @@ echo "${LOG_PREFIX} run production deploy"
 /usr/bin/env bash "${REPO_DIR}/deploy/tencent-cloud/deploy.sh"
 /usr/bin/env bash "${REPO_DIR}/deploy/tencent-cloud/check.sh"
 
-echo "${REMOTE_COMMIT}" > "${LAST_DEPLOYED_FILE}"
+echo "${REMOTE_COMMIT_SHORT}" > "${LAST_DEPLOYED_FILE}"
 echo "${CURRENT_ENV_HASH}" > "${LAST_ENV_HASH_FILE}"
-echo "${LOG_PREFIX} done deployed=${REMOTE_COMMIT} previous_local=${LOCAL_COMMIT}"
+echo "${LOG_PREFIX} done deployed=${REMOTE_COMMIT_SHORT} previous_local=${LOCAL_COMMIT}"

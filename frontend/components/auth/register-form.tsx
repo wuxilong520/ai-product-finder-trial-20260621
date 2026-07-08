@@ -5,8 +5,9 @@ import { useState } from "react";
 
 import { Button, MinimalField, Modal, ModalBody, ModalDescription, ModalFooter, ModalHeader, ModalTitle, StatusAlert } from "@/design-system/components";
 import { ROUTES } from "@/config/routes";
+import { setToken } from "@/lib/auth";
 import { Language } from "@/lib/i18n";
-import { registerUser, sendAuthCode } from "@/lib/api";
+import { login, registerUser, sendAuthCode } from "@/lib/api";
 
 export function RegisterForm({ lang: _lang }: { lang: Language }) {
   const [email, setEmail] = useState("");
@@ -51,6 +52,8 @@ export function RegisterForm({ lang: _lang }: { lang: Language }) {
     setMessage("");
     try {
       await registerUser(email, password, code, fullName);
+      const loginResult = await login(email, password);
+      setToken(loginResult.access_token);
       window.location.assign(ROUTES.home);
     } catch (err) {
       setError(err instanceof Error ? err.message : "注册失败");
@@ -109,29 +112,29 @@ export function RegisterForm({ lang: _lang }: { lang: Language }) {
         </ModalFooter>
       </Modal>
 
-      <form onSubmit={handleSubmit} className="space-y-5 px-4 pb-4 pt-2" autoComplete="off">
+      <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
         <MinimalField id="register-email" type="email" value={email} onChange={setEmail} label="邮箱" placeholder="请输入注册邮箱" />
         <MinimalField id="register-name" type="text" value={fullName} onChange={setFullName} label="姓名或团队名称" placeholder="方便你识别当前工作区" />
         <MinimalField id="register-password" type="password" value={password} onChange={setPassword} label="登录密码" placeholder="至少 8 位密码" />
         <div className="grid grid-cols-[1fr_132px] gap-3">
           <MinimalField id="register-code" type="text" value={code} onChange={setCode} label="邮箱验证码" placeholder="请输入验证码" />
           <div className="pt-8">
-            <Button type="button" variant="secondary" className="h-14 w-full" disabled={sendingCode || !email} onClick={handleSendCode}>
+            <Button type="button" className="h-14 w-full bg-[linear-gradient(135deg,#FB923C,#F97316)] text-white shadow-[0_16px_40px_rgba(249,115,22,0.26)] hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(249,115,22,0.3)]" disabled={sendingCode || !email} onClick={handleSendCode}>
               {sendingCode ? "发送中..." : "发送验证码"}
             </Button>
           </div>
         </div>
 
         {challengeQuestion ? (
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <p className="text-sm text-white/80">{challengeQuestion}</p>
+          <div className="rounded-2xl border border-[#FED7AA] bg-[#FFF7ED] p-4">
+            <p className="text-sm text-[#9A3412]">{challengeQuestion}</p>
             <div className="mt-3">
               <MinimalField id="register-challenge-answer" type="text" value={challengeAnswer} onChange={setChallengeAnswer} label="安全验证答案" placeholder="请输入答案后再次发送验证码" />
             </div>
           </div>
         ) : null}
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-7 text-white/70">
+        <div className="rounded-2xl border border-[#E7E5E4] bg-[#FAFAF9] px-4 py-3 text-sm leading-7 text-[#475569]">
           点击“创建账号”后，会先让你确认：
           <Link href={ROUTES.terms} className="ml-1 text-app-brand-secondary hover:text-white" target="_blank">用户协议</Link>
           、
@@ -144,13 +147,13 @@ export function RegisterForm({ lang: _lang }: { lang: Language }) {
         {error ? <StatusAlert status="error" message={error} /> : null}
         {message ? <StatusAlert status="success" message={message} /> : null}
 
-        <Button type="submit" className="h-12 w-full" disabled={loading}>
+        <Button type="submit" className="h-12 w-full bg-[linear-gradient(135deg,#FB923C,#F97316)] text-white shadow-[0_16px_40px_rgba(249,115,22,0.26)] hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(249,115,22,0.3)]" disabled={loading}>
           {loading ? "准备中..." : "创建账号"}
         </Button>
 
-        <div className="text-center text-sm text-white/55">
+        <div className="text-center text-sm text-[#64748B]">
           已经有账号了？{" "}
-          <Link href={ROUTES.login} className="text-app-brand-secondary hover:text-white">
+          <Link href={ROUTES.login} className="text-[#F97316] hover:text-[#EA580C]">
             去登录
           </Link>
         </div>

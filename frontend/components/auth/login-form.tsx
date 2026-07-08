@@ -108,8 +108,8 @@ export function LoginForm({ lang }: { lang: Language }) {
 
       <TabsContent value="password">
         <form onSubmit={handlePasswordLogin} className="space-y-5" autoComplete="off">
-          <MinimalField id="email" type="email" value={email} onChange={setEmail} label={text.email} placeholder={text.loginEmailPlaceholder} tone="light" />
-          <MinimalField id="password" type="password" value={password} onChange={setPassword} label={text.password} placeholder={text.loginPasswordPlaceholder} tone="light" />
+          <MinimalField id="email" type="email" value={email} onChange={setEmail} label={text.email} placeholder={text.loginEmailPlaceholder} />
+          <MinimalField id="password" type="password" value={password} onChange={setPassword} label={text.password} placeholder={text.loginPasswordPlaceholder} />
 
           {error ? <StatusAlert status="error" message={error} /> : null}
           {message ? <StatusAlert status="success" message={message} /> : null}
@@ -122,9 +122,9 @@ export function LoginForm({ lang }: { lang: Language }) {
 
       <TabsContent value="code">
         <form onSubmit={handleCodeLogin} className="space-y-5" autoComplete="off">
-          <MinimalField id="email-code" type="email" value={email} onChange={setEmail} label={text.email} placeholder={text.loginEmailPlaceholder} tone="light" />
+          <MinimalField id="email-code" type="email" value={email} onChange={setEmail} label={text.email} placeholder={text.loginEmailPlaceholder} />
           <div className="grid grid-cols-[1fr_132px] gap-3">
-            <MinimalField id="code" type="text" value={code} onChange={setCode} label="邮箱验证码" placeholder="请输入验证码" tone="light" />
+            <MinimalField id="code" type="text" value={code} onChange={setCode} label="邮箱验证码" placeholder="请输入验证码" />
             <div className="pt-8">
               <Button
                 type="button"
@@ -149,7 +149,6 @@ export function LoginForm({ lang }: { lang: Language }) {
                   onChange={setChallengeAnswer}
                   label="安全验证答案"
                   placeholder="请输入答案后再次发送验证码"
-                  tone="light"
                 />
               </div>
             </div>

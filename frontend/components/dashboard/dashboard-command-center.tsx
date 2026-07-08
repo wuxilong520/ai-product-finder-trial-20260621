@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { ArrowRight, Flame, ShoppingBag, Sparkles, TrendingUp } from "lucide-react";
+import { ArrowRight, BarChart3, Flame, PackageSearch, ShieldAlert, ShoppingBag, Sparkles, TrendingUp, WalletCards } from "lucide-react";
 
 import { PlanAccessPanel } from "@/components/billing/plan-access-panel";
 import { MarketAnalysisCard } from "@/components/market/market-analysis-card";
@@ -123,6 +123,7 @@ export function DashboardCommandCenter({
   const riskOpportunities = rankings?.risk_ranking.top_10.slice(0, 3) || [];
   const sourceHealth = sources.sources.slice(0, 4);
   const latestRuns = tasks.recent_runs.slice(0, 3);
+  const newestProducts = products.items.slice(0, 4);
   const totalProfit = topRecommendations.reduce((sum, item) => sum + Number(item.estimated_profit || 0), 0);
   const avgAiScore = topRecommendations.length
     ? Math.round(topRecommendations.reduce((sum, item) => sum + item.recommendation_score, 0) / topRecommendations.length)
@@ -156,6 +157,37 @@ export function DashboardCommandCenter({
     const keyword = quickKeyword.trim();
     router.push(keyword ? `${ROUTES.createTask}?keyword=${encodeURIComponent(keyword)}` : ROUTES.createTask);
   }
+
+  const dashboardQuickActions = [
+    {
+      title: "市场分析页",
+      desc: "先判断关键词需求、趋势、竞争和饱和度。",
+      href: ROUTES.insights,
+      label: "去看市场",
+      icon: <BarChart3 className="h-4 w-4" />,
+    },
+    {
+      title: "商品机会页",
+      desc: "基于市场结果继续筛商品，找更值得做的方向。",
+      href: ROUTES.insightsOpportunities,
+      label: "去看机会",
+      icon: <Sparkles className="h-4 w-4" />,
+    },
+    {
+      title: "供应链匹配页",
+      desc: "继续看 1688 货源、成本和供应稳定性。",
+      href: ROUTES.actionSuppliers,
+      label: "去看供应链",
+      icon: <PackageSearch className="h-4 w-4" />,
+    },
+    {
+      title: "利润决策页",
+      desc: "统一看 ROI、利润空间和风险等级。",
+      href: ROUTES.actionProfit,
+      label: "去看利润",
+      icon: <WalletCards className="h-4 w-4" />,
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -228,30 +260,16 @@ export function DashboardCommandCenter({
               />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
-              <QuickEntry
-                title="市场分析页"
-                desc="先判断需求、趋势、竞争、饱和度。"
-                href={ROUTES.insights}
-                label="去做关键词分析"
-              />
-              <QuickEntry
-                title="商品机会页"
-                desc="从类目往下找更值得做的具体商品。"
-                href={ROUTES.insightsOpportunities}
-                label="去看商品机会"
-              />
-              <QuickEntry
-                title="利润决策页"
-                desc="继续看利润、风险和最后的商业判断。"
-                href={ROUTES.actionProfit}
-                label="去看利润决策"
-              />
-              <QuickEntry
-                title="供应链页"
-                desc="继续筛 1688 供应结果，再决定要不要推进。"
-                href={ROUTES.actionSuppliers}
-                label="去看供应链"
-              />
+              {dashboardQuickActions.map((item) => (
+                <QuickEntry
+                  key={item.title}
+                  title={item.title}
+                  desc={item.desc}
+                  href={item.href}
+                  label={item.label}
+                  icon={item.icon}
+                />
+              ))}
             </div>
             <div className="grid gap-4 xl:grid-cols-2">
               <div className="rounded-2xl border border-white/6 bg-white/[0.03] p-4">
@@ -291,6 +309,86 @@ export function DashboardCommandCenter({
         </Card>
 
         <MarketAnalysisCard lang={lang} />
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-2">
+        <Card className="border-white/6 bg-[#111A2E]">
+          <CardHeader>
+            <CardTitle>今日趋势商品</CardTitle>
+            <CardDescription>这块回答的是：今天有哪些真实商品值得你优先点进去看。</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {newestProducts.length ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {newestProducts.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={productDetailRoute(item.id)}
+                    className="group rounded-2xl border border-white/6 bg-[rgba(255,255,255,0.02)] p-4 transition hover:-translate-y-0.5 hover:border-[#4F7CFF]/30 hover:bg-[rgba(79,124,255,0.06)]"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <Badge variant="brand" className="px-3 py-1.5 text-xs">
+                        今日关注
+                      </Badge>
+                      <span className="text-xs text-white/45">ID #{item.id}</span>
+                    </div>
+                    <div className="mt-4 line-clamp-2 min-h-[44px] text-sm font-medium leading-6 text-white">
+                      {item.title_zh || item.title}
+                    </div>
+                    <div className="mt-4 grid gap-2">
+                      <InfoRow
+                        label="价格"
+                        value={item.current_price != null ? `${item.currency_code || ""} ${item.current_price}`.trim() : "待补充"}
+                        tone="green"
+                      />
+                      <InfoRow label="评分" value={item.rating ? String(item.rating) : "待补充"} tone="blue" />
+                      <InfoRow label="评论" value={item.review_count ? String(item.review_count) : "0"} tone="neutral" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <EmptyState text="当前还没有真实商品进入首页推荐，先从采集或任务入口补充商品。" />
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-white/6 bg-[#111A2E]">
+          <CardHeader>
+            <CardTitle>今天应该怎么推进</CardTitle>
+            <CardDescription>这块回答的是：如果你现在就在做 Shopify 店铺，今天先做哪一步最合适。</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <ActionGuideCard
+              icon={<TrendingUp className="h-4 w-4" />}
+              title="先看市场"
+              desc="如果你还没决定做什么商品，先去市场分析页看关键词和类目趋势。"
+              href={ROUTES.insights}
+              label="进入市场分析"
+            />
+            <ActionGuideCard
+              icon={<ShoppingBag className="h-4 w-4" />}
+              title="再定商品"
+              desc="如果你已经有类目方向，比如家电，就去商品机会页筛更值得做的单品。"
+              href={ROUTES.insightsOpportunities}
+              label="进入商品机会"
+            />
+            <ActionGuideCard
+              icon={<PackageSearch className="h-4 w-4" />}
+              title="再匹配货源"
+              desc="单品有机会后，再去供应链页看 1688 价格、评分、MOQ 和发货周期。"
+              href={ROUTES.actionSuppliers}
+              label="进入供应链匹配"
+            />
+            <ActionGuideCard
+              icon={<ShieldAlert className="h-4 w-4" />}
+              title="最后做利润和风险判断"
+              desc="等市场、商品、货源都过了一轮，再去利润页和执行页，决定测试还是推进。"
+              href={ROUTES.actionProfit}
+              label="进入利润决策"
+            />
+          </CardContent>
+        </Card>
       </section>
 
       <Card className="border-white/6 bg-[#111A2E]">
@@ -671,7 +769,42 @@ function QuickEntry({
   desc,
   href,
   label,
+  icon,
 }: {
+  title: string;
+  desc: string;
+  href: string;
+  label: string;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="rounded-2xl border border-white/6 bg-[rgba(255,255,255,0.02)] p-4 transition hover:-translate-y-0.5 hover:border-[#4F7CFF]/30 hover:bg-[rgba(79,124,255,0.06)]"
+    >
+      {icon ? (
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#4F7CFF]/12 text-[#9CC0FF]">
+          {icon}
+        </div>
+      ) : null}
+      <div className="text-base font-semibold text-white">{title}</div>
+      <div className="mt-2 min-h-[48px] text-sm leading-7 text-white/60">{desc}</div>
+      <div className="mt-4 inline-flex items-center text-sm font-medium text-[#9CC0FF]">
+        {label}
+        <ArrowRight className="ml-2 h-4 w-4" />
+      </div>
+    </Link>
+  );
+}
+
+function ActionGuideCard({
+  icon,
+  title,
+  desc,
+  href,
+  label,
+}: {
+  icon: React.ReactNode;
   title: string;
   desc: string;
   href: string;
@@ -682,11 +815,18 @@ function QuickEntry({
       href={href}
       className="rounded-2xl border border-white/6 bg-[rgba(255,255,255,0.02)] p-4 transition hover:-translate-y-0.5 hover:border-[#4F7CFF]/30 hover:bg-[rgba(79,124,255,0.06)]"
     >
-      <div className="text-base font-semibold text-white">{title}</div>
-      <div className="mt-2 min-h-[48px] text-sm leading-7 text-white/60">{desc}</div>
-      <div className="mt-4 inline-flex items-center text-sm font-medium text-[#9CC0FF]">
-        {label}
-        <ArrowRight className="ml-2 h-4 w-4" />
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/6 text-[#9CC0FF]">
+          {icon}
+        </div>
+        <div className="min-w-0">
+          <div className="text-base font-semibold text-white">{title}</div>
+          <div className="mt-2 text-sm leading-7 text-white/60">{desc}</div>
+          <div className="mt-4 inline-flex items-center text-sm font-medium text-[#9CC0FF]">
+            {label}
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </div>
+        </div>
       </div>
     </Link>
   );

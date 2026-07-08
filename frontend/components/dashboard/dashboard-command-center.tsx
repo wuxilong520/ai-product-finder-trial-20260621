@@ -121,7 +121,6 @@ export function DashboardCommandCenter({
   const categoryCards = summary.top_categories.slice(0, 6);
   const marketOpportunities = rankings?.growth_ranking.top_10.slice(0, 3) || [];
   const riskOpportunities = rankings?.risk_ranking.top_10.slice(0, 3) || [];
-  const sourceHealth = sources.sources.slice(0, 4);
   const latestRuns = tasks.recent_runs.slice(0, 3);
   const newestProducts = products.items.slice(0, 4);
   const totalProfit = topRecommendations.reduce((sum, item) => sum + Number(item.estimated_profit || 0), 0);
@@ -235,27 +234,27 @@ export function DashboardCommandCenter({
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <Card className="border-white/6 bg-[#111A2E]">
           <CardHeader>
-            <CardTitle>系统总览</CardTitle>
-            <CardDescription>这块回答的是：今天的市场、利润、风险状态大概怎么样。</CardDescription>
+            <CardTitle>今天这个方向值不值得继续做</CardTitle>
+            <CardDescription>这块只回答用户最关心的三件事：有没有热度、有没有利润、风险大不大。</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-3">
               <StatusMetric
-                label="Market"
+                label="需求热度"
                 value={marketStatus}
-                desc={marketOpportunities.length ? `当前热度均值 ${avgMarketHeat}/100` : "当前还没有足够热度结果"}
+                desc={marketOpportunities.length ? `当前市场热度均值 ${avgMarketHeat}/100` : "现在还没有形成足够的热度结果"}
                 tone={marketStatus === "偏强" ? "green" : marketStatus === "中等" ? "orange" : "neutral"}
               />
               <StatusMetric
-                label="Profit"
+                label="利润空间"
                 value={profitStatus}
-                desc={topRecommendations.length ? `当前推荐利润累计 ${totalProfit.toFixed(2)}` : "当前还没有足够利润结果"}
+                desc={topRecommendations.length ? `当前推荐商品累计预估利润 ${totalProfit.toFixed(2)}` : "现在还没有形成足够的利润结果"}
                 tone={profitStatus === "有利润空间" ? "green" : "neutral"}
               />
               <StatusMetric
-                label="Risk"
+                label="进入风险"
                 value={riskStatus}
-                desc={riskOpportunities.length ? "基于当前风险榜单结果" : "当前还没有足够风险结果"}
+                desc={riskOpportunities.length ? "基于当前机会和竞争结果得出" : "现在还没有形成足够的风险判断"}
                 tone={riskStatus === "偏低" ? "green" : riskStatus === "中等" ? "orange" : riskStatus === "偏高" ? "red" : "neutral"}
               />
             </div>
@@ -273,35 +272,34 @@ export function DashboardCommandCenter({
             </div>
             <div className="grid gap-4 xl:grid-cols-2">
               <div className="rounded-2xl border border-white/6 bg-white/[0.03] p-4">
-                <div className="text-sm font-medium text-white">当前任务状态</div>
+                <div className="text-sm font-medium text-white">为什么今天先看这些</div>
                 <div className="mt-4 grid gap-3">
-                  {tasks.states.map((item) => (
-                    <div key={item.key} className="rounded-xl border border-white/6 bg-black/10 px-3 py-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-sm text-white/75">{item.label}</span>
-                        <span className={`text-sm font-medium ${taskStatusTone(item.status)}`}>{taskStatusText(item.status)}</span>
-                      </div>
-                      <div className="mt-2 text-sm leading-6 text-white/55">{item.message || "当前没有额外状态说明"}</div>
+                  {[
+                    "先看市场，是为了先判断这个词到底有没有人搜、有没有增长。",
+                    "再看商品机会，是为了从类目里找到竞争更低、更适合切入的单品。",
+                    "再看供应链，是为了确认 1688 价格、评分、MOQ 和发货周期能不能承接。",
+                    "最后看利润和上架，是为了防止刚有点热度就盲目上架。",
+                  ].map((item) => (
+                    <div key={item} className="rounded-xl border border-white/6 bg-black/10 px-3 py-3 text-sm leading-7 text-white/68">
+                      {item}
                     </div>
                   ))}
                 </div>
               </div>
               <div className="rounded-2xl border border-white/6 bg-white/[0.03] p-4">
-                <div className="text-sm font-medium text-white">当前数据源状态</div>
+                <div className="text-sm font-medium text-white">今天你可以直接怎么走</div>
                 <div className="mt-4 grid gap-3">
-                  {sourceHealth.length ? sourceHealth.map((item) => (
-                    <div key={item.platform_code} className="rounded-xl border border-white/6 bg-black/10 px-3 py-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-sm text-white/75">{item.platform_name}</span>
-                        <span className={`text-sm font-medium ${sourceHealthTone(item.health)}`}>{sourceHealthText(item.health)}</span>
-                      </div>
-                      <div className="mt-2 text-sm leading-6 text-white/55">
-                        {item.last_activity_text} · 当前商品数 {item.product_count}
-                      </div>
+                  {[
+                    { step: "第一步", text: "如果你还没定商品，就先去市场分析页输入关键词。" },
+                    { step: "第二步", text: "如果你已经想做家电，就去商品机会页继续筛单品。" },
+                    { step: "第三步", text: "如果单品看起来能做，就去供应链页比 1688 货源。" },
+                    { step: "第四步", text: "最后再去利润决策页，看值不值得测试上架。" },
+                  ].map((item) => (
+                    <div key={item.step} className="rounded-xl border border-white/6 bg-black/10 px-3 py-3">
+                      <div className="text-sm font-medium text-[#9CC0FF]">{item.step}</div>
+                      <div className="mt-2 text-sm leading-6 text-white/60">{item.text}</div>
                     </div>
-                  )) : (
-                    <EmptyState text="现在还没有拿到数据源状态。" />
-                  )}
+                  ))}
                 </div>
               </div>
             </div>
@@ -540,7 +538,7 @@ export function DashboardCommandCenter({
         </CardContent>
       </Card>
 
-      <PlanAccessPanel currentPlan={currentPlan} title="你当前这套账号能调用什么 AI" />
+      <PlanAccessPanel currentPlan={currentPlan} title="你当前套餐能用哪些 AI 能力" />
 
       <section className="grid gap-4 xl:grid-cols-4">
         <MetricCard
@@ -573,110 +571,18 @@ export function DashboardCommandCenter({
         />
       </section>
 
-      {isAdmin ? (
-        <Card className="border-white/6 bg-[#111A2E]">
-          <CardContent className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="text-xs uppercase tracking-[0.22em] text-white/35">商航AI · 内部运营入口</div>
-              <div className="mt-2 text-xl font-semibold text-white">你当前账号拥有后台权限</div>
-              <div className="mt-2 text-sm leading-7 text-white/60">
-                可以直接进入内部管理后台，查看用户、收入和系统状态。
-              </div>
-            </div>
-            <Link
-              href={ROUTES.systemAdmin}
-              className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm text-white transition hover:bg-white/10"
-            >
-              进入后台管理
-            </Link>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      <section className="grid gap-6 xl:grid-cols-2">
-        <Card className="border-white/6 bg-[#111A2E]">
-          <CardHeader>
-            <CardTitle>补充看板：今日值得关注商品</CardTitle>
-            <CardDescription>这块放在机会判断后面，不再抢首页第一眼。</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {topRecommendations.length ? (
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                {topRecommendations.slice(0, 8).map((item) => (
-                  <Link
-                    key={`${item.product_id}-${item.keyword}`}
-                    href={productDetailRoute(item.product_id)}
-                    className="group rounded-2xl border border-white/6 bg-[rgba(255,255,255,0.02)] p-4 transition hover:-translate-y-0.5 hover:border-[#4F7CFF]/30 hover:bg-[rgba(79,124,255,0.06)]"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <Badge variant="brand" className="px-3 py-1.5 text-xs">
-                        {text.recommendBadge}
-                      </Badge>
-                      <span className="text-xs text-white/45">{Math.round(item.recommendation_score)}/100</span>
-                    </div>
-                    <div className="mt-4 line-clamp-2 min-h-[44px] text-sm font-medium leading-6 text-white">
-                      {item.title_zh || item.title}
-                    </div>
-                    <div className="mt-4 grid gap-2">
-                      <InfoRow label={text.profit} value={String(item.estimated_profit)} tone="green" />
-                      <InfoRow label={text.keyword} value={item.keyword} tone="neutral" />
-                      <InfoRow label={text.suggestion} value={item.recommendation} tone="blue" />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <EmptyState text={text.noToday} />
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="border-white/6 bg-[#111A2E]">
-          <CardHeader>
-            <CardTitle>补充看板：类目分布</CardTitle>
-            <CardDescription>这是辅助信息，不再代替“今天先看什么”的主判断。</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {categoryCards.length ? (
-              <div className="flex gap-4 overflow-x-auto pb-2">
-                {categoryCards.map((item, index) => (
-                  <div key={`${item.name}-${index}`} className="min-w-[220px] rounded-2xl border border-white/6 bg-[rgba(255,255,255,0.02)] p-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <Badge variant="neutral" className="px-3 py-1.5 text-xs">
-                        {text.categoryBadge}
-                      </Badge>
-                      <span className="text-xs text-white/40">TOP {index + 1}</span>
-                    </div>
-                    <div className="mt-4 text-base font-semibold text-white">{item.name}</div>
-                    <div className="mt-3 text-sm text-white/55">{text.categoryCount}{item.product_count}</div>
-                    <div className="mt-5 h-2 rounded-full bg-white/6">
-                      <div
-                        className="h-2 rounded-full bg-[linear-gradient(90deg,#4F7CFF,#3DD68C)]"
-                        style={{ width: `${Math.min(100, item.product_count * 8)}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <EmptyState text={text.noCategory} />
-            )}
-          </CardContent>
-        </Card>
-      </section>
-
       <section className="grid gap-6 xl:grid-cols-3">
         <Card className="border-white/6 bg-[#111A2E] xl:col-span-2">
           <CardHeader>
-            <CardTitle>现在这套系统已经走到哪里</CardTitle>
-            <CardDescription>这里只写当前页面和代码里已经收口到的东西，不写没做完的空话。</CardDescription>
+            <CardTitle>你现在可以直接做的事</CardTitle>
+            <CardDescription>这块只讲你现在打开系统后，马上可以用起来的动作。</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 md:grid-cols-2">
             {[
-              "登录后首页已经按产品入口聚合市场、商品、供应链、利润和执行入口。",
-              "任务详情页已经能把市场智能层、1688 结果、利润和 Shopify 出口放一起看。",
-              "套餐、账户、订单和封号提示都已经有独立页面承接。",
-              "真实平台的最终自动发布还没完全收口，所以执行页现在还是以准备和队列为主。",
+              "先用市场页判断一个类目或者一个词是不是在增长。",
+              "再用商品机会页继续筛出更值得做的具体商品。",
+              "再去供应链页比 1688 价格、评分、MOQ 和发货周期。",
+              "最后到利润页做判断，再决定要不要推进到上架。",
             ].map((item) => (
               <div key={item} className="rounded-2xl border border-white/6 bg-white/[0.03] p-4 text-sm leading-7 text-white/68">
                 {item}
@@ -687,15 +593,15 @@ export function DashboardCommandCenter({
 
         <Card className="border-white/6 bg-[#111A2E]">
           <CardHeader>
-            <CardTitle>快速入口</CardTitle>
-            <CardDescription>把常用入口放在一起，少走弯路。</CardDescription>
+            <CardTitle>常用入口</CardTitle>
+            <CardDescription>你不想绕路时，就从这里直接进去。</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {[
               { label: "进入任务中心", href: ROUTES.tasks },
               { label: "进入账户中心", href: ROUTES.settings },
               { label: "进入套餐充值页", href: ROUTES.pricing },
-              { label: "查看产品健康页", href: ROUTES.productDashboard },
+              ...(isAdmin ? [{ label: "进入内部管理页", href: ROUTES.systemAdmin }] : []),
             ].map((item) => (
               <Link
                 key={item.label}
@@ -712,8 +618,8 @@ export function DashboardCommandCenter({
 
       <Card className="border-white/6 bg-[#111A2E]">
         <CardHeader>
-          <CardTitle>最近真实动作</CardTitle>
-          <CardDescription>这块只展示系统里最近真实跑过的采集记录，不放假数据。</CardDescription>
+          <CardTitle>最近分析记录</CardTitle>
+          <CardDescription>这块展示最近真实跑过的分析记录，方便你接着往下看。</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 xl:grid-cols-3">
           {latestRuns.length ? latestRuns.map((item) => (
@@ -722,12 +628,13 @@ export function DashboardCommandCenter({
                 <div className="text-sm font-medium text-white">{item.platform_name}</div>
                 <div className={`text-sm font-medium ${runStatusTone(item.status)}`}>{runStatusText(item.status)}</div>
               </div>
-              <div className="mt-3 break-all text-sm leading-6 text-white/55">{item.request_url}</div>
+              <div className="mt-3 text-sm leading-6 text-white/55">这是你最近真实跑过的一条分析来源记录。</div>
+              <div className="mt-3 break-all text-xs text-white/38">{item.request_url}</div>
               <div className="mt-3 text-xs text-white/38">{formatTimeText(item.crawled_at)}</div>
             </div>
           )) : (
             <div className="xl:col-span-3">
-              <EmptyState text="现在还没有最近采集记录，说明你还需要继续跑真实采集，首页这里才会越来越有价值。" />
+              <EmptyState text="现在还没有最近分析记录，你先跑一轮真实分析，这里才会逐步变成真正有用的经营首页。" />
             </div>
           )}
         </CardContent>

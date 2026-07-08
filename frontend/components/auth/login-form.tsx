@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { Button, LightTabsList, LightTabsTrigger, MinimalField, StatusAlert, Tabs, TabsContent } from "@/design-system/components";
+import { Button, MinimalField, StatusAlert, Tabs, TabsContent, TabsList, TabsTrigger } from "@/design-system/components";
 import { ROUTES } from "@/config/routes";
 import { getToken, setToken } from "@/lib/auth";
 import { Language, t } from "@/lib/i18n";
@@ -91,10 +91,20 @@ export function LoginForm({ lang }: { lang: Language }) {
 
   return (
     <Tabs defaultValue="password" className="px-4 pb-4 pt-2">
-      <LightTabsList className="grid w-full grid-cols-2">
-        <LightTabsTrigger value="password">密码登录</LightTabsTrigger>
-        <LightTabsTrigger value="code">验证码登录</LightTabsTrigger>
-      </LightTabsList>
+      <TabsList className="grid h-auto w-full grid-cols-2 border-[#F3E8D8] bg-[#FFFDF8] p-1 shadow-[0_10px_24px_rgba(15,23,42,0.05)]">
+        <TabsTrigger
+          value="password"
+          className="text-[#94A3B8] data-[inactive=true]:text-[#94A3B8] [&]:rounded-xl [&]:px-4 [&]:py-2 [&]:text-sm [&]:font-medium"
+        >
+          密码登录
+        </TabsTrigger>
+        <TabsTrigger
+          value="code"
+          className="text-[#94A3B8] data-[inactive=true]:text-[#94A3B8] [&]:rounded-xl [&]:px-4 [&]:py-2 [&]:text-sm [&]:font-medium"
+        >
+          验证码登录
+        </TabsTrigger>
+      </TabsList>
 
       <TabsContent value="password">
         <form onSubmit={handlePasswordLogin} className="space-y-5" autoComplete="off">

@@ -139,9 +139,10 @@ export function ProfitPublishCenter({ initialKeyword }: { initialKeyword?: strin
     <div className="space-y-5">
       <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
         <CardHeader>
-          <CardTitle>利润决策 + 上架准备页</CardTitle>
+          <div className="text-xs uppercase tracking-[0.24em] text-white/40">商航AI · 利润决策 + 上架准备页</div>
+          <CardTitle>先确认这单到底赚不赚钱，再决定要不要继续推进上架</CardTitle>
           <p className="text-sm text-white/55">
-            这一步是最后拍板：先算利润，再看 AI 决策，再生成 Shopify 上架草稿，最后做发布前检查。
+            这一步不是一上来就发布，而是先把利润、风险、执行等级和发布条件看清楚，再决定要不要继续做 Shopify 上架准备。
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -155,7 +156,13 @@ export function ProfitPublishCenter({ initialKeyword }: { initialKeyword?: strin
             <InfoTile label="当前商品" value={keyword || "未填写"} />
             <InfoTile label="当前市场" value={market} />
             <InfoTile label="当前策略" value={strategyMode} />
-            <InfoTile label="当前目标" value="做 Shopify 上架准备" />
+            <InfoTile label="当前目标" value="做最后拍板" />
+          </div>
+          <div className="grid gap-4 md:grid-cols-4">
+            <StepHint title="先看利润" desc="如果利润不成立，后面就没有必要继续做上架准备。" />
+            <StepHint title="再看风险" desc="利润看起来不错，也要判断风险和执行等级。" />
+            <StepHint title="再生成草稿" desc="确认值得继续后，再生成 Shopify 上架草稿。" />
+            <StepHint title="最后做检查" desc="检查当前到底允不允许往真实发布走。" />
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             <Input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="例如：air fryer" />
@@ -204,7 +211,7 @@ export function ProfitPublishCenter({ initialKeyword }: { initialKeyword?: strin
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <WandSparkles className="h-5 w-5 text-[#7dd3fc]" />
-                利润决策结果
+                最后拍板结果
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -222,6 +229,9 @@ export function ProfitPublishCenter({ initialKeyword }: { initialKeyword?: strin
                     <InfoTile label="执行是否允许" value={decision.execution_allowed ? "允许" : "不允许"} />
                     <InfoTile label="执行阻断原因" value={decision.execution_block_reason || "当前没有阻断"} />
                     <InfoTile label="策略模式" value={decision.strategy_mode || "—"} />
+                  </div>
+                  <div className="rounded-2xl border border-white/8 bg-black/10 p-4 text-sm leading-7 text-white/68">
+                    {buildDecisionSummary(decision)}
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
                     <InfoTile label="市场摘要" value={analysis?.market_insight?.summary || "后端没返回市场摘要"} />
@@ -263,6 +273,9 @@ export function ProfitPublishCenter({ initialKeyword }: { initialKeyword?: strin
                     <InfoTile label="发布建议" value={listingData?.publish_decision || "—"} />
                     <InfoTile label="执行目标平台" value={listingData?.execution_target_platform || "—"} />
                     <InfoTile label="执行状态" value={listingData?.execution?.platform_execution_status || "—"} />
+                  </div>
+                  <div className="rounded-2xl border border-white/8 bg-black/10 p-4 text-sm leading-7 text-white/68">
+                    这一步的作用不是直接发布，而是先把 Shopify 的商品草稿准备出来，方便你继续检查标题、售价、卖点和关键词。
                   </div>
                   <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
                     <div className="text-sm font-medium text-white">卖点</div>
@@ -318,6 +331,11 @@ export function ProfitPublishCenter({ initialKeyword }: { initialKeyword?: strin
                     <InfoTile label="是否允许发布" value={publishData.execution_bridge_mapping?.publish_allowed ? "允许" : "不允许"} />
                     <InfoTile label="Shopify 商品 ID" value={publishData.shopify_product_id || "还没有"} />
                   </div>
+                  <div className="rounded-2xl border border-white/8 bg-black/10 p-4 text-sm leading-7 text-white/68">
+                    {publishData.execution_bridge_mapping?.publish_allowed
+                      ? "从当前检查结果看，这一步已经接近可以往真实发布推进。"
+                      : "从当前检查结果看，这一步还不能直接往真实发布走，先解决阻塞项。"}
+                  </div>
                   <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
                     <div className="text-sm font-medium text-white">检查结论</div>
                     <div className="mt-3 text-sm leading-7 text-white/65">{publishData.message || "当前没有额外说明"}</div>
@@ -339,7 +357,7 @@ export function ProfitPublishCenter({ initialKeyword }: { initialKeyword?: strin
 
           <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
             <CardHeader>
-              <CardTitle>当前这一步能做什么，不能做什么</CardTitle>
+              <CardTitle>这一页当前能帮你做到哪里</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm leading-7 text-white/60">
               <div>1. 已经能做：利润估算、风险判断、执行等级判断、Shopify 上架草稿生成、发布前检查。</div>
@@ -395,4 +413,27 @@ function formatTrustLine(
     return "后端还没返回可信数据说明";
   }
   return `trust=${trust.trust_level ?? "—"} / confidence=${trust.confidence ?? "—"} / mock=${String(trust.is_mock ?? false)} / expired=${String(trust.is_expired ?? false)}`;
+}
+
+function StepHint({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div className="rounded-2xl border border-white/8 bg-white/5 p-4">
+      <div className="text-base font-semibold text-white">{title}</div>
+      <div className="mt-2 text-sm leading-7 text-white/60">{desc}</div>
+    </div>
+  );
+}
+
+function buildDecisionSummary(decision: NonNullable<DecisionV1Response["decision"]>) {
+  const profitOk = typeof decision.real_profit_estimate === "number" && decision.real_profit_estimate > 0;
+  const riskText = decision.risk_level === "low" ? "风险偏低" : decision.risk_level === "medium" ? "风险中等" : "风险偏高";
+  const actionText = decision.action_level || "还没给出执行等级";
+
+  if (profitOk && decision.execution_allowed) {
+    return `这轮结果说明：利润目前看起来能成立，${riskText}，而且执行等级是 ${actionText}，可以继续推进 Shopify 上架准备。`;
+  }
+  if (profitOk) {
+    return `这轮结果说明：利润目前不算差，但 ${riskText}，或者执行条件还没满足，所以现在更适合先解决阻塞项。`;
+  }
+  return `这轮结果说明：利润现在还不够成立，同时 ${riskText}，这时不适合急着推进上架。`;
 }

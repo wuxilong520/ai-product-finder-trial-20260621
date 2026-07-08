@@ -33,7 +33,7 @@ export default async function ProfitReviewPage() {
       lang={lang}
       activePath="action"
       title="利润决策 + 上架准备"
-      description="这一步就是你真正拍板的地方：先算利润，再看风险和执行等级，再生成 Shopify 上架草稿，最后检查当前能不能真的往发布走。"
+      description="这一步就是你最后拍板的地方：先看利润能不能成立，再看风险和执行等级，最后再决定要不要继续做 Shopify 上架准备。"
       badge="Profit & Publish"
       notice="当前这页已经接上真实决策、上架草稿、发布前检查三条接口。当前唯一不能假装完成的地方，是 production_ready 没通过时，真实发布仍会被系统锁住。"
       currentTaskId={currentTaskId}
@@ -45,8 +45,8 @@ export default async function ProfitReviewPage() {
       ]}
       highlights={[
         {
-          title: "先做最终拍板",
-          description: "直接在这一页跑利润决策、生成上架草稿、做发布前检查。",
+          title: "先做最后拍板",
+          description: "直接在这一页完成利润判断、上架草稿和发布前检查。",
           badge: "第 7 页主流程",
         },
         {
@@ -63,8 +63,8 @@ export default async function ProfitReviewPage() {
           hrefLabel: "查看套餐",
         },
         {
-          title: "重新发起利润判断",
-          description: "如果当前结果不够新，可以重新发起一轮任务拿最新判断。",
+          title: "重新跑一轮判断",
+          description: "如果当前结果不够新，可以重新发起任务拿最新利润和决策结果。",
           href: ROUTES.createTask,
           hrefLabel: "发起新任务",
         },
@@ -74,7 +74,7 @@ export default async function ProfitReviewPage() {
 
       <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
         <CardHeader>
-          <CardTitle>最近几次利润判断</CardTitle>
+          <CardTitle>最近几次最后拍板结果</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {recentSuccesses.length ? (

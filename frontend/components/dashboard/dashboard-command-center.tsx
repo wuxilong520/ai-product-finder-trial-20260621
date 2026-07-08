@@ -195,10 +195,10 @@ export function DashboardCommandCenter({
           <div className="max-w-3xl">
             <div className="text-xs uppercase tracking-[0.22em] text-[#D8E3FF]">商航AI · 产品功能首页</div>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white lg:text-4xl">
-              先回答一件事：我今天该先看什么
+              帮你把“找市场、找货源、算利润、上 Shopify”串成一条线
             </h1>
             <p className="mt-3 text-sm leading-7 text-white/68">
-              如果你现在在做 Shopify 店铺，首页不应该先把一堆任务状态丢给你。这里先把今天推荐关注的类目、最近增长的商品方向、低竞争机会和市场分析入口给你，让你先知道今天优先看什么。
+              你不需要先看后台状态。你只需要先判断市场，再筛商品，再匹配 1688 货源，最后决定值不值得上架。首页现在就是按这条路带你走。
             </p>
             <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/10 p-4">
               <div className="text-sm font-medium text-white">一键分析入口</div>
@@ -224,12 +224,36 @@ export function DashboardCommandCenter({
             </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[420px]">
-            <InfoTile label="今天先看" value="类目和机会" />
-            <InfoTile label="下一步" value="市场分析" />
-            <InfoTile label="最终目标" value="找到能做的商品" />
+            <InfoTile label="第一步" value="看市场" />
+            <InfoTile label="第二步" value="筛商品" />
+            <InfoTile label="第三步" value="比货源" />
           </div>
         </CardContent>
       </Card>
+
+      <section className="grid gap-4 xl:grid-cols-3">
+        <StageEntryCard
+          title="我还没想好卖什么"
+          desc="先从类目和关键词开始，判断这个方向到底有没有增长。"
+          href={ROUTES.insights}
+          label="先去看市场"
+          badge="适合刚开始"
+        />
+        <StageEntryCard
+          title="我已经有类目方向"
+          desc="比如你已经决定做家电，那就继续筛到更值得做的具体商品。"
+          href={ROUTES.insightsOpportunities}
+          label="继续筛商品"
+          badge="适合已经有方向"
+        />
+        <StageEntryCard
+          title="我已经在比货和利润"
+          desc="说明你已经接近执行，下一步就是对比 1688 货源和利润空间。"
+          href={ROUTES.actionSuppliers}
+          label="进入供应链匹配"
+          badge="适合准备上架"
+        />
+      </section>
 
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <Card className="border-white/6 bg-[#111A2E]">
@@ -308,6 +332,28 @@ export function DashboardCommandCenter({
 
         <MarketAnalysisCard lang={lang} />
       </section>
+
+      <Card className="border-white/6 bg-[#111A2E]">
+        <CardHeader>
+          <CardTitle>商航AI 现在是怎么帮你走闭环的</CardTitle>
+          <CardDescription>先看市场，再筛商品，再匹配货源，再做利润判断，最后决定要不要推进到上架。</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 xl:grid-cols-5">
+          {[
+            ["市场", "先判断类目、关键词、趋势和竞争。"],
+            ["商品", "从方向里继续筛更有机会的单品。"],
+            ["供应链", "对比 1688 价格、评分、MOQ 和周期。"],
+            ["利润", "统一看成本、售价、利润和风险。"],
+            ["上架", "等判断通过后，再进入执行和发布。"],
+          ].map(([title, desc], index) => (
+            <div key={title} className="rounded-2xl border border-white/6 bg-white/[0.03] p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9CC0FF]">步骤 {index + 1}</div>
+              <div className="mt-3 text-lg font-semibold text-white">{title}</div>
+              <div className="mt-2 text-sm leading-7 text-white/60">{desc}</div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
       <section className="grid gap-6 xl:grid-cols-2">
         <Card className="border-white/6 bg-[#111A2E]">
@@ -734,6 +780,37 @@ function ActionGuideCard({
             <ArrowRight className="ml-2 h-4 w-4" />
           </div>
         </div>
+      </div>
+    </Link>
+  );
+}
+
+function StageEntryCard({
+  title,
+  desc,
+  href,
+  label,
+  badge,
+}: {
+  title: string;
+  desc: string;
+  href: string;
+  label: string;
+  badge: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="rounded-2xl border border-white/6 bg-[#111A2E] p-5 transition hover:-translate-y-0.5 hover:border-[#4F7CFF]/30 hover:bg-[rgba(79,124,255,0.06)]"
+    >
+      <div className="inline-flex rounded-full bg-[#4F7CFF]/12 px-3 py-1 text-xs font-semibold text-[#9CC0FF]">
+        {badge}
+      </div>
+      <div className="mt-4 text-lg font-semibold text-white">{title}</div>
+      <div className="mt-3 min-h-[72px] text-sm leading-7 text-white/60">{desc}</div>
+      <div className="mt-4 inline-flex items-center text-sm font-medium text-[#9CC0FF]">
+        {label}
+        <ArrowRight className="ml-2 h-4 w-4" />
       </div>
     </Link>
   );

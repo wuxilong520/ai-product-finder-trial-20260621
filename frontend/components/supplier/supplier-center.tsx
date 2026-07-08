@@ -72,16 +72,17 @@ export function SupplierCenter({
     <div className="space-y-5">
       <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
         <CardHeader>
-          <CardTitle>供应链匹配页</CardTitle>
+          <div className="text-xs uppercase tracking-[0.24em] text-white/40">商航AI · 供应链匹配页</div>
+          <CardTitle>先把能接得住的 1688 货源筛出来，再决定要不要继续做</CardTitle>
           <p className="text-sm text-white/55">
-            这一步就是把你在前面看中的商品，继续往 1688 这类供货入口去匹配。你先筛价格、匹配分、是否有货，再决定要不要进入利润决策和半自动上架。
+            这一步不是拍板上架，而是先确认：这个商品在 1688 这类供货入口里，有没有价格合适、匹配度够高、当前还能供货的货源。
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-3">
             <InfoTile label="当前类目" value={initialCategory || "未指定"} />
             <InfoTile label="当前商品" value={keyword || "未指定"} />
-            <InfoTile label="当前阶段" value="筛供应链" />
+            <InfoTile label="当前阶段" value="筛货源" />
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             <InfoTile label="当前结果数" value={`${filteredItems.length} 个`} />
@@ -93,6 +94,12 @@ export function SupplierCenter({
               label="当前筛选重点"
               value={availableOnly ? "只看可供货" : "全部供应结果"}
             />
+          </div>
+          <div className="grid gap-4 md:grid-cols-4">
+            <StepCard title="先比价格" desc="先过滤掉明显超出你成本预期的货源。" />
+            <StepCard title="再看匹配分" desc="优先看和当前商品方向更接近的货源。" />
+            <StepCard title="再看是否有货" desc="没有现货或无法供货的，先别浪费时间。" />
+            <StepCard title="最后进利润页" desc="筛完货源后，再去做最后的利润判断。" />
           </div>
           <div className="flex gap-3">
             <div className="relative flex-1">
@@ -140,7 +147,7 @@ export function SupplierCenter({
       <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
           <CardHeader>
-            <CardTitle>筛选后的供应商结果</CardTitle>
+            <CardTitle>当前更值得继续看的货源结果</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {filteredItems.length ? filteredItems.map((item, index) => (
@@ -157,6 +164,9 @@ export function SupplierCenter({
                 </div>
                 <div className="mt-4 text-base font-medium text-white">{item.supplier_title}</div>
                 <div className="mt-1 text-sm text-white/45">{item.platform} · {item.supplier_name || "供应入口已就绪"}</div>
+                <div className="mt-4 rounded-2xl border border-white/8 bg-black/10 p-4 text-sm leading-7 text-white/68">
+                  {buildSupplierSummary(item)}
+                </div>
                 <div className="mt-4 grid gap-4 md:grid-cols-3">
                   <InfoTile label={text.supplierPrice} value={item.supplier_price != null ? `${item.currency || ""} ${Number(item.supplier_price).toFixed(2)}` : text.supplierPending} />
                   <InfoTile label="成本空间" value={item.supplier_price != null ? `${Math.max(0, 100 - Math.round(item.supplier_price)).toString()}%` : "待核算"} />
@@ -182,6 +192,17 @@ export function SupplierCenter({
         </Card>
 
         <div className="space-y-5">
+          <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+            <CardHeader>
+              <CardTitle>这一步到底在决定什么</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-3">
+              <HintCard title="能不能拿货" desc="如果没货，后面利润和上架都没有意义。" />
+              <HintCard title="价格能不能承接" desc="如果供货价太高，利润页基本很难跑出好结果。" />
+              <HintCard title="要不要继续推进" desc="这里只筛采购可行性，最后拍板还是要去利润决策页。" />
+            </CardContent>
+          </Card>
+
           <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
             <CardHeader>
               <CardTitle>报价对比</CardTitle>
@@ -258,4 +279,20 @@ function HintCard({ title, desc }: { title: string; desc: string }) {
       <div className="mt-2 text-sm leading-7 text-white/60">{desc}</div>
     </div>
   );
+}
+
+function StepCard({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div className="rounded-2xl border border-white/8 bg-white/5 p-4">
+      <div className="text-base font-semibold text-white">{title}</div>
+      <div className="mt-2 text-sm leading-7 text-white/60">{desc}</div>
+    </div>
+  );
+}
+
+function buildSupplierSummary(item: SupplierMatchItem) {
+  const priceText = item.supplier_price != null ? "价格已经返回" : "价格还没完整返回";
+  const scoreText = item.match_score >= 70 ? "匹配度比较高" : item.match_score >= 45 ? "匹配度中等" : "匹配度偏弱";
+  const stockText = /available|instock|ready|现货|有货/i.test(item.availability || "") ? "当前看起来还能供货" : "当前供货状态一般";
+  return `${item.platform} 这条货源现在 ${scoreText}，${stockText}，而且 ${priceText}，适合继续拿去做利润判断。`;
 }

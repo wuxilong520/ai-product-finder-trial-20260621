@@ -55,7 +55,7 @@ export default async function LaunchQueuePage() {
       lang={lang}
       activePath="action"
       title="Shopify执行页"
-      description="这页就是第 8 页：专门看 Shopify 发布执行层。你能直接看到发布状态、执行等级、队列状态、商品 ID、阻塞原因和重试入口。"
+      description="这页就是第 8 页：专门看 Shopify 发布执行层。你在这里确认的不是分析结果，而是这条商品到底有没有进入队列、有没有被拦截、有没有拿到执行回执。"
       badge="Execution Page"
       notice="这里不假装说已经真实全自动发货。当前展示的，是系统真实记录到的执行层结果：被拦截、待授权、进入队列、返回回执，都会老老实实展示。"
       currentTaskId={currentTaskId}
@@ -86,11 +86,20 @@ export default async function LaunchQueuePage() {
         },
       ]}
     >
+      <Card className="border-white/8 bg-[#121c2c] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+        <div className="grid gap-4 md:grid-cols-4">
+          <StageCard title="先看执行等级" desc="先看是 WATCH、TEST、SCALE 还是 AUTO_LIST。" />
+          <StageCard title="再看队列状态" desc="确认这条记录有没有真的进入执行队列。" />
+          <StageCard title="再看平台状态" desc="看 Shopify 侧到底返回了什么状态。" />
+          <StageCard title="最后看阻塞原因" desc="如果没走通，直接看为什么被卡住。" />
+        </div>
+      </Card>
+
       <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
         <div className="space-y-5">
           <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
             <CardHeader>
-              <CardTitle>当前最新执行状态</CardTitle>
+              <CardTitle>当前最新 Shopify 执行状态</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {latestRecord ? (
@@ -107,6 +116,9 @@ export default async function LaunchQueuePage() {
                     <InfoTile label="执行队列" value={latestRecord.execution_queue_status || "—"} />
                     <InfoTile label="Shopify 商品 ID" value={latestRecord.shopify_product_id || "还没有"} />
                     <InfoTile label="店铺域名" value={latestRecord.shop_domain || "还没有"} />
+                  </div>
+                  <div className="rounded-2xl border border-white/8 bg-black/10 p-4 text-sm leading-7 text-white/68">
+                    {buildExecutionSummary(latestRecord)}
                   </div>
                   <StatusAlert
                     status={mapExecutionStatus(latestRecord.platform_execution_status)}
@@ -150,6 +162,9 @@ export default async function LaunchQueuePage() {
                       <div>商品 ID：{item.shopify_product_id || "—"}</div>
                       <div>店铺：{item.shop_domain || "—"}</div>
                     </div>
+                    <div className="mt-3 rounded-2xl border border-white/8 bg-black/10 px-4 py-3 text-sm leading-7 text-white/68">
+                      {buildExecutionSummary(item)}
+                    </div>
                     <div className="mt-3 text-sm leading-7 text-white/60">
                       {item.blocked_reason || item.rollback_reason || "当前没有额外错误说明。"}
                     </div>
@@ -184,7 +199,7 @@ export default async function LaunchQueuePage() {
 
           <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
             <CardHeader>
-              <CardTitle>执行风险和收益</CardTitle>
+              <CardTitle>执行结果和收益参考</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
@@ -210,7 +225,7 @@ export default async function LaunchQueuePage() {
 
           <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
             <CardHeader>
-              <CardTitle>执行重试入口</CardTitle>
+              <CardTitle>如果这里走不通，下一步怎么处理</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm leading-7 text-white/60">
               <div>1. 如果是生产锁拦截，就先去解决生产锁，不要重复点发布。</div>
@@ -225,4 +240,36 @@ export default async function LaunchQueuePage() {
       </div>
     </TaskDrivenPageShell>
   );
+}
+
+function StageCard({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+      <div className="text-base font-semibold text-white">{title}</div>
+      <div className="mt-2 text-sm leading-7 text-white/60">{desc}</div>
+    </div>
+  );
+}
+
+function buildExecutionSummary(item: {
+  execution_level?: string;
+  platform_execution_status?: string;
+  execution_queue_status?: string;
+  blocked_reason?: string | null;
+  shopify_product_id?: string | null;
+}) {
+  const level = String(item.execution_level || "").toUpperCase();
+  const status = String(item.platform_execution_status || "");
+  const queue = String(item.execution_queue_status || "");
+
+  if (item.blocked_reason) {
+    return `这条 Shopify 执行记录当前被拦截了，执行等级是 ${level || "未返回"}，主要先看阻塞原因，不要重复推进。`;
+  }
+  if (/published|success|ready/i.test(status)) {
+    return `这条 Shopify 执行记录已经拿到较明确的执行结果了，当前状态是 ${status}，可以继续看商品 ID 和后续动作。`;
+  }
+  if (/queue/i.test(status) || /queue/i.test(queue)) {
+    return `这条 Shopify 执行记录已经进入队列，执行等级是 ${level || "未返回"}，现在更适合继续观察队列变化。`;
+  }
+  return `这条 Shopify 执行记录还在准备阶段，先看执行等级、平台动作和队列状态，再判断下一步。`;
 }

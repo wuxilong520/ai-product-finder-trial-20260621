@@ -100,6 +100,35 @@ export type MarketAnalyzeResponse = {
   reasons: string[];
   category?: string | null;
   source: string;
+  market_score?: number | null;
+  competition_level?: "low" | "medium" | "high" | string | null;
+  market_saturation?: number | null;
+  entry_barrier?: "low" | "medium" | "high" | string | null;
+  confidence?: number | null;
+  risk_flags?: string[];
+  is_mock?: boolean | null;
+  mock_penalty?: number | null;
+  reasoning?: {
+    demand_reason?: string;
+    competition_reason?: string;
+    trend_reason?: string;
+  } | null;
+  platform_signals?: {
+    google_trends_score?: number;
+    amazon_search_volume?: number;
+    tiktok_viral_score?: number;
+    shopify_category_activity?: number;
+  } | null;
+  keyword_cluster?: {
+    related_keywords?: string[];
+    long_tail_keywords?: string[];
+  } | null;
+  platform_compatibility?: {
+    shopify_ready?: boolean;
+    alibaba_match?: string[];
+    tiktok_potential?: number;
+  } | null;
+  data_source_map?: Record<string, string> | null;
 };
 
 export type SupplierMatchItem = {

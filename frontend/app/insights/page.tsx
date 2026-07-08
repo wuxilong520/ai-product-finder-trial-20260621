@@ -9,31 +9,6 @@ export default async function InsightsPage({
   searchParams?: Promise<{ productId?: string; keyword?: string }>;
 }) {
   const { lang } = await loadFlowPageData();
-  const text = lang === "en"
-    ? {
-        title: "Market Intelligence",
-        desc: "This page answers one thing first: does this keyword truly have enough demand to keep going?",
-        trend: "Trend Strength",
-        demand: "Demand Score",
-        competition: "Competition",
-        conclusion: "Go / Watch",
-        chart: "Need to judge",
-        compare: "Need to compare",
-        dynamic: "Need confidence",
-        watch: "Need conclusion",
-      }
-    : {
-        title: "市场智能页",
-        desc: "这一页先回答一件事：这个关键词到底有没有真实市场需求，值不值得继续做下去。",
-        trend: "趋势强度",
-        demand: "需求判断",
-        competition: "竞争强度",
-        conclusion: "市场结论",
-        chart: "先判断趋势",
-        compare: "先判断需求",
-        dynamic: "先判断竞争",
-        watch: "先给结论",
-      };
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const productId = resolvedSearchParams?.productId;
   const keyword = resolvedSearchParams?.keyword ? decodeURIComponent(String(resolvedSearchParams.keyword)) : undefined;
@@ -43,25 +18,27 @@ export default async function InsightsPage({
       <div className="space-y-6">
         <Card className="border-white/6 bg-[#111A2E]">
           <CardHeader>
-            <CardTitle>{text.title}</CardTitle>
-            <p className="text-sm leading-7 text-white/55">{text.desc}</p>
+            <CardTitle>市场智能页</CardTitle>
+            <p className="text-sm leading-7 text-white/55">
+              这一页是整个选品流程的第一层入口。先判断这个类目或商品方向到底有没有需求、趋势是不是在涨、竞争是不是太强，再决定要不要继续往商品机会、供应链和利润页推进。
+            </p>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-4">
-            <MetricCard label={text.trend} value={text.chart} />
-            <MetricCard label={text.demand} value={text.compare} />
-            <MetricCard label={text.competition} value={text.dynamic} />
-            <MetricCard label={text.conclusion} value={text.watch} />
+            <MetricCard label="先看需求" value="有没有市场" />
+            <MetricCard label="再看趋势" value="最近是涨是跌" />
+            <MetricCard label="再看竞争" value="能不能切进去" />
+            <MetricCard label="最后结论" value="继续做还是放弃" />
           </CardContent>
         </Card>
 
         <Card className="border-white/6 bg-[#111A2E]">
           <CardHeader>
-            <CardTitle>这页到底是干什么的</CardTitle>
+            <CardTitle>这一页之后会接到哪里</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-3">
-            <MetricCard label="第一步" value="先看有没有需求" />
-            <MetricCard label="第二步" value="再看竞争强不强" />
-            <MetricCard label="第三步" value="最后决定继续还是放弃" />
+            <MetricCard label="市场结论好" value="进入商品机会页" />
+            <MetricCard label="再往后" value="进入 1688 供应链匹配" />
+            <MetricCard label="最后" value="进入利润决策和上架" />
           </CardContent>
         </Card>
 

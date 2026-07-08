@@ -15,3 +15,16 @@ class MarketAnalyzeResponse(BaseModel):
     reasons: list[str]
     category: str | None = None
     source: str
+    market_score: float | None = None
+    competition_level: str | None = None
+    market_saturation: float | None = None
+    entry_barrier: str | None = None
+    confidence: float | None = None
+    risk_flags: list[str] = Field(default_factory=list)
+    is_mock: bool | None = None
+    mock_penalty: float | None = None
+    reasoning: dict | None = None
+    platform_signals: dict | None = None
+    keyword_cluster: dict | None = None
+    platform_compatibility: dict | None = None
+    data_source_map: dict | None = None

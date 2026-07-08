@@ -12,6 +12,7 @@ from app.services.decision_engine import decision_engine
 from app.services.decision_truth_wrapper import decision_truth_wrapper
 from app.services.market_intelligence_engine import market_intelligence_engine
 from app.services.supplier_matching_engine import supplier_matching_engine
+from app.core.analysis_orchestrator import analysis_orchestrator
 
 
 class ExecutionBridge:
@@ -19,7 +20,30 @@ class ExecutionBridge:
         policy = policy_engine.build(payload)
         router = provider_router.build(policy)
         if job_type == "market":
-            result = market_intelligence_engine.analyze_keyword(db, payload["keyword"])
+            legacy_result = market_intelligence_engine.analyze_keyword(db, payload["keyword"])
+            orchestrated = analysis_orchestrator.build_market_context(
+                keyword=payload["keyword"],
+                market=payload.get("market", "global"),
+            )
+            market_result = orchestrated["market_intelligence"]
+            market_intelligence = market_result["market_intelligence"]
+            result = {
+                **legacy_result,
+                "market_score": market_result.get("market_score"),
+                "competition_level": market_intelligence.get("competition_level"),
+                "market_saturation": market_intelligence.get("market_saturation"),
+                "entry_barrier": market_intelligence.get("entry_barrier"),
+                "confidence": market_result.get("confidence"),
+                "risk_flags": market_result.get("risk_flags", []),
+                "is_mock": market_intelligence.get("is_mock"),
+                "mock_penalty": market_intelligence.get("mock_penalty"),
+                "reasoning": market_result.get("reasoning"),
+                "platform_signals": market_intelligence.get("platform_signals"),
+                "keyword_cluster": market_intelligence.get("keyword_cluster"),
+                "platform_compatibility": market_intelligence.get("platform_compatibility"),
+                "data_source_map": market_intelligence.get("data_source_map"),
+                "source": "market_intelligence_engine",
+            }
         elif job_type == "supplier":
             result = supplier_matching_engine.match(db, payload["keyword"])
         elif job_type == "decision":

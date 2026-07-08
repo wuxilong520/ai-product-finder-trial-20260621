@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { Button, MinimalField, StatusAlert, Tabs, TabsContent, TabsList, TabsTrigger } from "@/design-system/components";
+import { Button, LightTabsList, LightTabsTrigger, MinimalField, StatusAlert, Tabs, TabsContent } from "@/design-system/components";
 import { ROUTES } from "@/config/routes";
 import { getToken, setToken } from "@/lib/auth";
 import { Language, t } from "@/lib/i18n";
@@ -21,6 +21,11 @@ export function LoginForm({ lang }: { lang: Language }) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const text = t(lang);
+  const loginTips = [
+    "密码登录适合老用户日常进入系统。",
+    "验证码登录适合临时快速进入工作台。",
+    "登录后直接进入首页，不需要再单独选工作区入口。",
+  ];
 
   async function finishLogin(result: Awaited<ReturnType<typeof login>>) {
     setToken(result.access_token);
@@ -86,15 +91,15 @@ export function LoginForm({ lang }: { lang: Language }) {
 
   return (
     <Tabs defaultValue="password" className="px-4 pb-4 pt-2">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="password">密码登录</TabsTrigger>
-        <TabsTrigger value="code">验证码登录</TabsTrigger>
-      </TabsList>
+      <LightTabsList className="grid w-full grid-cols-2">
+        <LightTabsTrigger value="password">密码登录</LightTabsTrigger>
+        <LightTabsTrigger value="code">验证码登录</LightTabsTrigger>
+      </LightTabsList>
 
       <TabsContent value="password">
         <form onSubmit={handlePasswordLogin} className="space-y-5" autoComplete="off">
-          <MinimalField id="email" type="email" value={email} onChange={setEmail} label={text.email} placeholder={text.loginEmailPlaceholder} />
-          <MinimalField id="password" type="password" value={password} onChange={setPassword} label={text.password} placeholder={text.loginPasswordPlaceholder} />
+          <MinimalField id="email" type="email" value={email} onChange={setEmail} label={text.email} placeholder={text.loginEmailPlaceholder} tone="light" />
+          <MinimalField id="password" type="password" value={password} onChange={setPassword} label={text.password} placeholder={text.loginPasswordPlaceholder} tone="light" />
 
           {error ? <StatusAlert status="error" message={error} /> : null}
           {message ? <StatusAlert status="success" message={message} /> : null}
@@ -107,21 +112,35 @@ export function LoginForm({ lang }: { lang: Language }) {
 
       <TabsContent value="code">
         <form onSubmit={handleCodeLogin} className="space-y-5" autoComplete="off">
-          <MinimalField id="email-code" type="email" value={email} onChange={setEmail} label={text.email} placeholder={text.loginEmailPlaceholder} />
+          <MinimalField id="email-code" type="email" value={email} onChange={setEmail} label={text.email} placeholder={text.loginEmailPlaceholder} tone="light" />
           <div className="grid grid-cols-[1fr_132px] gap-3">
-            <MinimalField id="code" type="text" value={code} onChange={setCode} label="邮箱验证码" placeholder="请输入验证码" />
+            <MinimalField id="code" type="text" value={code} onChange={setCode} label="邮箱验证码" placeholder="请输入验证码" tone="light" />
             <div className="pt-8">
-              <Button type="button" variant="secondary" className="h-14 w-full" disabled={sendingCode || !email} onClick={handleSendCode}>
+              <Button
+                type="button"
+                variant="secondary"
+                className="h-14 w-full border-[#F5E7D4] bg-white !text-[#334155] hover:border-[#FDBA74] hover:bg-[#FFF7ED] hover:!text-[#0F172A]"
+                disabled={sendingCode || !email}
+                onClick={handleSendCode}
+              >
                 {sendingCode ? "发送中..." : "发送验证码"}
               </Button>
             </div>
           </div>
 
           {challengeQuestion ? (
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <p className="text-sm text-white/80">{challengeQuestion}</p>
+            <div className="rounded-2xl border border-[#F5E7D4] bg-[#FFFDF8] p-4">
+              <p className="text-sm text-[#475569]">{challengeQuestion}</p>
               <div className="mt-3">
-                <MinimalField id="challenge-answer" type="text" value={challengeAnswer} onChange={setChallengeAnswer} label="安全验证答案" placeholder="请输入答案后再次发送验证码" />
+                <MinimalField
+                  id="challenge-answer"
+                  type="text"
+                  value={challengeAnswer}
+                  onChange={setChallengeAnswer}
+                  label="安全验证答案"
+                  placeholder="请输入答案后再次发送验证码"
+                  tone="light"
+                />
               </div>
             </div>
           ) : null}
@@ -135,16 +154,26 @@ export function LoginForm({ lang }: { lang: Language }) {
         </form>
       </TabsContent>
 
-      <div className="mt-6 text-center text-sm text-white/55">
+      <div className="mt-6 text-center text-sm text-[#64748B]">
         还没有账号？{" "}
-        <Link href={ROUTES.register} className="text-app-brand-secondary hover:text-white">
+        <Link href={ROUTES.register} className="text-[#F97316] hover:text-[#EA580C]">
           去注册
         </Link>
       </div>
-      <div className="mt-2 text-center text-sm text-white/45">
-        <Link href={ROUTES.forgotPassword} className="text-app-text-secondary hover:text-white">
+      <div className="mt-2 text-center text-sm text-[#94A3B8]">
+        <Link href={ROUTES.forgotPassword} className="text-[#64748B] hover:text-[#0F172A]">
           忘记密码
         </Link>
+      </div>
+      <div className="mt-6 rounded-2xl border border-[#F5E7D4] bg-[#FFFBF7] p-4">
+        <div className="text-sm font-semibold text-[#0F172A]">登录后会发生什么</div>
+        <div className="mt-3 grid gap-2">
+          {loginTips.map((item) => (
+            <div key={item} className="text-sm leading-6 text-[#475569]">
+              · {item}
+            </div>
+          ))}
+        </div>
       </div>
     </Tabs>
   );

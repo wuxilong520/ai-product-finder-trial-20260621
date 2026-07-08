@@ -99,12 +99,12 @@ export default async function RegisterPage() {
                 <Mail className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-sm text-[#64748B]">新用户注册入口</div>
+              <div className="text-sm text-[#64748B]">新用户注册入口</div>
                 <h2 className="text-2xl font-semibold text-[#0F172A]">创建你的工作账号</h2>
               </div>
             </div>
             <p className="mb-6 text-sm leading-7 text-[#475569]">
-              用邮箱完成注册，系统会自动创建专属工作区。你可以用密码登录，也可以后续用邮箱验证码快捷登录。需要说明的是：验证码能否真实发到邮箱，要看当前环境的邮件通道是否已配置完成。
+              用邮箱完成注册，系统会自动创建专属工作区。你可以用密码登录，也可以后续用邮箱验证码快捷登录。如果验证码发送失败，页面会直接告诉你真实结果，不会假装已经发出。
             </p>
             <RegisterForm lang={lang} />
           </Card>

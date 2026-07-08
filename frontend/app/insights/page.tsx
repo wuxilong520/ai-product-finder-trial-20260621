@@ -6,7 +6,7 @@ import { loadFlowPageData } from "@/lib/flow-page-data";
 export default async function InsightsPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ productId?: string }>;
+  searchParams?: Promise<{ productId?: string; keyword?: string }>;
 }) {
   const { lang } = await loadFlowPageData();
   const text = lang === "en"
@@ -36,6 +36,7 @@ export default async function InsightsPage({
       };
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const productId = resolvedSearchParams?.productId;
+  const keyword = resolvedSearchParams?.keyword ? decodeURIComponent(String(resolvedSearchParams.keyword)) : undefined;
 
   return (
     <XBorderLayout lang={lang} activePath="insights">
@@ -64,7 +65,7 @@ export default async function InsightsPage({
           </CardContent>
         </Card>
 
-        <MarketAnalysisCard lang={lang} initialKeyword={productId ? String(productId) : undefined} />
+        <MarketAnalysisCard lang={lang} initialKeyword={keyword || (productId ? String(productId) : undefined)} />
       </div>
     </XBorderLayout>
   );

@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import { ArrowRight, Flame, ShoppingBag, Sparkles, TrendingUp } from "lucide-react";
 
 import { PlanAccessPanel } from "@/components/billing/plan-access-panel";
 import { MarketAnalysisCard } from "@/components/market/market-analysis-card";
 import { ROUTES, productDetailRoute } from "@/config/routes";
-import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, InfoTile } from "@/design-system/components";
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, InfoTile, Input } from "@/design-system/components";
 import type { CurrentBillingStatus } from "@/lib/api/billing";
 import { Language } from "@/lib/i18n";
 import type {
@@ -39,6 +41,7 @@ export function DashboardCommandCenter({
   isAdmin: boolean;
   currentPlan: CurrentBillingStatus | null;
 }) {
+  const router = useRouter();
   const text = lang === "en"
     ? {
         totalProducts: "Total Products",
@@ -118,6 +121,8 @@ export function DashboardCommandCenter({
   const categoryCards = summary.top_categories.slice(0, 6);
   const marketOpportunities = rankings?.growth_ranking.top_10.slice(0, 3) || [];
   const riskOpportunities = rankings?.risk_ranking.top_10.slice(0, 3) || [];
+  const sourceHealth = sources.sources.slice(0, 4);
+  const latestRuns = tasks.recent_runs.slice(0, 3);
   const totalProfit = topRecommendations.reduce((sum, item) => sum + Number(item.estimated_profit || 0), 0);
   const avgAiScore = topRecommendations.length
     ? Math.round(topRecommendations.reduce((sum, item) => sum + item.recommendation_score, 0) / topRecommendations.length)
@@ -135,6 +140,22 @@ export function DashboardCommandCenter({
         return "偏高";
       })()
     : "待判断";
+  const defaultKeyword = useMemo(() => {
+    if (topRecommendations[0]?.keyword) return topRecommendations[0].keyword;
+    if (categoryCards[0]?.name) return categoryCards[0].name;
+    return "";
+  }, [topRecommendations, categoryCards]);
+  const [quickKeyword, setQuickKeyword] = useState(defaultKeyword);
+
+  function pushToInsights() {
+    const keyword = quickKeyword.trim();
+    router.push(keyword ? `${ROUTES.insights}?keyword=${encodeURIComponent(keyword)}` : ROUTES.insights);
+  }
+
+  function pushToCreateTask() {
+    const keyword = quickKeyword.trim();
+    router.push(keyword ? `${ROUTES.createTask}?keyword=${encodeURIComponent(keyword)}` : ROUTES.createTask);
+  }
 
   return (
     <div className="space-y-6">
@@ -148,6 +169,28 @@ export function DashboardCommandCenter({
             <p className="mt-3 text-sm leading-7 text-white/68">
               如果你现在在做 Shopify 店铺，首页不应该先把一堆任务状态丢给你。这里先把今天推荐关注的类目、最近增长的商品方向、低竞争机会和市场分析入口给你，让你先知道今天优先看什么。
             </p>
+            <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/10 p-4">
+              <div className="text-sm font-medium text-white">一键分析入口</div>
+              <div className="text-sm leading-7 text-white/60">
+                你已经有想法时，比如“炒锅”“空气炸锅”“电热饭盒”，直接在这里输入，马上进入市场分析或任务创建。
+              </div>
+              <div className="flex flex-col gap-3 xl:flex-row">
+                <Input
+                  value={quickKeyword}
+                  onChange={(event) => setQuickKeyword(event.target.value)}
+                  placeholder="输入你现在要判断的商品关键词"
+                  className="xl:max-w-md"
+                />
+                <div className="flex flex-wrap gap-3">
+                  <Button type="button" onClick={pushToInsights}>
+                    先做市场分析
+                  </Button>
+                  <Button type="button" variant="secondary" onClick={pushToCreateTask}>
+                    进入商品机会
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[420px]">
             <InfoTile label="今天先看" value="类目和机会" />
@@ -209,6 +252,40 @@ export function DashboardCommandCenter({
                 href={ROUTES.actionSuppliers}
                 label="去看供应链"
               />
+            </div>
+            <div className="grid gap-4 xl:grid-cols-2">
+              <div className="rounded-2xl border border-white/6 bg-white/[0.03] p-4">
+                <div className="text-sm font-medium text-white">当前任务状态</div>
+                <div className="mt-4 grid gap-3">
+                  {tasks.states.map((item) => (
+                    <div key={item.key} className="rounded-xl border border-white/6 bg-black/10 px-3 py-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-sm text-white/75">{item.label}</span>
+                        <span className={`text-sm font-medium ${taskStatusTone(item.status)}`}>{taskStatusText(item.status)}</span>
+                      </div>
+                      <div className="mt-2 text-sm leading-6 text-white/55">{item.message || "当前没有额外状态说明"}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-2xl border border-white/6 bg-white/[0.03] p-4">
+                <div className="text-sm font-medium text-white">当前数据源状态</div>
+                <div className="mt-4 grid gap-3">
+                  {sourceHealth.length ? sourceHealth.map((item) => (
+                    <div key={item.platform_code} className="rounded-xl border border-white/6 bg-black/10 px-3 py-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-sm text-white/75">{item.platform_name}</span>
+                        <span className={`text-sm font-medium ${sourceHealthTone(item.health)}`}>{sourceHealthText(item.health)}</span>
+                      </div>
+                      <div className="mt-2 text-sm leading-6 text-white/55">
+                        {item.last_activity_text} · 当前商品数 {item.product_count}
+                      </div>
+                    </div>
+                  )) : (
+                    <EmptyState text="现在还没有拿到数据源状态。" />
+                  )}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -535,6 +612,29 @@ export function DashboardCommandCenter({
         </Card>
       </section>
 
+      <Card className="border-white/6 bg-[#111A2E]">
+        <CardHeader>
+          <CardTitle>最近真实动作</CardTitle>
+          <CardDescription>这块只展示系统里最近真实跑过的采集记录，不放假数据。</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 xl:grid-cols-3">
+          {latestRuns.length ? latestRuns.map((item) => (
+            <div key={item.id} className="rounded-2xl border border-white/6 bg-white/[0.03] p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm font-medium text-white">{item.platform_name}</div>
+                <div className={`text-sm font-medium ${runStatusTone(item.status)}`}>{runStatusText(item.status)}</div>
+              </div>
+              <div className="mt-3 break-all text-sm leading-6 text-white/55">{item.request_url}</div>
+              <div className="mt-3 text-xs text-white/38">{formatTimeText(item.crawled_at)}</div>
+            </div>
+          )) : (
+            <div className="xl:col-span-3">
+              <EmptyState text="现在还没有最近采集记录，说明你还需要继续跑真实采集，首页这里才会越来越有价值。" />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
     </div>
   );
 }
@@ -650,4 +750,57 @@ function InfoRow({
       <span className={`text-sm font-medium ${toneClass}`}>{value}</span>
     </div>
   );
+}
+
+function taskStatusText(status: string) {
+  if (status === "success") return "正常";
+  if (status === "running") return "进行中";
+  if (status === "pending") return "待开始";
+  if (status === "blocked") return "已拦截";
+  if (status === "error") return "异常";
+  return "未知";
+}
+
+function taskStatusTone(status: string) {
+  if (status === "success") return "text-[#3DD68C]";
+  if (status === "running") return "text-[#4F7CFF]";
+  if (status === "pending") return "text-[#FFB020]";
+  if (status === "blocked" || status === "error") return "text-[#FF5C5C]";
+  return "text-white/60";
+}
+
+function sourceHealthText(health: string) {
+  if (health === "ok") return "正常";
+  if (health === "warning") return "注意";
+  if (health === "error") return "异常";
+  return "未知";
+}
+
+function sourceHealthTone(health: string) {
+  if (health === "ok") return "text-[#3DD68C]";
+  if (health === "warning") return "text-[#FFB020]";
+  if (health === "error") return "text-[#FF5C5C]";
+  return "text-white/60";
+}
+
+function runStatusText(status: string) {
+  if (status === "success") return "成功";
+  if (status === "running") return "进行中";
+  if (status === "failed" || status === "error") return "失败";
+  return status || "未知";
+}
+
+function runStatusTone(status: string) {
+  if (status === "success") return "text-[#3DD68C]";
+  if (status === "running") return "text-[#4F7CFF]";
+  if (status === "failed" || status === "error") return "text-[#FF5C5C]";
+  return "text-white/60";
+}
+
+function formatTimeText(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return `最近时间：${date.toLocaleString("zh-CN", { hour12: false })}`;
 }

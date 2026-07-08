@@ -3,6 +3,7 @@ set -euo pipefail
 
 REPO_DIR="/home/ubuntu/publish_repo"
 LOCK_FILE="/tmp/publish_repo_auto_deploy.lock"
+DEPLOY_LOCK_FILE="/tmp/shanghang-ai-deploy.lock"
 RUNTIME_DIR="/home/ubuntu/publish_repo_runtime"
 STATE_DIR="${RUNTIME_DIR}/state"
 LAST_DEPLOYED_FILE="${STATE_DIR}/last_deployed_commit"
@@ -17,6 +18,14 @@ exec 9>"${LOCK_FILE}"
 if ! flock -n 9; then
   echo "${LOG_PREFIX} another deploy is running, skip"
   exit 0
+fi
+
+if [ -f "${DEPLOY_LOCK_FILE}" ]; then
+  DEPLOY_PID="$(cat "${DEPLOY_LOCK_FILE}" 2>/dev/null || true)"
+  if [ -n "${DEPLOY_PID}" ] && kill -0 "${DEPLOY_PID}" >/dev/null 2>&1; then
+    echo "${LOG_PREFIX} production deploy is running, skip"
+    exit 0
+  fi
 fi
 
 cd "${REPO_DIR}"
@@ -57,8 +66,12 @@ echo "${LOG_PREFIX} update working tree to ${REMOTE_COMMIT}"
 git checkout -B main origin/main
 git reset --hard origin/main
 
-echo "${LOG_PREFIX} sync GitHub backup"
-git push github main
+if git remote get-url github >/dev/null 2>&1; then
+  echo "${LOG_PREFIX} sync GitHub backup (best effort)"
+  if ! git push github main; then
+    echo "${LOG_PREFIX} GitHub backup sync failed, continue deploy"
+  fi
+fi
 
 echo "${LOG_PREFIX} run production deploy"
 /usr/bin/env bash "${REPO_DIR}/deploy/tencent-cloud/deploy.sh"

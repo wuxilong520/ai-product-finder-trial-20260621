@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
 import { Card, CardContent, CardHeader, CardTitle, InfoTile, Button } from "@/design-system/components";
+import { StoreLinkGate } from "@/components/settings/store-link-gate";
 import { ROUTES } from "@/config/routes";
 import { TOKEN_KEY } from "@/lib/auth";
 import { getAccountOverview } from "@/lib/api/account";
@@ -27,6 +28,62 @@ export default async function StoreLinksPage() {
   }
 
   const shopify = overview.store_links.shopify;
+  const nextSteps = [
+    {
+      title: shopify.store_base_url_configured ? "店铺地址参数已到位" : "先补店铺地址参数",
+      desc: shopify.store_base_url_configured
+        ? "系统已经拿到店铺地址参数，下一步主要看能不能继续读商品、继续执行。"
+        : "当前第一步还没补齐，所以这里不会假装你已经能开始读店铺。",
+    },
+    {
+      title: shopify.admin_read_ready ? "已经能读真实商品" : "还不能读真实商品",
+      desc: shopify.admin_read_ready
+        ? "你现在可以把 Shopify 作为真实参考商品源，继续往市场和商品页走。"
+        : "现在还不能从 Shopify 读真实商品，所以这页只告诉你真实状态。",
+    },
+    {
+      title: shopify.oauth_status === "reserved" ? "自助绑定流程还没做完" : "绑定状态已更新",
+      desc: shopify.oauth_status === "reserved"
+        ? "当前只是把 OAuth 结构预留了，还没有做到你自己点一下就完成绑定。"
+        : `当前绑定状态：${shopify.oauth_status}`,
+    },
+    {
+      title: shopify.publish_ready ? "发布链路已打开" : "发布链路还没正式放开",
+      desc: shopify.publish_ready
+        ? "你可以继续去利润页和执行页看真实上架动作。"
+        : "现在不会假装已经能一键上架，发布能力还要继续收口。",
+    },
+  ];
+
+  const useActions = [
+    shopify.admin_read_ready
+      ? {
+          title: "继续做市场分析",
+          desc: "既然店铺读取已经打开，就继续去看市场、趋势和商品机会。",
+          href: ROUTES.insights,
+          label: "去市场智能页",
+        }
+      : {
+          title: "先看套餐和能力",
+          desc: "当前没有自助绑定完成链路，先确认套餐和权限是不是够用。",
+          href: ROUTES.pricing,
+          label: "去套餐页",
+        },
+    {
+      title: "继续做商品筛选",
+      desc: "不管店铺绑定走到哪一步，你都可以继续看商品机会和供应链。",
+      href: ROUTES.products,
+      label: "去商品机会页",
+    },
+    {
+      title: shopify.publish_ready ? "继续看执行发布" : "先看利润和上架判断",
+      desc: shopify.publish_ready
+        ? "当前执行层已经开到发布这一步，可以继续看执行记录。"
+        : "当前更适合先完成利润判断，再决定后面什么时候发。",
+      href: shopify.publish_ready ? ROUTES.actionLaunchQueue : ROUTES.actionProfit,
+      label: shopify.publish_ready ? "去执行页" : "去利润页",
+    },
+  ];
 
   return (
     <XBorderLayout lang={lang} activePath="settings">
@@ -37,6 +94,20 @@ export default async function StoreLinksPage() {
           <p className="mt-2 text-sm leading-7 text-white/60">
             这个页面现在不再放空话，直接告诉你 Shopify 到底已经接到哪一步：真实读取、用户自助绑定、真实发布，分别到什么状态。
           </p>
+        </Card>
+
+        <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+          <CardHeader>
+            <CardTitle>你现在下一步该怎么走</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {nextSteps.map((item) => (
+              <div key={item.title} className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-white/70">
+                <div className="font-medium text-white">{item.title}</div>
+                <div className="mt-2 leading-7 text-white/60">{item.desc}</div>
+              </div>
+            ))}
+          </CardContent>
         </Card>
 
         <div className="grid gap-6 xl:grid-cols-4">
@@ -73,6 +144,47 @@ export default async function StoreLinksPage() {
           </Card>
         </div>
 
+        <div className="grid gap-6 xl:grid-cols-2">
+          <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+            <CardHeader>
+              <CardTitle>当前可继续使用的动作</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {useActions.map((item) => (
+                <div key={item.title} className="rounded-2xl border border-white/8 bg-white/5 p-4">
+                  <div className="text-base font-medium text-white">{item.title}</div>
+                  <div className="mt-2 text-sm leading-7 text-white/60">{item.desc}</div>
+                  <div className="mt-4">
+                    <Button asChild>
+                      <Link href={item.href}>{item.label}</Link>
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+            <CardHeader>
+              <CardTitle>现在不能假装完成的部分</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm leading-7 text-white/70">
+                当前没有做成“你自己填店铺信息后，马上绑定成功”的最终自助流程。
+              </div>
+              <div className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm leading-7 text-white/70">
+                如果发布能力还没放开，这页不会假装你已经可以正式一键上架。
+              </div>
+              <div className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm leading-7 text-white/70">
+                所以这页现在更像“真实状态页 + 下一步入口页”，不是假装全闭环的炫技页。
+              </div>
+              <div className="pt-2">
+                <StoreLinkGate />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         <Card className="border-white/8 bg-[#121c2c]">
           <CardHeader>
             <CardTitle>现在这页说真话</CardTitle>
@@ -98,6 +210,7 @@ export default async function StoreLinksPage() {
         <div className="flex flex-wrap gap-3">
           <Button asChild><Link href={ROUTES.products}>去市场与商品页继续用</Link></Button>
           <Button asChild variant="secondary"><Link href={ROUTES.pricing}>去看套餐和充值</Link></Button>
+          <Button asChild variant="secondary"><Link href={ROUTES.actionLaunchQueue}>去执行页看发布状态</Link></Button>
           <Button asChild variant="outline"><Link href={ROUTES.settings}>回到账户中心</Link></Button>
         </div>
       </div>

@@ -82,10 +82,24 @@ export default async function SettingsPage() {
             <div>
               <div className="text-xs uppercase tracking-[0.24em] text-white/40">商航AI · 账户中心</div>
               <h1 className="text-3xl font-semibold tracking-tight text-white">{text.title}</h1>
-              <p className="mt-2 text-sm leading-7 text-white/60">{text.desc}</p>
+              <p className="mt-2 text-sm leading-7 text-white/60">
+                这里不是技术后台，而是你的配置中心。你在这里看账号、套餐、工作区、API Key、店铺绑定和订单状态，再决定下一步怎么继续用商航AI。
+              </p>
             </div>
             <UpgradeEntry label="去充值 / 升级" />
           </div>
+        </Card>
+
+        <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+          <CardHeader>
+            <CardTitle>你现在最需要看的 4 件事</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-4">
+            <StageTile title="账号和工作区" desc="先确认你现在在哪个工作区里使用这套系统。" />
+            <StageTile title="套餐和模型权限" desc="再确认当前套餐到底能用哪些模型和能力。" />
+            <StageTile title="店铺绑定状态" desc="再看 Shopify 读取、绑定和发布现在走到哪一步。" />
+            <StageTile title="订单和 API Key" desc="最后看充值记录和 API Key 是否已经准备好。" />
+          </CardContent>
         </Card>
 
         <div className="grid gap-6 xl:grid-cols-4">
@@ -172,10 +186,10 @@ export default async function SettingsPage() {
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {[
-              { title: "账号信息", desc: "看邮箱、套餐、最近订单。", href: ROUTES.settingsProfile, label: "进入账号信息" },
-              { title: "店铺绑定", desc: "看 Shopify 等平台接入准备状态。", href: ROUTES.settingsStoreLinks, label: "进入店铺绑定" },
-              { title: "密码与安全", desc: "走登录、验证码和找回密码入口。", href: ROUTES.settingsSecurity, label: "进入安全页" },
-              { title: "套餐与充值", desc: "去看升级、订单、当前权限。", href: ROUTES.pricing, label: "进入充值页" },
+              { title: "账号信息", desc: "看邮箱、工作区、套餐、订单和 API Key。", href: ROUTES.settingsProfile, label: "进入账号信息" },
+              { title: "店铺绑定", desc: "看 Shopify 读取、绑定和真实发布现在走到哪一步。", href: ROUTES.settingsStoreLinks, label: "进入店铺绑定" },
+              { title: "密码与安全", desc: "看登录、验证码、忘记密码这些安全入口。", href: ROUTES.settingsSecurity, label: "进入安全页" },
+              { title: "套餐与充值", desc: "看当前套餐、订单和下一步升级入口。", href: ROUTES.pricing, label: "进入充值页" },
             ].map((item) => (
               <LinkCard key={item.title} title={item.title} desc={item.desc} href={item.href} label={item.label} />
             ))}
@@ -207,14 +221,14 @@ export default async function SettingsPage() {
 
         <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
           <CardHeader>
-            <CardTitle>当前账户页说真话</CardTitle>
+            <CardTitle>当前账户中心已经收口到哪里</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 md:grid-cols-2">
             {[
               "账号、套餐、订单这些信息现在已经能在这里真实查看。",
               "工作区、套餐模型权限、API Key 状态现在已经补进账户中心。",
-              "用户自助店铺绑定页已经有入口，但还没收口成真正可绑定成功的最终状态。",
-              "真正的平台自动执行能力没有在账户页假装成已经完成。",
+              "店铺绑定页现在已经能真实告诉你 Shopify 读取、绑定和发布分别是什么状态。",
+              "真正的平台自动执行能力没有在账户中心假装成已经完全完成。",
             ].map((item) => (
               <div key={item} className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm leading-7 text-white/70">
                 {item}
@@ -247,5 +261,14 @@ function LinkCard({
       <div className="mt-2 text-sm leading-7 text-white/60">{desc}</div>
       <div className="mt-4 text-sm font-medium text-[#9CC0FF]">{label}</div>
     </Link>
+  );
+}
+
+function StageTile({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div className="rounded-2xl border border-white/8 bg-white/5 p-4">
+      <div className="text-base font-semibold text-white">{title}</div>
+      <div className="mt-2 text-sm leading-7 text-white/60">{desc}</div>
+    </div>
   );
 }

@@ -30,6 +30,9 @@ export default async function SettingsProfilePage() {
     throw error;
   }
 
+  const allowedModels = Array.isArray(overview.billing.allowed_ai_models) ? overview.billing.allowed_ai_models : [];
+  const allowedProviders = Array.isArray(overview.billing.allowed_ai_providers) ? overview.billing.allowed_ai_providers : [];
+
   return (
     <XBorderLayout lang={lang} activePath="settings">
       <div className="space-y-6">
@@ -87,8 +90,8 @@ export default async function SettingsProfilePage() {
           <Card className="border-white/8 bg-[#121c2c]">
             <CardHeader><CardTitle>AI 通道权限</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              <InfoTile label="可用模型" value={overview.billing.allowed_ai_models.join(" / ") || "未开放"} />
-              <InfoTile label="可用通道" value={overview.billing.allowed_ai_providers.join(" / ") || "未开放"} />
+              <InfoTile label="可用模型" value={allowedModels.join(" / ") || "未开放"} />
+              <InfoTile label="可用通道" value={allowedProviders.join(" / ") || "未开放"} />
               <InfoTile label="企业专属模型" value={overview.billing.supports_custom_model ? "支持" : "不支持"} />
             </CardContent>
           </Card>

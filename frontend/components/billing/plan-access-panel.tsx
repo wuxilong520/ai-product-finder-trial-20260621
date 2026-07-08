@@ -17,6 +17,9 @@ export function PlanAccessPanel({
     );
   }
 
+  const allowedModels = Array.isArray(currentPlan.allowed_ai_models) ? currentPlan.allowed_ai_models : [];
+  const allowedProviders = Array.isArray(currentPlan.allowed_ai_providers) ? currentPlan.allowed_ai_providers : [];
+
   return (
     <div className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-white/75">
       <div className="text-xs text-white/45">{title}</div>
@@ -35,12 +38,12 @@ export function PlanAccessPanel({
       </div>
       <div className="mt-3">
         <div className="text-xs text-white/45">可用模型</div>
-        <div className="mt-1 text-white">{currentPlan.allowed_ai_models.join(" / ") || "未开放"}</div>
+        <div className="mt-1 text-white">{allowedModels.join(" / ") || "未开放"}</div>
       </div>
       {!compact ? (
         <div className="mt-3">
           <div className="text-xs text-white/45">可用 AI 通道</div>
-          <div className="mt-1 text-white">{currentPlan.allowed_ai_providers.join(" / ") || "未开放"}</div>
+          <div className="mt-1 text-white">{allowedProviders.join(" / ") || "未开放"}</div>
         </div>
       ) : null}
       <div className="mt-3 text-white/60">{currentPlan.ai_policy_note || "当前套餐权限会直接影响你能调用的 AI 模型。"}</div>

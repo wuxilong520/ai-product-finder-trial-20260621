@@ -54,7 +54,7 @@ export function SupplierCenter({
   const filteredItems = useMemo(() => {
     const priceLimit = maxPrice ? Number(maxPrice) : null;
     const scoreFloor = Number(minScore || 0);
-    return items.filter((item) => {
+    const baseFiltered = items.filter((item) => {
       if (availableOnly && !/available|instock|ready|现货|有货/i.test(item.availability || "")) {
         return false;
       }
@@ -66,6 +66,18 @@ export function SupplierCenter({
       }
       return true;
     });
+    if (availableOnly && baseFiltered.length === 0 && items.length > 0) {
+      return items.filter((item) => {
+        if (!Number.isNaN(scoreFloor) && item.match_score < scoreFloor) {
+          return false;
+        }
+        if (priceLimit !== null && !Number.isNaN(priceLimit) && item.supplier_price != null && item.supplier_price > priceLimit) {
+          return false;
+        }
+        return true;
+      });
+    }
+    return baseFiltered;
   }, [availableOnly, items, maxPrice, minScore]);
 
   return (
@@ -126,6 +138,21 @@ export function SupplierCenter({
           <div className="rounded-2xl border border-[#4F7CFF]/20 bg-[#4F7CFF]/10 px-4 py-3 text-sm leading-7 text-[#D8E3FF]">
             当前这页已经能真实展示：供应商推荐、价格、MOQ、供应评分、供应可信度、认证情况、利润预估、风险提示。还没完全打通的是真实 1688 官方接口，不会假装成已接通。
           </div>
+          {availableOnly && items.length > 0 && filteredItems.length > 0 && filteredItems.length === items.filter((item) => {
+            const priceLimit = maxPrice ? Number(maxPrice) : null;
+            const scoreFloor = Number(minScore || 0);
+            if (!Number.isNaN(scoreFloor) && item.match_score < scoreFloor) {
+              return false;
+            }
+            if (priceLimit !== null && !Number.isNaN(priceLimit) && item.supplier_price != null && item.supplier_price > priceLimit) {
+              return false;
+            }
+            return true;
+          }).length && !items.some((item) => /available|instock|ready|现货|有货/i.test(item.availability || "")) ? (
+            <div className="rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+              当前没有“可供货”状态的实时结果，这里先把待核验供应结果展示给你，避免页面空白。
+            </div>
+          ) : null}
           <div className="grid gap-4 md:grid-cols-3">
             <HintCard
               title="先筛价格"

@@ -47,6 +47,7 @@ class SupplierMatchingEngine:
                     "profit_estimate": item.get("estimated_profit"),
                     "risk_flags": item.get("risk_flags", []),
                     "data_source": item.get("data_source"),
+                    "source_type": item.get("source_type") or item.get("data_source"),
                     "supplier_type": item.get("supplier_type"),
                     "location": item.get("location"),
                     "certification": item.get("certification"),
@@ -54,6 +55,12 @@ class SupplierMatchingEngine:
                     "price_change": item.get("price_change"),
                     "stock_change": item.get("stock_change"),
                     "procurement_recommendation": supply_result.get("procurement_recommendation", {}).get("decision"),
+                    "risk_level": self._risk_level(
+                        supplier_confidence=item.get("supplier_confidence"),
+                        supplier_score=item.get("supplier_score"),
+                        risk_flags=item.get("risk_flags", []),
+                        is_mock=item.get("is_mock"),
+                    ),
                 }
                 for item in supply_result.get("suppliers", [])
                 if item.get("product_url") or item.get("search_url")
@@ -70,6 +77,13 @@ class SupplierMatchingEngine:
             "profit_preview": supply_result.get("profit_preview"),
             "procurement_recommendation": supply_result.get("procurement_recommendation"),
             "is_mock": supply_result.get("is_mock"),
+            "source_type": (supply_result.get("selected_supplier") or {}).get("source_type") or supply_result.get("data_source"),
+            "risk_level": self._risk_level(
+                supplier_confidence=supply_result.get("supplier_confidence"),
+                supplier_score=supply_result.get("supplier_score"),
+                risk_flags=supply_result.get("risk_flags", []),
+                is_mock=supply_result.get("is_mock"),
+            ),
         }
 
     def _deduplicate(self, matches: list[dict]) -> list[dict]:
@@ -82,6 +96,23 @@ class SupplierMatchingEngine:
             seen.add(key)
             unique.append(item)
         return unique[:8]
+
+    def _risk_level(
+        self,
+        *,
+        supplier_confidence: float | None,
+        supplier_score: float | None,
+        risk_flags: list[str] | None,
+        is_mock: bool | None,
+    ) -> str:
+        flags = set(risk_flags or [])
+        confidence = float(supplier_confidence or 0)
+        score = float(supplier_score or 0)
+        if is_mock or confidence < 0.6 or {"mock_data_used", "supplier_unverified", "high_moq"} & flags:
+            return "high"
+        if score >= 80 and confidence >= 0.8 and not flags:
+            return "low"
+        return "medium"
 
 
 supplier_matching_engine = SupplierMatchingEngine()

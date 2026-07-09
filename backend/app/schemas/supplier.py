@@ -26,6 +26,8 @@ class SupplierMatchItem(BaseModel):
     profit_estimate: float | None = None
     risk_flags: list[str] = Field(default_factory=list)
     data_source: str | None = None
+    source_type: str | None = None
+    risk_level: str | None = None
     supplier_type: str | None = None
     location: str | None = None
     certification: str | None = None
@@ -40,6 +42,8 @@ class SupplierMatchResponse(BaseModel):
     supplier_score: float | None = None
     supplier_confidence: float | None = None
     confidence: float | None = None
+    source_type: str | None = None
+    risk_level: str | None = None
     risk_flags: list[str] = Field(default_factory=list)
     cost_estimate: dict | None = None
     profit_preview: dict | None = None

@@ -148,6 +148,8 @@ export type SupplierMatchItem = {
   profit_estimate?: number | null;
   risk_flags?: string[];
   data_source?: string | null;
+  source_type?: string | null;
+  risk_level?: "low" | "medium" | "high" | string | null;
   supplier_type?: string | null;
   location?: string | null;
   certification?: string | null;
@@ -162,6 +164,8 @@ export type SupplierMatchResponse = {
   supplier_score?: number | null;
   supplier_confidence?: number | null;
   confidence?: number | null;
+  source_type?: string | null;
+  risk_level?: "low" | "medium" | "high" | string | null;
   risk_flags?: string[];
   cost_estimate?: {
     product_cost?: number;

@@ -129,6 +129,16 @@ export type MarketAnalyzeResponse = {
     tiktok_potential?: number;
   } | null;
   data_source_map?: Record<string, string> | null;
+  market_signals?: Array<Record<string, unknown>>;
+  market_growth?: number | null;
+  market_opportunity?: {
+    score?: number;
+    level?: string;
+    recommendation?: string;
+    supply_accessibility?: number;
+  } | null;
+  source_status?: Record<string, string> | null;
+  trend_direction?: string | null;
 };
 
 export type SupplierMatchItem = {

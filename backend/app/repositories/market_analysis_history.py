@@ -4,6 +4,23 @@ from app.models.market_analysis_history import MarketAnalysisHistory
 
 
 class MarketAnalysisHistoryRepository:
+    def latest_for_keyword(
+        self,
+        db: Session,
+        *,
+        keyword: str,
+        region: str,
+    ) -> MarketAnalysisHistory | None:
+        return (
+            db.query(MarketAnalysisHistory)
+            .filter(
+                MarketAnalysisHistory.keyword == keyword,
+                MarketAnalysisHistory.region == region,
+            )
+            .order_by(MarketAnalysisHistory.created_at.desc(), MarketAnalysisHistory.id.desc())
+            .first()
+        )
+
     def create(
         self,
         db: Session,
@@ -17,6 +34,10 @@ class MarketAnalysisHistoryRepository:
         source: str,
         confidence: float,
         is_mock: bool,
+        previous_score: float | None,
+        current_score: float | None,
+        change_rate: float | None,
+        trend_direction: str | None,
         snapshot: dict,
     ) -> MarketAnalysisHistory:
         record = MarketAnalysisHistory(
@@ -29,6 +50,10 @@ class MarketAnalysisHistoryRepository:
             source=source,
             confidence=confidence,
             is_mock=is_mock,
+            previous_score=previous_score,
+            current_score=current_score,
+            change_rate=change_rate,
+            trend_direction=trend_direction,
             snapshot=snapshot,
         )
         db.add(record)

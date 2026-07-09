@@ -246,10 +246,18 @@ class DecisionService(DecisionServiceBase):
             verdict = 'watch'
             listing_recommendation = '当前真实数据可信度不足，先观察，不要直接执行。'
             reasons.append('data_trust_score 低于 0.6，系统已自动降级为 observe。')
+        trusted_market_data = normalized_analysis_context.get("trusted_market_data") or {}
+        market_confidence = float(trusted_market_data.get("confidence") or normalized_analysis_context.get("confidence") or 0)
+        if bool(trusted_market_data.get("all_sources_mock")):
+            verdict = "watch"
+            risk_level = "high"
+            reasons.append("市场侧当前全部是 mock 来源，系统强制把最高动作限制在 WATCH。")
         desired_action_level = None
         if supply_inputs["supplier_confidence"] < 0.6:
             desired_action_level = "TEST"
             reasons.append("供应商可信度低于 0.6，禁止进入 AUTO_LIST，当前最多只能 TEST。")
+        if bool(trusted_market_data.get("all_sources_mock")) or market_confidence <= 0.3:
+            desired_action_level = "WATCH"
         market_score = float((normalized_analysis_context.get("trusted_market_data") or {}).get("market_score") or normalized_analysis_context.get("market_score") or 0)
         if (
             supply_inputs["supplier_score"] > 80
@@ -307,6 +315,14 @@ class DecisionService(DecisionServiceBase):
             scale_recommendation=str(readiness["scale_recommendation"]),
         )
         execution_result = execution_control_layer.evaluate(decision)
+        if desired_action_level == "WATCH" and execution_result["action_level"] != "WATCH":
+            execution_result["override_history"].append({
+                "rule": "market_all_mock_or_low_confidence_watch_only",
+                "from": execution_result["action_level"],
+                "to": "WATCH",
+            })
+            execution_result["action_level"] = "WATCH"
+            execution_result["execution_block_reason"] = "市场数据全部为 mock 或市场可信度低于 0.3，当前只能 WATCH。"
         if desired_action_level == "TEST" and execution_result["action_level"] in {"SCALE", "AUTO_LIST"}:
             execution_result["override_history"].append({
                 "rule": "supplier_confidence_lt_0.6",

@@ -22,4 +22,8 @@ class MarketAnalysisHistory(TimestampMixin, Base):
     source: Mapped[str] = mapped_column(String(255), nullable=False)
     confidence: Mapped[float] = mapped_column(Float, nullable=False)
     is_mock: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    previous_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    current_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    change_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
+    trend_direction: Mapped[str | None] = mapped_column(String(50), nullable=True)
     snapshot: Mapped[dict] = mapped_column(json_field, nullable=False, default=dict)

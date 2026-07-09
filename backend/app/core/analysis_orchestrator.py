@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from app.core.contracts import MarketInsight, TrendPoint
+from app.core.market_signal_engine import market_signal_engine
+from app.core.market_opportunity_model import market_opportunity_model
 from app.core.market_intelligence_engine import MarketInsight as EngineMarketInsight, MarketQuery, market_intelligence_engine
 from app.core.platform_router import platform_router
 from app.core.real_data_layer import real_data_manager
@@ -19,13 +21,34 @@ class AnalysisOrchestrator:
             )
         )
         market_intelligence = market_result.market_intelligence
+        signal_bundle = market_signal_engine.build(
+            keyword=keyword,
+            region=normalized_region,
+            data_sources=market_intelligence.data_sources,
+            market_intelligence=market_intelligence.model_dump(mode="json"),
+        )
+        market_opportunity = market_opportunity_model.evaluate(
+            demand_score=signal_bundle["demand_score"],
+            trend_score=signal_bundle["trend_score"],
+            competition_score=signal_bundle["competition_score"],
+            platform_compatibility=market_intelligence.platform_compatibility.model_dump(mode="json"),
+        )
+        market_intelligence = market_intelligence.model_copy(update={
+            "market_signals": signal_bundle["market_signals"],
+            "market_growth": signal_bundle["market_growth"],
+            "trend_direction": signal_bundle["trend_direction"],
+            "market_opportunity": market_opportunity.model_dump(mode="json"),
+            "source_status": signal_bundle["source_status"],
+            "confidence": min(float(signal_bundle["confidence"]), 0.3) if signal_bundle["all_mock"] else float(signal_bundle["confidence"]),
+            "all_sources_mock": signal_bundle["all_mock"],
+        })
         market_insight = MarketInsight(
             source="market_intelligence_engine",
             keyword=keyword,
             market=market,
-            trend_direction="up" if market_intelligence.trend_strength >= 55 else "flat",
-            demand_score=int(round(market_intelligence.demand_score)),
-            competition_score=int(round(market_intelligence.market_saturation)),
+            trend_direction=market_intelligence.trend_direction,
+            demand_score=int(round(signal_bundle["demand_score"])),
+            competition_score=int(round(signal_bundle["competition_score"])),
             trend_points=[
                 TrendPoint(
                     date=str(item.get("date") or ""),
@@ -39,11 +62,12 @@ class AnalysisOrchestrator:
                 market_result.reasoning["demand_reason"],
                 market_result.reasoning["competition_reason"],
                 market_result.reasoning["trend_reason"],
+                f"市场机会 {market_opportunity.level}，机会分 {market_opportunity.score}。",
             ]),
             market_score=market_result.market_score,
-            recommendation=market_result.recommendation,
-            confidence=market_result.confidence,
-            risk_flags=market_result.risk_flags,
+            recommendation=market_opportunity.recommendation,
+            confidence=market_intelligence.confidence,
+            risk_flags=sorted(set([*market_result.risk_flags, "all_sources_mock"])) if signal_bundle["all_mock"] else market_result.risk_flags,
             platform_signals=market_intelligence.platform_signals.model_dump(mode="json"),
             keyword_cluster=market_intelligence.keyword_cluster.model_dump(mode="json"),
             platform_compatibility=market_intelligence.platform_compatibility.model_dump(mode="json"),
@@ -54,7 +78,23 @@ class AnalysisOrchestrator:
             "market_intelligence": market_result.model_dump(mode="json"),
             "market_insight": market_insight,
             "analysis_context": {
-                "market_intelligence": market_result.model_dump(mode="json"),
+                "market_intelligence": {
+                    **market_result.model_dump(mode="json"),
+                    "market_signals": market_intelligence.market_signals,
+                    "market_growth": market_intelligence.market_growth,
+                    "market_opportunity": market_intelligence.market_opportunity,
+                    "source_status": market_intelligence.source_status,
+                    "trend_direction": market_intelligence.trend_direction,
+                    "confidence": market_intelligence.confidence,
+                    "all_sources_mock": market_intelligence.all_sources_mock,
+                },
+                "trusted_market_data": {
+                    "market_score": market_result.market_score,
+                    "market_opportunity": market_intelligence.market_opportunity,
+                    "confidence": market_intelligence.confidence,
+                    "source_status": market_intelligence.source_status,
+                    "all_sources_mock": market_intelligence.all_sources_mock,
+                },
             },
         }
 

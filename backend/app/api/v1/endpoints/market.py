@@ -3,7 +3,7 @@ import asyncio
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import db_session, get_current_user
+from app.api.deps import db_session, get_request_context
 from app.core.runtime import AppError, error_response
 from app.schemas.market import MarketAnalyzeRequest, MarketAnalyzeResponse
 from app.services.sync_runtime_service import sync_runtime_service
@@ -18,19 +18,26 @@ router = APIRouter()
 def analyze_market_keyword(
     payload: MarketAnalyzeRequest,
     db: Session = Depends(db_session),
-    current_user=Depends(get_current_user),
+    auth_context=Depends(get_request_context),
 ):
     try:
         task = task_controller.submit_task(
             db,
             job_type="market",
             job_key=f"market:{payload.keyword.strip()}",
-            payload={"keyword": payload.keyword},
+            payload={"keyword": payload.keyword, "region": payload.region, "category": payload.category},
+            auth_context=auth_context,
             runner_factory=lambda task_id, task_db: lambda: execution_bridge.execute(
                 task_db,
                 task_id=task_id,
                 job_type="market",
-                payload={"keyword": payload.keyword},
+                payload={
+                    "keyword": payload.keyword,
+                    "region": payload.region,
+                    "category": payload.category,
+                    "workspace_id": auth_context.workspace_id,
+                    "user_id": auth_context.user_id,
+                },
             ),
         )
         result_wrapper = sync_runtime_service.get_task_result(task["task_id"])
@@ -43,4 +50,27 @@ def analyze_market_keyword(
         return error_response(exc.error_code, exc.message, exc.stage, exc.status_code)
     except Exception as exc:
         return error_response("MARKET_ANALYZE_FAILED", str(exc), "market", status.HTTP_500_INTERNAL_SERVER_ERROR)
+    return MarketAnalyzeResponse(**result)
+
+
+@router.post("/market/intelligence", response_model=MarketAnalyzeResponse)
+def market_intelligence(
+    payload: MarketAnalyzeRequest,
+    db: Session = Depends(db_session),
+    auth_context=Depends(get_request_context),
+):
+    del auth_context
+    try:
+        from app.services.market_intelligence_engine import market_intelligence_engine
+
+        result = market_intelligence_engine.analyze_keyword(
+            db,
+            payload.keyword,
+            region=payload.region,
+            category=payload.category,
+        )
+    except AppError as exc:
+        return error_response(exc.error_code, exc.message, exc.stage, exc.status_code)
+    except Exception as exc:
+        return error_response("MARKET_INTELLIGENCE_FAILED", str(exc), "market", status.HTTP_500_INTERNAL_SERVER_ERROR)
     return MarketAnalyzeResponse(**result)

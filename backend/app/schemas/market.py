@@ -38,3 +38,9 @@ class MarketAnalyzeResponse(BaseModel):
     market_opportunity: dict | None = None
     source_status: dict | None = None
     trend_direction: str | None = None
+    trend_strength: float | None = None
+    competition: float | None = None
+    risk_level: str | None = None
+    real_ratio: float | None = None
+    partial_ratio: float | None = None
+    mock_ratio: float | None = None

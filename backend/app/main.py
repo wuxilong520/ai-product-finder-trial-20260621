@@ -17,13 +17,14 @@ from app.core.runtime import (
     unhandled_exception_handler,
 )
 from app.core.startup_checks import collect_runtime_summary, validate_startup_env
+from app.core.production_detector import production_detector
 from app.repositories.platform import platform_repository
 from app.billing.service import billing_service
 from app.billing import order as billing_order  # noqa: F401
 from app.services.auth import auth_service
 from app.services.task_status import task_status_service
 from app.workspace.service import workspace_service
-from app.models import analysis, auth_identity, business_truth, category, crawl_run, decision_recommendation, market_intelligence, platform, product, product_intelligence, request_metric, supplier_match, user  # noqa: F401
+from app.models import analysis, auth_identity, business_truth, category, crawl_run, decision_recommendation, market_analysis_history, market_intelligence, market_signal_history, platform, product, product_intelligence, request_metric, supplier, supplier_match, user  # noqa: F401
 from app.workspace import model as workspace_model  # noqa: F401
 from app.api_key import model as api_key_model  # noqa: F401
 from app.quota import model as quota_model  # noqa: F401
@@ -54,12 +55,17 @@ async def lifespan(app: FastAPI):
     finally:
         db.close()
     runtime_summary = collect_runtime_summary()
+    production_status = production_detector.detect()
     log_info(
         "STARTUP_HEALTH | "
         f"status={runtime_summary['status']} | "
         f"db={runtime_summary['services']['database']} | "
         f"ai={runtime_summary['services']['ai']} | "
-        f"crawler={runtime_summary['services']['crawler']}"
+        f"crawler={runtime_summary['services']['crawler']} | "
+        f"production_env={production_status['environment']} | "
+        f"payment={production_status['payment_configured']} | "
+        f"email={production_status['email_configured']} | "
+        f"ssl={production_status['ssl_enabled']}"
     )
     yield
 
@@ -71,7 +77,7 @@ app.add_exception_handler(Exception, unhandled_exception_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

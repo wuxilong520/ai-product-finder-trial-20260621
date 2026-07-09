@@ -9,6 +9,7 @@ from app.models.data_governance import DataLineageRecord, DataQualityHistory, Da
 from app.models.decision_recommendation import DecisionRecommendation
 from app.models.market_analysis_history import MarketAnalysisHistory
 from app.models.market_intelligence import MarketIntelligence
+from app.models.market_signal_history import MarketSignalHistory
 from app.models.platform import Platform
 from app.models.product import Product, ProductImage, ProductKeyword, SourcingLink
 from app.models.product_intelligence import ProductIntelligence
@@ -31,6 +32,7 @@ __all__ = [
     "DecisionRecommendation",
     "MarketAnalysisHistory",
     "MarketIntelligence",
+    "MarketSignalHistory",
     "Platform",
     "Product",
     "ProductImage",

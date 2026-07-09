@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 from app.core.contracts import MarketInsight, TrendPoint
-from app.core.market_signal_engine import market_signal_engine
-from app.core.market_opportunity_model import market_opportunity_model
-from app.core.market_intelligence_engine import MarketInsight as EngineMarketInsight, MarketQuery, market_intelligence_engine
+from app.services.market_intelligence_engine import market_intelligence_engine as market_radar_service
 from app.core.platform_router import platform_router
 from app.core.real_data_layer import real_data_manager
 from app.core.data_trust_engine import data_trust_engine
@@ -14,86 +12,62 @@ from app.core.database import SessionLocal
 class AnalysisOrchestrator:
     def build_market_context(self, *, keyword: str, market: str) -> dict:
         normalized_region = "global" if str(market or "").strip().lower() in {"shopify", "amazon", "shopee", "tiktok"} else (market or "global")
-        market_result = market_intelligence_engine.analyze(
-            MarketQuery(
-                keyword=keyword,
+        db = SessionLocal()
+        try:
+            market_result = market_radar_service.analyze_keyword(
+                db,
+                keyword,
                 region=normalized_region,
+                category=None,
             )
-        )
-        market_intelligence = market_result.market_intelligence
-        signal_bundle = market_signal_engine.build(
-            keyword=keyword,
-            region=normalized_region,
-            data_sources=market_intelligence.data_sources,
-            market_intelligence=market_intelligence.model_dump(mode="json"),
-        )
-        market_opportunity = market_opportunity_model.evaluate(
-            demand_score=signal_bundle["demand_score"],
-            trend_score=signal_bundle["trend_score"],
-            competition_score=signal_bundle["competition_score"],
-            platform_compatibility=market_intelligence.platform_compatibility.model_dump(mode="json"),
-        )
-        market_intelligence = market_intelligence.model_copy(update={
-            "market_signals": signal_bundle["market_signals"],
-            "market_growth": signal_bundle["market_growth"],
-            "trend_direction": signal_bundle["trend_direction"],
-            "market_opportunity": market_opportunity.model_dump(mode="json"),
-            "source_status": signal_bundle["source_status"],
-            "confidence": min(float(signal_bundle["confidence"]), 0.3) if signal_bundle["all_mock"] else float(signal_bundle["confidence"]),
-            "all_sources_mock": signal_bundle["all_mock"],
-        })
+        finally:
+            db.close()
         market_insight = MarketInsight(
-            source="market_intelligence_engine",
+            source="market_real_radar",
             keyword=keyword,
             market=market,
-            trend_direction=market_intelligence.trend_direction,
-            demand_score=int(round(signal_bundle["demand_score"])),
-            competition_score=int(round(signal_bundle["competition_score"])),
+            trend_direction=str(market_result.get("trend_direction") or "flat"),
+            demand_score=int(round(float(market_result.get("demand_score") or 0))),
+            competition_score=int(round(float(market_result.get("competition_score") or 0))),
             trend_points=[
                 TrendPoint(
                     date=str(item.get("date") or ""),
                     score=int(round(float(item.get("score") or 0))),
                 )
-                for item in (market_intelligence.trend_points or [])
+                for item in (market_result.get("trend_points") or [])
             ] or [
-                TrendPoint(date="trend-current", score=int(round(market_intelligence.trend_strength))),
+                TrendPoint(date="trend-current", score=int(round(float(market_result.get("trend_strength") or 0)))),
             ],
             summary="；".join([
-                market_result.reasoning["demand_reason"],
-                market_result.reasoning["competition_reason"],
-                market_result.reasoning["trend_reason"],
-                f"市场机会 {market_opportunity.level}，机会分 {market_opportunity.score}。",
+                str((market_result.get("reasoning") or {}).get("demand_reason") or ""),
+                str((market_result.get("reasoning") or {}).get("competition_reason") or ""),
+                str((market_result.get("reasoning") or {}).get("trend_reason") or ""),
+                f"市场机会 {((market_result.get('market_opportunity') or {}).get('entry_recommendation') or '')}，机会分 {((market_result.get('market_opportunity') or {}).get('market_score') or 0)}。",
             ]),
-            market_score=market_result.market_score,
-            recommendation=market_opportunity.recommendation,
-            confidence=market_intelligence.confidence,
-            risk_flags=sorted(set([*market_result.risk_flags, "all_sources_mock"])) if signal_bundle["all_mock"] else market_result.risk_flags,
-            platform_signals=market_intelligence.platform_signals.model_dump(mode="json"),
-            keyword_cluster=market_intelligence.keyword_cluster.model_dump(mode="json"),
-            platform_compatibility=market_intelligence.platform_compatibility.model_dump(mode="json"),
-            is_mock=market_intelligence.is_mock,
-            mock_penalty_applied=market_intelligence.mock_penalty > 0,
+            market_score=float(market_result.get("market_score") or 0),
+            recommendation=str(market_result.get("recommendation") or "WATCH"),
+            confidence=float(market_result.get("confidence") or 0),
+            risk_flags=list(market_result.get("risk_flags") or []),
+            platform_signals=dict(market_result.get("platform_signals") or {}),
+            keyword_cluster=dict(market_result.get("keyword_cluster") or {}),
+            platform_compatibility=dict(market_result.get("platform_compatibility") or {}),
+            is_mock=bool(market_result.get("is_mock")),
+            mock_penalty_applied=bool(market_result.get("mock_ratio", 0) > 0),
         )
         return {
-            "market_intelligence": market_result.model_dump(mode="json"),
+            "market_intelligence": market_result,
             "market_insight": market_insight,
             "analysis_context": {
-                "market_intelligence": {
-                    **market_result.model_dump(mode="json"),
-                    "market_signals": market_intelligence.market_signals,
-                    "market_growth": market_intelligence.market_growth,
-                    "market_opportunity": market_intelligence.market_opportunity,
-                    "source_status": market_intelligence.source_status,
-                    "trend_direction": market_intelligence.trend_direction,
-                    "confidence": market_intelligence.confidence,
-                    "all_sources_mock": market_intelligence.all_sources_mock,
-                },
+                "market_context": market_result,
+                "market_intelligence": market_result,
                 "trusted_market_data": {
-                    "market_score": market_result.market_score,
-                    "market_opportunity": market_intelligence.market_opportunity,
-                    "confidence": market_intelligence.confidence,
-                    "source_status": market_intelligence.source_status,
-                    "all_sources_mock": market_intelligence.all_sources_mock,
+                    "market_score": market_result.get("market_score"),
+                    "market_opportunity": market_result.get("market_opportunity"),
+                    "confidence": market_result.get("confidence"),
+                    "source_status": market_result.get("source_status"),
+                    "all_sources_mock": bool(market_result.get("real_ratio", 0) == 0 and market_result.get("partial_ratio", 0) == 0),
+                    "demand_score": market_result.get("demand_score"),
+                    "trend_strength": market_result.get("trend_strength"),
                 },
             },
         }

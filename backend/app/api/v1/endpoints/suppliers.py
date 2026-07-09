@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import db_session, get_request_context
+from app.api.deps import db_session, get_request_context_no_quota
 from app.core.runtime import AppError, error_response
 from app.schemas.supplier import SupplierMatchRequest, SupplierMatchResponse
 from app.services.supplier_matching_engine import supplier_matching_engine
@@ -14,7 +14,7 @@ router = APIRouter()
 def match_suppliers(
     payload: SupplierMatchRequest,
     db: Session = Depends(db_session),
-    auth_context=Depends(get_request_context),
+    auth_context=Depends(get_request_context_no_quota),
 ):
     del auth_context
     try:

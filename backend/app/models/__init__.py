@@ -7,11 +7,13 @@ from app.models.category import Category
 from app.models.crawl_run import CrawlRun
 from app.models.data_governance import DataLineageRecord, DataQualityHistory, DataSourceRegistryRecord, SyncJobRecord
 from app.models.decision_recommendation import DecisionRecommendation
+from app.models.market_analysis_history import MarketAnalysisHistory
 from app.models.market_intelligence import MarketIntelligence
 from app.models.platform import Platform
 from app.models.product import Product, ProductImage, ProductKeyword, SourcingLink
 from app.models.product_intelligence import ProductIntelligence
 from app.models.request_metric import RequestMetricRecord
+from app.models.supplier import Supplier, SupplierProduct, SupplyAnalysisHistory, SupplySupplierHistory
 from app.models.supplier_match import SupplierMatch
 from app.models.user import User
 
@@ -27,6 +29,7 @@ __all__ = [
     "DataQualityHistory",
     "DataSourceRegistryRecord",
     "DecisionRecommendation",
+    "MarketAnalysisHistory",
     "MarketIntelligence",
     "Platform",
     "Product",
@@ -34,6 +37,10 @@ __all__ = [
     "ProductIntelligence",
     "ProductKeyword",
     "RequestMetricRecord",
+    "Supplier",
+    "SupplierProduct",
+    "SupplyAnalysisHistory",
+    "SupplySupplierHistory",
     "SourcingLink",
     "SupplierMatch",
     "SyncJobRecord",

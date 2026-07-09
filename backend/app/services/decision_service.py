@@ -32,6 +32,50 @@ class DecisionServiceBase(ABC):
 
 
 class DecisionService(DecisionServiceBase):
+    def _extract_supply_inputs(
+        self,
+        *,
+        analysis_context: dict,
+        profit: ProfitBreakdown,
+    ) -> dict:
+        supply_intelligence = analysis_context.get("supply_intelligence") or {}
+        supply_context = analysis_context.get("supply_context") or {}
+        cost_context = analysis_context.get("cost_context") or {}
+        real_cost = float(cost_context.get("landed_cost") or cost_context.get("product_cost") or profit.supply_cost)
+        margin = float(cost_context.get("margin") or profit.estimated_margin_rate)
+        supplier_score = float(
+            supply_context.get("supplier_score")
+            or supply_intelligence.get("supplier_score")
+            or 0
+        )
+        supplier_quality = str(
+            supply_context.get("supplier_quality")
+            or supply_intelligence.get("supplier_quality")
+            or "not_recommended"
+        )
+        supplier_confidence = float(
+            supply_context.get("supplier_confidence")
+            or supply_intelligence.get("supplier_confidence")
+            or 0
+        )
+        if "risk_flags" in supply_context:
+            supplier_risk = list(supply_context.get("risk_flags") or [])
+        elif "supplier_risk" in supply_intelligence:
+            supplier_risk = list(supply_intelligence.get("supplier_risk") or [])
+        else:
+            supplier_risk = list(supply_intelligence.get("risk_flags") or [])
+        return {
+            "supply_intelligence": supply_intelligence,
+            "supply_context": supply_context,
+            "cost_context": cost_context,
+            "real_cost": real_cost,
+            "margin": margin,
+            "supplier_score": supplier_score,
+            "supplier_quality": supplier_quality,
+            "supplier_confidence": supplier_confidence,
+            "supplier_risk": supplier_risk,
+        }
+
     def _normalize_confidence_score(self, ai_result: dict, *, default_score: float = 50) -> int:
         raw_score = ai_result.get("confidence_score")
         if raw_score is None:
@@ -121,6 +165,13 @@ class DecisionService(DecisionServiceBase):
             "currency_loss": float((business_constraints or {}).get("currency_loss", 0)),
             **(business_constraints or {}),
         }
+        supply_inputs = self._extract_supply_inputs(
+            analysis_context=normalized_analysis_context,
+            profit=profit,
+        )
+        normalized_constraints["product_cost"] = float(
+            (business_constraints or {}).get("product_cost", supply_inputs["real_cost"])
+        )
         strategy_plan = strategy_layer.build(
             strategy_mode=strategy_mode,
             keyword=keyword,
@@ -149,14 +200,19 @@ class DecisionService(DecisionServiceBase):
                 "suggested_price": profit.estimated_sell_price,
                 "estimated_profit": profit.estimated_profit,
                 "estimated_margin_rate": profit.estimated_margin_rate,
+                "supplier_quality": supply_inputs["supplier_quality"],
+                "supplier_score": supply_inputs["supplier_score"],
+                "supplier_confidence": supply_inputs["supplier_confidence"],
+                "supplier_risk": supply_inputs["supplier_risk"],
+                "real_cost": supply_inputs["real_cost"],
+                "margin": supply_inputs["margin"],
             },
         )
-        truth_profit = profit_truth_engine.calculate(
+        truth_profit = profit_truth_engine.calculate_from_supply_intelligence(
+            supply_intelligence=supply_inputs["supply_intelligence"],
+            cost_estimate=supply_inputs["cost_context"],
             selling_price=float(normalized_constraints["selling_price"]),
-            platform_fee=float(normalized_constraints["platform_fee"]),
-            shipping_cost=float(normalized_constraints["shipping_cost"]),
             ad_cost=float(normalized_constraints["ad_cost"]),
-            product_cost=float(normalized_constraints["product_cost"]),
             currency_loss=float(normalized_constraints["currency_loss"]),
         )
         feedback_keys = feedback_loop.register_feedback_keys(keyword=keyword, market=market, strategy_mode=strategy_plan.strategy_mode)
@@ -178,6 +234,9 @@ class DecisionService(DecisionServiceBase):
             ai_result,
             fallback_reason=f"{keyword} 在 {market} 已完成基础决策分析，但当前 AI 返回缺少完整理由字段。",
         )
+        reasons.append(
+            f"供应商评分 {supply_inputs['supplier_score']:.2f}，供应质量 {supply_inputs['supplier_quality']}，供应可信度 {supply_inputs['supplier_confidence']:.2f}，落地成本 {supply_inputs['real_cost']:.2f}。"
+        )
         if is_mock:
             verdict = "watch"
             risk_level = "high" if risk_level != "high" else risk_level
@@ -187,6 +246,18 @@ class DecisionService(DecisionServiceBase):
             verdict = 'watch'
             listing_recommendation = '当前真实数据可信度不足，先观察，不要直接执行。'
             reasons.append('data_trust_score 低于 0.6，系统已自动降级为 observe。')
+        desired_action_level = None
+        if supply_inputs["supplier_confidence"] < 0.6:
+            desired_action_level = "TEST"
+            reasons.append("供应商可信度低于 0.6，禁止进入 AUTO_LIST，当前最多只能 TEST。")
+        market_score = float((normalized_analysis_context.get("trusted_market_data") or {}).get("market_score") or normalized_analysis_context.get("market_score") or 0)
+        if (
+            supply_inputs["supplier_score"] > 80
+            and float(supply_inputs["margin"] or 0) > 0.3
+            and market_score > 70
+        ):
+            desired_action_level = "SCALE"
+            reasons.append("供应商评分、利润率、市场分数都达标，可以进入 SCALE。")
         decision_id = f"{strategy_plan.strategy_mode}:{market}:{keyword}".replace(" ", "_").lower()
         latest_feedback = feedback_loop_v2.latest_signal(keyword=keyword, market=market)
         ai_adjustment_suggestion = {
@@ -221,6 +292,10 @@ class DecisionService(DecisionServiceBase):
             feedback_keys=list(ai_result.get("feedback_keys", feedback_keys)),
             trusted_market_data=dict(ai_result.get("trusted_market_data", normalized_analysis_context)),
             supply_validation=list(ai_result.get("supply_validation", strategy_plan.supply_validation)),
+            supplier_quality=supply_inputs["supplier_quality"],
+            supplier_confidence=supply_inputs["supplier_confidence"],
+            real_supply_cost=supply_inputs["real_cost"],
+            supplier_risk=supply_inputs["supplier_risk"],
             listing_recommendation=listing_recommendation,
             business_constraints=normalized_constraints,
             data_trust=overall_trust,
@@ -232,6 +307,27 @@ class DecisionService(DecisionServiceBase):
             scale_recommendation=str(readiness["scale_recommendation"]),
         )
         execution_result = execution_control_layer.evaluate(decision)
+        if desired_action_level == "TEST" and execution_result["action_level"] in {"SCALE", "AUTO_LIST"}:
+            execution_result["override_history"].append({
+                "rule": "supplier_confidence_lt_0.6",
+                "from": execution_result["action_level"],
+                "to": "TEST",
+            })
+            execution_result["action_level"] = "TEST"
+            execution_result["execution_block_reason"] = "供应商可信度低于 0.6，禁止进入 AUTO_LIST。"
+        if (
+            desired_action_level == "SCALE"
+            and execution_result["action_level"] == "TEST"
+            and not overall_trust.get("is_mock", False)
+            and float(overall_trust.get("trust_level", 0)) >= 0.6
+            and str(decision.risk_level).lower() != "high"
+        ):
+            execution_result["override_history"].append({
+                "rule": "supplier_market_margin_scale_ready",
+                "from": execution_result["action_level"],
+                "to": "SCALE",
+            })
+            execution_result["action_level"] = "SCALE"
         decision = decision.model_copy(update=execution_result)
         execution_log_layer.write(
             keyword=keyword,

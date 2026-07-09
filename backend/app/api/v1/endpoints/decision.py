@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import db_session, get_request_context
+from app.core.ai_engine import ai_engine
 from app.core.runtime import AppError, error_response
 from app.schemas.skeleton_v1 import ApiEnvelope, DecisionV1Request
 from app.services.analyze_service import analyze_service
@@ -34,6 +35,15 @@ def decision_v1(payload: DecisionV1Request):
             "estimated_profit": analysis.profit_breakdown.estimated_profit,
             "estimated_margin_rate": analysis.profit_breakdown.estimated_margin_rate,
             "analysis_score": analysis.analysis_outcome.score,
+            "market_score": analysis.market_insight.market_score,
+            "trusted_market_data": {
+                "market_score": analysis.market_insight.market_score,
+                "recommendation": analysis.market_insight.recommendation,
+                "confidence": analysis.market_insight.confidence,
+            },
+            "supply_intelligence": analysis.trust_report.get("supply_intelligence", {}),
+            "supply_context": analysis.trust_report.get("supply_context", {}),
+            "cost_context": analysis.trust_report.get("cost_context", {}),
         },
         data_trust=analysis.trust_report,
         business_constraints=payload.business_constraints,
@@ -47,7 +57,7 @@ def decision_v1(payload: DecisionV1Request):
         },
         meta={
             "version": "shanghang-ai-v1",
-            "ai_engine": "mock_ai_engine",
+            "ai_engine": getattr(ai_engine, "engine_name", "unknown"),
         },
     )
 

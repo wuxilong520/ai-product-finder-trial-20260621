@@ -124,7 +124,7 @@ export function SupplierCenter({
             </label>
           </div>
           <div className="rounded-2xl border border-[#4F7CFF]/20 bg-[#4F7CFF]/10 px-4 py-3 text-sm leading-7 text-[#D8E3FF]">
-            当前这页能真实筛的是：关键词、价格、匹配分、是否有货。供应商评分、MOQ、真实工厂认证这几个字段，现在后端还没有完整返回，所以我不假装已经接通了。
+            当前这页已经能真实展示：供应商推荐、价格、MOQ、供应评分、供应可信度、认证情况、利润预估、风险提示。还没完全打通的是真实 1688 官方接口，不会假装成已接通。
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             <HintCard
@@ -167,11 +167,25 @@ export function SupplierCenter({
                 <div className="mt-4 rounded-2xl border border-white/8 bg-black/10 p-4 text-sm leading-7 text-white/68">
                   {buildSupplierSummary(item)}
                 </div>
-                <div className="mt-4 grid gap-4 md:grid-cols-3">
+                <div className="mt-4 grid gap-4 md:grid-cols-4">
                   <InfoTile label={text.supplierPrice} value={item.supplier_price != null ? `${item.currency || ""} ${Number(item.supplier_price).toFixed(2)}` : text.supplierPending} />
-                  <InfoTile label="成本空间" value={item.supplier_price != null ? `${Math.max(0, 100 - Math.round(item.supplier_price)).toString()}%` : "待核算"} />
+                  <InfoTile label="MOQ" value={item.moq != null ? `${item.moq}` : "待确认"} />
+                  <InfoTile label="供应评分" value={item.supplier_score != null ? `${Number(item.supplier_score).toFixed(1)} / ${item.supplier_level || "—"}` : "待评分"} />
                   <InfoTile label={text.supplierStatus} value={item.availability} />
                 </div>
+                <div className="mt-4 grid gap-4 md:grid-cols-4">
+                  <InfoTile label="供应可信度" value={item.supplier_confidence != null ? `${Math.round(Number(item.supplier_confidence) * 100)}%` : "待确认"} />
+                  <InfoTile label="认证情况" value={item.certification || "暂无"} />
+                  <InfoTile label="交付时效" value={item.delivery_time ? `${item.delivery_time} 天` : "待确认"} />
+                  <InfoTile label="建议采购" value={item.procurement_recommendation || "待判断"} />
+                </div>
+                {(item.risk_flags || []).length ? (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {(item.risk_flags || []).slice(0, 4).map((flag) => (
+                      <Badge key={flag} variant="warning">{flag}</Badge>
+                    ))}
+                  </div>
+                ) : null}
                 <div className="mt-4 flex flex-wrap gap-3">
                   <Link
                     href={`${ROUTES.actionProfit}${keyword ? `?keyword=${encodeURIComponent(keyword)}` : ""}`}
@@ -262,8 +276,8 @@ export function SupplierCenter({
             </CardHeader>
             <CardContent className="space-y-3 text-sm leading-7 text-white/60">
               <div>1. 现在已经能做：关键词匹配、1688 供货结果查看、价格筛选、匹配分筛选、是否有货筛选。</div>
-              <div>2. 现在还没完全打通：真实供应商评分、MOQ、工厂认证、履约稳定性。</div>
-              <div>3. 所以你现在最适合的真实流程是：市场页 → 商品机会页 → 供应链匹配页 → 利润决策页。</div>
+              <div>2. 现在已经能展示：供应商评分、MOQ、认证、风险、采购建议；但 1688 官方实时明细还没完全接通。</div>
+              <div>3. 你现在最适合的真实流程是：市场页 → 商品机会页 → 供应链匹配页 → 利润决策页。</div>
             </CardContent>
           </Card>
         </div>
@@ -294,5 +308,7 @@ function buildSupplierSummary(item: SupplierMatchItem) {
   const priceText = item.supplier_price != null ? "价格已经返回" : "价格还没完整返回";
   const scoreText = item.match_score >= 70 ? "匹配度比较高" : item.match_score >= 45 ? "匹配度中等" : "匹配度偏弱";
   const stockText = /available|instock|ready|现货|有货/i.test(item.availability || "") ? "当前看起来还能供货" : "当前供货状态一般";
-  return `${item.platform} 这条货源现在 ${scoreText}，${stockText}，而且 ${priceText}，适合继续拿去做利润判断。`;
+  const supplierText = item.supplier_score != null ? `供应评分大约 ${Number(item.supplier_score).toFixed(1)} 分` : "供应评分还在补充";
+  const riskText = (item.risk_flags || []).length ? `需要留意 ${(item.risk_flags || []).slice(0, 2).join("、")}` : "当前没有额外风险提示";
+  return `${item.platform} 这条货源现在 ${scoreText}，${stockText}，${priceText}，${supplierText}，${riskText}。`;
 }

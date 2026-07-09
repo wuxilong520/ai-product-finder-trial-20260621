@@ -5,14 +5,17 @@ from app.core.market_intelligence_engine import MarketInsight as EngineMarketIns
 from app.core.platform_router import platform_router
 from app.core.real_data_layer import real_data_manager
 from app.core.data_trust_engine import data_trust_engine
+from app.core.supply_intelligence_engine import SupplyQuery, supply_intelligence_engine
+from app.core.database import SessionLocal
 
 
 class AnalysisOrchestrator:
     def build_market_context(self, *, keyword: str, market: str) -> dict:
+        normalized_region = "global" if str(market or "").strip().lower() in {"shopify", "amazon", "shopee", "tiktok"} else (market or "global")
         market_result = market_intelligence_engine.analyze(
             MarketQuery(
                 keyword=keyword,
-                region=market or "global",
+                region=normalized_region,
             )
         )
         market_intelligence = market_result.market_intelligence
@@ -24,11 +27,13 @@ class AnalysisOrchestrator:
             demand_score=int(round(market_intelligence.demand_score)),
             competition_score=int(round(market_intelligence.market_saturation)),
             trend_points=[
-                TrendPoint(date="2026-06-01", score=max(0, int(round(market_intelligence.trend_strength - 12)))),
-                TrendPoint(date="2026-06-08", score=max(0, int(round(market_intelligence.trend_strength - 8)))),
-                TrendPoint(date="2026-06-15", score=max(0, int(round(market_intelligence.trend_strength - 4)))),
-                TrendPoint(date="2026-06-22", score=max(0, int(round(market_intelligence.trend_strength - 2)))),
-                TrendPoint(date="2026-06-29", score=int(round(market_intelligence.trend_strength))),
+                TrendPoint(
+                    date=str(item.get("date") or ""),
+                    score=int(round(float(item.get("score") or 0))),
+                )
+                for item in (market_intelligence.trend_points or [])
+            ] or [
+                TrendPoint(date="trend-current", score=int(round(market_intelligence.trend_strength))),
             ],
             summary="；".join([
                 market_result.reasoning["demand_reason"],
@@ -75,15 +80,57 @@ class AnalysisOrchestrator:
             },
         }
 
+    def build_supply_context(self, *, keyword: str, market: str, market_context: dict) -> dict:
+        market_intelligence = (market_context.get("market_intelligence") or {}).get("market_intelligence") or {}
+        expected_price = None
+        try:
+            shopify_signal = float(((market_intelligence.get("platform_signals") or {}).get("shopify_category_activity")) or 0)
+            expected_price = round(max(39.9, 0.8 * shopify_signal + 39.9), 2)
+        except Exception:
+            expected_price = None
+        db = SessionLocal()
+        try:
+            supply_result = supply_intelligence_engine.analyze(
+                db,
+                SupplyQuery(
+                    keyword=keyword,
+                    category=None,
+                    target_market=market or "global",
+                    expected_price=expected_price,
+                    quantity=100,
+                ),
+            )
+        finally:
+            db.close()
+        return {
+            "supply_intelligence": supply_result,
+            "supply_context": {
+                "suppliers": supply_result.get("suppliers", []),
+                "selected_supplier": supply_result.get("selected_supplier"),
+                "supplier_score": supply_result.get("supplier_score", 0),
+                "supplier_quality": supply_result.get("supplier_quality", "not_recommended"),
+                "supplier_confidence": supply_result.get("supplier_confidence", 0),
+                "risk_flags": supply_result.get("supplier_risk", supply_result.get("risk_flags", [])),
+                "confidence": supply_result.get("confidence", 0),
+                "is_mock": supply_result.get("is_mock", True),
+                "procurement_recommendation": supply_result.get("procurement_recommendation", {}),
+            },
+            "cost_context": supply_result.get("cost_estimate", {}),
+        }
+
     def build_analysis_context(self, *, keyword: str, market: str) -> dict:
         market_context = self.build_market_context(keyword=keyword, market=market)
         platform_context = self.build_platform_context(keyword=keyword)
+        supply_context = self.build_supply_context(keyword=keyword, market=market, market_context=market_context)
         return {
             **market_context,
             **platform_context,
+            **supply_context,
             "analysis_context": {
                 **market_context["analysis_context"],
                 "platform_data": platform_context["platform_data"],
+                "supply_context": supply_context["supply_context"],
+                "cost_context": supply_context["cost_context"],
             },
         }
 

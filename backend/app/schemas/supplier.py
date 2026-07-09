@@ -3,6 +3,10 @@ from pydantic import BaseModel, Field
 
 class SupplierMatchRequest(BaseModel):
     keyword: str = Field(..., min_length=1, description="供应链匹配关键词", examples=["air fryer"])
+    category: str | None = None
+    target_market: str = "global"
+    expected_price: float | None = None
+    quantity: int = 100
 
 
 class SupplierMatchItem(BaseModel):
@@ -15,7 +19,29 @@ class SupplierMatchItem(BaseModel):
     currency: str | None = None
     match_score: float
     availability: str
+    moq: int | None = None
+    supplier_score: float | None = None
+    supplier_level: str | None = None
+    supplier_confidence: float | None = None
+    profit_estimate: float | None = None
+    risk_flags: list[str] = Field(default_factory=list)
+    data_source: str | None = None
+    supplier_type: str | None = None
+    location: str | None = None
+    certification: str | None = None
+    delivery_time: int | None = None
+    price_change: float | None = None
+    stock_change: str | None = None
+    procurement_recommendation: str | None = None
 
 
 class SupplierMatchResponse(BaseModel):
     suppliers: list[SupplierMatchItem]
+    supplier_score: float | None = None
+    supplier_confidence: float | None = None
+    confidence: float | None = None
+    risk_flags: list[str] = Field(default_factory=list)
+    cost_estimate: dict | None = None
+    profit_preview: dict | None = None
+    procurement_recommendation: dict | None = None
+    is_mock: bool | None = None

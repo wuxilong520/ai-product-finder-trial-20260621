@@ -141,10 +141,52 @@ export type SupplierMatchItem = {
   currency?: string | null;
   match_score: number;
   availability: string;
+  moq?: number | null;
+  supplier_score?: number | null;
+  supplier_level?: string | null;
+  supplier_confidence?: number | null;
+  profit_estimate?: number | null;
+  risk_flags?: string[];
+  data_source?: string | null;
+  supplier_type?: string | null;
+  location?: string | null;
+  certification?: string | null;
+  delivery_time?: number | null;
+  price_change?: number | null;
+  stock_change?: string | null;
+  procurement_recommendation?: string | null;
 };
 
 export type SupplierMatchResponse = {
   suppliers: SupplierMatchItem[];
+  supplier_score?: number | null;
+  supplier_confidence?: number | null;
+  confidence?: number | null;
+  risk_flags?: string[];
+  cost_estimate?: {
+    product_cost?: number;
+    shipping_estimate?: number;
+    platform_fee?: number;
+    marketing_cost?: number;
+    landed_cost?: number;
+    suggested_price?: number;
+    margin?: number;
+  } | null;
+  profit_preview?: {
+    purchase_cost?: number;
+    shipping_cost?: number;
+    platform_cost?: number;
+    ad_cost?: number;
+    gross_profit?: number;
+    net_profit?: number;
+    margin_rate?: number;
+    confidence?: number;
+  } | null;
+  procurement_recommendation?: {
+    decision?: string;
+    reason?: string;
+  } | null;
+  is_mock?: boolean | null;
 };
 
 export type DecisionRecommendResponse = {

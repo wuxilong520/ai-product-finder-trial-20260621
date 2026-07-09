@@ -115,6 +115,10 @@ class DecisionRecord(BaseModel):
     feedback_keys: list[str] = Field(default_factory=list)
     trusted_market_data: dict = Field(default_factory=dict)
     supply_validation: list[str] = Field(default_factory=list)
+    supplier_quality: str = ""
+    supplier_confidence: float = 0
+    real_supply_cost: float = 0
+    supplier_risk: list[str] = Field(default_factory=list)
     listing_recommendation: str = ""
     business_constraints: dict = Field(default_factory=dict)
     data_trust: dict = Field(default_factory=dict)

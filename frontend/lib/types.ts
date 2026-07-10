@@ -203,6 +203,87 @@ export type SupplierMatchResponse = {
   is_mock?: boolean | null;
 };
 
+export type OpportunityAnalyzeResponse = {
+  keyword: string;
+  market: string;
+  market_signal: {
+    demand_score: number;
+    trend_direction: string;
+    competition_level: string;
+    confidence: number;
+  };
+  amazon_signal: {
+    demand_score: number;
+    review_density: number;
+    competition_density: number;
+    price_range: Record<string, unknown>;
+  };
+  supplier_signal: {
+    supplier_score: number;
+    supplier_source: string;
+    product_cost: number;
+    MOQ: number;
+    supplier_confidence: number;
+  };
+  profit_signal: {
+    cost: number;
+    shipping_cost: number;
+    platform_fee: number;
+    ad_cost: number;
+    expected_price: number;
+    gross_margin: number;
+    net_margin: number;
+    profit_confidence: number;
+  };
+  decision: "BUY" | "TEST" | "WATCH" | "IGNORE" | string;
+  execution: {
+    shopify_ready: boolean;
+    draft_allowed: boolean;
+    publish_allowed: boolean;
+  };
+  market_score: number;
+  supplier_score: number;
+  profit_margin: number;
+  opportunity_score: number;
+  confidence: number;
+  risk_flags: string[];
+  source_status: Record<string, unknown>;
+  shopify_action: string;
+  shopify_draft: Record<string, unknown>;
+  feedback_signal: Record<string, unknown>;
+  history_id?: number | null;
+};
+
+export type OpportunityExecuteResponse = {
+  keyword: string;
+  market: string;
+  recommendation: string;
+  shopify_action: string;
+  execution: Record<string, unknown>;
+  draft: Record<string, unknown>;
+  feedback: Record<string, unknown>;
+  history_id?: number | null;
+};
+
+export type OpportunityHistoryItem = {
+  id: number;
+  keyword: string;
+  market: string;
+  market_score: number;
+  supplier_score: number;
+  profit_margin: number;
+  opportunity_score: number;
+  decision: string;
+  execution_result?: string | null;
+  shopify_action?: string | null;
+  actual_result: Record<string, unknown>;
+  created_at: string;
+};
+
+export type OpportunityHistoryResponse = {
+  items: OpportunityHistoryItem[];
+};
+
 export type DecisionRecommendResponse = {
   source_id?: string | null;
   source_type?: string | null;

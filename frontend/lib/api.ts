@@ -15,6 +15,9 @@ import {
   ListingV1Response,
   LoginResponse,
   MarketAnalyzeResponse,
+  OpportunityAnalyzeResponse,
+  OpportunityExecuteResponse,
+  OpportunityHistoryResponse,
   Product,
   ProductBatchDeleteResponse,
   ProductIntelligenceEngineResponse,
@@ -372,6 +375,67 @@ export async function matchSuppliers(keyword: string, token?: string): Promise<S
   });
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "供应链匹配失败"));
+  }
+  return response.json();
+}
+
+export async function analyzeOpportunity(
+  payload: {
+    keyword: string;
+    marketplace?: string;
+    region?: string;
+  },
+  token?: string,
+): Promise<OpportunityAnalyzeResponse> {
+  ensureApiBase();
+  const response = await fetch(`${API_V1}/opportunity/analyze`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...buildAuthHeaders(token),
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "商业机会分析失败"));
+  }
+  return response.json();
+}
+
+export async function executeOpportunity(
+  payload: {
+    keyword: string;
+    marketplace?: string;
+    region?: string;
+    shop_domain: string;
+  },
+  token?: string,
+): Promise<OpportunityExecuteResponse> {
+  ensureApiBase();
+  const response = await fetch(`${API_V1}/opportunity/execute`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...buildAuthHeaders(token),
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "商业机会执行失败"));
+  }
+  return response.json();
+}
+
+export async function getOpportunityHistory(token?: string, limit = 20): Promise<OpportunityHistoryResponse> {
+  ensureApiBase();
+  const response = await fetch(`${API_V1}/opportunity/history?limit=${limit}`, {
+    method: "GET",
+    headers: {
+      ...buildAuthHeaders(token),
+    },
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "商业机会历史读取失败"));
   }
   return response.json();
 }

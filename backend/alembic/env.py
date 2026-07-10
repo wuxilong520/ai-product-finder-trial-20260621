@@ -11,7 +11,7 @@ if str(BACKEND_DIR) not in sys.path:
 
 from app.core.config import settings
 from app.core.database import Base
-from app.models import amazon_market_signal, analysis, auth_identity, business_truth, category, crawl_run, decision_recommendation, market_intelligence, platform, product, product_intelligence, supplier_match, user  # noqa: F401
+from app.models import amazon_market_signal, analysis, auth_identity, business_opportunity_history, business_truth, category, crawl_run, decision_recommendation, market_intelligence, platform, product, product_intelligence, supplier_match, user  # noqa: F401
 from app.billing import order as billing_order  # noqa: F401
 
 config = context.config

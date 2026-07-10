@@ -29,6 +29,7 @@ export const ROUTES = {
   actionPriceCompare: "/action-center/price-compare",
   actionLaunchQueue: "/action-center/launch-queue",
   executionDashboard: "/dashboard/execution",
+  opportunityDashboard: "/dashboard/opportunity",
   productDashboard: "/dashboard/product",
   settingsStoreLinks: "/settings/store-links",
   settingsProfile: "/settings/profile",

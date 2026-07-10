@@ -3,6 +3,7 @@ from app.models.amazon_market_signal import AmazonMarketHistory, AmazonMarketSig
 from app.models.auth_identity import AuthChallenge, AuthVerificationCode
 from app.models.base import TimestampMixin
 from app.models.business_truth import BusinessTruthDecision
+from app.models.business_opportunity_history import BusinessOpportunityHistory
 from app.billing.order import BillingOrder
 from app.models.category import Category
 from app.models.crawl_run import CrawlRun
@@ -27,6 +28,7 @@ __all__ = [
     "AuthVerificationCode",
     "BillingOrder",
     "BusinessTruthDecision",
+    "BusinessOpportunityHistory",
     "Category",
     "CrawlRun",
     "DataLineageRecord",

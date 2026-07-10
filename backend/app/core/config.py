@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
 from urllib.parse import urlparse
@@ -55,6 +57,7 @@ class Settings(BaseSettings):
     shopify_store_base_url: str = os.getenv("SHOPIFY_STORE_BASE_URL", "")
     shopify_api_key: str = os.getenv("SHOPIFY_API_KEY", "")
     shopify_api_secret: str = os.getenv("SHOPIFY_API_SECRET", "")
+    shopify_admin_access_token: str = os.getenv("SHOPIFY_ADMIN_ACCESS_TOKEN", "")
 
     model_config = SettingsConfigDict(
         env_file=(str(PROJECT_ROOT / ".env"), str(BACKEND_DIR / ".env")),

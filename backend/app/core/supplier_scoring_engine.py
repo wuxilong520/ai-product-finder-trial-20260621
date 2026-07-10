@@ -2,6 +2,50 @@ from __future__ import annotations
 
 
 class SupplierScoringEngine:
+    def quality_score(
+        self,
+        *,
+        factory_score: float,
+        price_advantage: float,
+        delivery_score: float,
+        verification_score: float,
+    ) -> dict:
+        score = round(
+            float(factory_score or 0) * 0.3
+            + float(price_advantage or 0) * 0.25
+            + float(delivery_score or 0) * 0.2
+            + float(verification_score or 0) * 0.25,
+            2,
+        )
+        if score >= 85:
+            level = "A"
+            recommendation = "recommended"
+        elif score >= 70:
+            level = "B"
+            recommendation = "test"
+        elif score >= 55:
+            level = "C"
+            recommendation = "watch"
+        else:
+            level = "D"
+            recommendation = "not_recommended"
+        reasons: list[str] = []
+        if float(factory_score or 0) >= 75:
+            reasons.append("工厂能力较强")
+        if float(price_advantage or 0) >= 75:
+            reasons.append("价格优势明显")
+        if float(delivery_score or 0) < 45:
+            reasons.append("交付能力偏弱")
+        if float(verification_score or 0) < 50:
+            reasons.append("认证或校验不足")
+        return {
+            "score": score,
+            "supplier_score": score,
+            "level": level,
+            "recommendation": recommendation,
+            "reason": reasons or ["供应链信息基本完整，可进入下一步判断。"],
+        }
+
     def score(
         self,
         *,

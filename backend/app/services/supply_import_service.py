@@ -163,6 +163,12 @@ class SupplyImportService:
                 delivery_time_days=record.delivery_time,
                 source_type=record.source_type,
                 confidence_score=0.82 if record.source_type == "merchant_authorized" else 0.76,
+                supplier_verified=record.source_type in {"merchant_authorized", "browser_extension"},
+                product_url=record.product_url,
+                factory_level="user_import",
+                delivery_score=78.0 if record.delivery_time and record.delivery_time <= 7 else 58.0,
+                price_history=[{"price": record.price, "source": record.source_type}],
+                verification_status="verified" if record.source_type == "merchant_authorized" else "pending",
                 is_authorized=record.source_type in {"merchant_authorized", "browser_extension"},
                 last_feedback=f"{record.source_type} imported",
                 last_verified_time=datetime.now(UTC),
@@ -178,6 +184,12 @@ class SupplyImportService:
             supplier.delivery_time_days = record.delivery_time or supplier.delivery_time_days
             supplier.source_type = record.source_type
             supplier.confidence_score = max(float(supplier.confidence_score or 0), 0.76)
+            supplier.supplier_verified = supplier.supplier_verified or record.source_type == "merchant_authorized"
+            supplier.product_url = record.product_url or supplier.product_url
+            supplier.factory_level = "user_import"
+            supplier.delivery_score = 78.0 if record.delivery_time and record.delivery_time <= 7 else 58.0
+            supplier.price_history = [*list(supplier.price_history or []), {"price": record.price, "source": record.source_type}][-10:]
+            supplier.verification_status = "verified" if record.source_type == "merchant_authorized" else supplier.verification_status
             supplier.last_feedback = f"{record.source_type} imported"
             supplier.last_verified_time = datetime.now(UTC)
             db.add(supplier)

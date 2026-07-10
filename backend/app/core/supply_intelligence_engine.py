@@ -74,7 +74,7 @@ class SupplyIntelligenceEngine:
         )[:10]
 
         selected_supplier = suppliers[0] if suppliers else None
-        is_mock = not selected_supplier or bool(selected_supplier.get("is_mock"))
+        is_mock = bool(selected_supplier.get("is_mock")) if selected_supplier else False
         cost_estimate = self._build_cost_estimate(selected_supplier=selected_supplier, query=query)
         profit_preview = self._build_profit_preview(cost_estimate=cost_estimate, selected_supplier=selected_supplier)
         risk_flags = self._collect_risk_flags(suppliers)
@@ -102,7 +102,8 @@ class SupplyIntelligenceEngine:
             "risk_flags": risk_flags,
             "procurement_recommendation": procurement_advice,
             "data_sources": source_payloads,
-            "data_source": selected_supplier.get("source_type") if selected_supplier else "mock",
+            "data_source": selected_supplier.get("source_type") if selected_supplier else "unavailable",
+            "source_status": selected_supplier.get("source_status") if selected_supplier else "unavailable",
             "is_mock": is_mock,
         }
         self._persist(db, query=query, payload=payload)
@@ -133,12 +134,18 @@ class SupplyIntelligenceEngine:
             "factory_score": float(item.get("factory_score") or 0),
             "trust_score": float(item.get("trust_score") or 0),
             "factory_info": str(item.get("factory_level") or item.get("factory_info") or ""),
+            "factory_level": str(item.get("factory_level") or item.get("factory_info") or ""),
             "transaction_info": str(item.get("transaction_info") or ""),
             "data_source": str(item.get("data_source") or item.get("source_type") or source_name),
             "source_type": str(item.get("source_type") or source_name),
+            "source_status": str(item.get("source_status") or "partial"),
             "confidence_score": float(item.get("confidence_score") or 0),
             "certification": str(item.get("certification") or ""),
             "delivery_time": item.get("delivery_time"),
+            "delivery_score": float(item.get("delivery_score") or 0),
+            "supplier_verified": bool(item.get("supplier_verified", False)),
+            "verification_status": str(item.get("verification_status") or "unverified"),
+            "price_history": list(item.get("price_history") or []),
             "feedback_status": item.get("feedback_status"),
             "feedback_score": float(item.get("feedback_score") or 0),
             "availability": str(item.get("availability") or ("mock" if item.get("is_mock") else "available")),
@@ -155,31 +162,21 @@ class SupplyIntelligenceEngine:
             price_max = float(item.get("price_max") or price_min)
             price_mid = round((price_min + price_max) / 2, 2) if (price_min or price_max) else 0.0
             market_match = self._market_match_score(item=item, query=query)
-            stability_score = supplier_scoring_engine.stability_score(
-                factory_score=float(item.get("factory_score") or 0),
-                transaction_history=float(item.get("transaction_score") or 0),
-                source_confidence=float(item.get("confidence_score") or 0),
+            price_advantage = supplier_scoring_engine.price_competitiveness(
+                price_mid=price_mid,
+                expected_price=query.expected_price,
             )
-            score_meta = supplier_scoring_engine.score(
-                stability_score=stability_score,
-                price_competitiveness=supplier_scoring_engine.price_competitiveness(
-                    price_mid=price_mid,
-                    expected_price=query.expected_price,
-                ),
-                moq_reasonableness=supplier_scoring_engine.moq_reasonableness(
-                    moq=int(item.get("min_order_quantity") or 0),
-                    quantity=query.quantity,
-                ),
-                delivery_score=supplier_scoring_engine.delivery_score(
-                    delivery_time_days=self._delivery_days(item.get("delivery_time")),
-                ),
-                certification_score=supplier_scoring_engine.certification_score(
-                    certification=item.get("certification"),
-                ),
-                feedback_score=supplier_scoring_engine.feedback_score(
-                    trust_score=float(item.get("trust_score") or 0),
-                    feedback_status=item.get("feedback_status"),
-                ),
+            delivery_score = float(item.get("delivery_score") or 0) or supplier_scoring_engine.delivery_score(
+                delivery_time_days=self._delivery_days(item.get("delivery_time")),
+            )
+            verification_score = 90.0 if bool(item.get("supplier_verified")) else supplier_scoring_engine.certification_score(
+                certification=item.get("certification"),
+            )
+            score_meta = supplier_scoring_engine.quality_score(
+                factory_score=float(item.get("factory_score") or 0),
+                price_advantage=price_advantage,
+                delivery_score=delivery_score,
+                verification_score=verification_score,
             )
             risk_flags = list(item.get("risk_flags") or [])
             if int(item.get("min_order_quantity") or 0) > query.quantity and query.quantity > 0:
@@ -206,11 +203,17 @@ class SupplyIntelligenceEngine:
                     "supplier_score": score_meta["score"],
                     "supplier_level": score_meta["level"],
                     "supplier_confidence": round(float(item.get("confidence_score") or 0), 4),
+                    "supplier_quality_score": score_meta["score"],
                     "recommendation": score_meta["recommendation"],
                     "score_reasons": score_meta["reason"],
                     "estimated_profit": round(max(0.0, float(query.expected_price or 0) - price_mid), 2) if query.expected_price else 0.0,
                     "price_change": monitor_result.get("price_change", 0.0),
                     "stock_change": monitor_result.get("stock_change", "unknown"),
+                    "delivery_score": round(float(delivery_score or 0), 2),
+                    "verification_status": str(item.get("verification_status") or "unverified"),
+                    "supplier_verified": bool(item.get("supplier_verified", False)),
+                    "factory_level": str(item.get("factory_level") or ""),
+                    "price_history": list(item.get("price_history") or []),
                     "risk_flags": sorted(set(risk_flags)),
                 }
             )

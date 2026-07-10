@@ -48,6 +48,12 @@ class BrowserImportService:
                 delivery_time_days=payload.delivery_time,
                 source_type="browser_extension",
                 confidence_score=0.88,
+                supplier_verified=True,
+                product_url=payload.url,
+                factory_level="browser_authorized",
+                delivery_score=80.0 if payload.delivery_time and payload.delivery_time <= 7 else 60.0,
+                price_history=[{"price": price_value, "source": "browser_extension"}],
+                verification_status="verified",
                 is_authorized=True,
                 last_feedback="用户浏览器主动授权导入",
                 last_verified_time=datetime.now(UTC),
@@ -63,6 +69,12 @@ class BrowserImportService:
             supplier.delivery_time_days = payload.delivery_time or supplier.delivery_time_days
             supplier.source_type = "browser_extension"
             supplier.confidence_score = max(float(supplier.confidence_score or 0), 0.88)
+            supplier.supplier_verified = True
+            supplier.product_url = payload.url
+            supplier.factory_level = "browser_authorized"
+            supplier.delivery_score = 80.0 if payload.delivery_time and payload.delivery_time <= 7 else 60.0
+            supplier.price_history = [*list(supplier.price_history or []), {"price": price_value, "source": "browser_extension"}][-10:]
+            supplier.verification_status = "verified"
             supplier.is_authorized = True
             supplier.last_feedback = "用户浏览器主动授权导入"
             supplier.last_verified_time = datetime.now(UTC)

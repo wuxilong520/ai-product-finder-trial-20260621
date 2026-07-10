@@ -57,9 +57,11 @@ class AnalysisOrchestrator:
         return {
             "market_intelligence": market_result,
             "market_insight": market_insight,
+            "amazon_intelligence": ((market_result.get("platform_signals") or {}).get("amazon") or {}),
             "analysis_context": {
                 "market_context": market_result,
                 "market_intelligence": market_result,
+                "amazon_signal": ((market_result.get("platform_signals") or {}).get("amazon") or {}),
                 "trusted_market_data": {
                     "market_score": market_result.get("market_score"),
                     "market_opportunity": market_result.get("market_opportunity"),
@@ -68,6 +70,7 @@ class AnalysisOrchestrator:
                     "all_sources_mock": bool(market_result.get("real_ratio", 0) == 0 and market_result.get("partial_ratio", 0) == 0),
                     "demand_score": market_result.get("demand_score"),
                     "trend_strength": market_result.get("trend_strength"),
+                    "amazon_signal": ((market_result.get("platform_signals") or {}).get("amazon") or {}),
                 },
             },
         }

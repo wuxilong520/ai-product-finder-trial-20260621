@@ -5,7 +5,8 @@ from enum import StrEnum
 
 from sqlalchemy.orm import Session
 
-from app.adapters.supply.alibaba_1688_adapter import Alibaba1688Provider, AlibabaQuery
+from app.adapters.supply.alibaba_1688_adapter import AlibabaQuery
+from app.adapters.supply.alibaba1688_provider_v2 import Alibaba1688ProviderV2
 from app.adapters.supply.supplier_database_adapter import SupplierDatabaseAdapter
 
 
@@ -28,38 +29,29 @@ class SourceDescriptor:
 
 class SupplySourceManager:
     def __init__(self) -> None:
-        self.alibaba_provider = Alibaba1688Provider()
+        self.alibaba_provider = Alibaba1688ProviderV2()
 
     async def collect(self, db: Session, *, query: AlibabaQuery) -> dict[str, dict]:
         database_adapter = SupplierDatabaseAdapter(db)
         return {
             SupplySource.ALIBABA_API.value: await self.alibaba_provider.fetch_api(query),
-            SupplySource.MERCHANT_AUTHORIZED.value: await database_adapter.fetch_by_source_types(
-                keyword=query.keyword,
-                source_types=[SupplySource.MERCHANT_AUTHORIZED.value],
-                category=query.category,
-            ),
-            SupplySource.BROWSER_EXTENSION.value: await database_adapter.fetch_by_source_types(
-                keyword=query.keyword,
-                source_types=[SupplySource.BROWSER_EXTENSION.value],
-                category=query.category,
-            ),
-            SupplySource.CSV_IMPORT.value: await database_adapter.fetch_by_source_types(
-                keyword=query.keyword,
-                source_types=[SupplySource.CSV_IMPORT.value],
-                category=query.category,
-            ),
+            SupplySource.MERCHANT_AUTHORIZED.value: await self.alibaba_provider.fetch_merchant_authorized(db, query),
+            SupplySource.BROWSER_EXTENSION.value: await self.alibaba_provider.fetch_browser_extension(db, query),
+            SupplySource.CSV_IMPORT.value: await self.alibaba_provider.fetch_user_upload(db, query),
             SupplySource.MANUAL_INPUT.value: await database_adapter.fetch_by_source_types(
                 keyword=query.keyword,
                 source_types=[SupplySource.MANUAL_INPUT.value],
                 category=query.category,
             ),
-            SupplySource.CACHE_DATABASE.value: await database_adapter.fetch_by_source_types(
-                keyword=query.keyword,
-                source_types=[SupplySource.CACHE_DATABASE.value, "cached"],
-                category=query.category,
-            ),
-            SupplySource.PUBLIC_PAGE.value: await self.alibaba_provider.fetch_public_page(query),
+            SupplySource.CACHE_DATABASE.value: await self.alibaba_provider.fetch_cache(db, query),
+            SupplySource.PUBLIC_PAGE.value: {
+                "source": "public_page_disabled",
+                "data": {"keyword": query.keyword, "suppliers": []},
+                "timestamp": "",
+                "confidence": 0.0,
+                "is_mock": False,
+                "source_status": "unavailable",
+            },
         }
 
 

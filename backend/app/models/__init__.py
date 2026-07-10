@@ -1,4 +1,5 @@
 from app.models.analysis import AIAnalysisResult
+from app.models.amazon_market_signal import AmazonMarketHistory, AmazonMarketSignal
 from app.models.auth_identity import AuthChallenge, AuthVerificationCode
 from app.models.base import TimestampMixin
 from app.models.business_truth import BusinessTruthDecision
@@ -20,6 +21,8 @@ from app.models.user import User
 
 __all__ = [
     "AIAnalysisResult",
+    "AmazonMarketHistory",
+    "AmazonMarketSignal",
     "AuthChallenge",
     "AuthVerificationCode",
     "BillingOrder",

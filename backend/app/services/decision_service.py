@@ -169,6 +169,9 @@ class DecisionService(DecisionServiceBase):
             analysis_context=normalized_analysis_context,
             profit=profit,
         )
+        trusted_market_data = normalized_analysis_context.get("trusted_market_data") or {}
+        amazon_signal = normalized_analysis_context.get("amazon_signal") or trusted_market_data.get("amazon_signal") or {}
+        business_opportunity = normalized_analysis_context.get("business_opportunity") or {}
         normalized_constraints["product_cost"] = float(
             (business_constraints or {}).get("product_cost", supply_inputs["real_cost"])
         )
@@ -206,6 +209,8 @@ class DecisionService(DecisionServiceBase):
                 "supplier_risk": supply_inputs["supplier_risk"],
                 "real_cost": supply_inputs["real_cost"],
                 "margin": supply_inputs["margin"],
+                "amazon_signal": amazon_signal,
+                "opportunity_score": business_opportunity.get("opportunity_score"),
             },
         )
         truth_profit = profit_truth_engine.calculate_from_supply_intelligence(
@@ -246,18 +251,32 @@ class DecisionService(DecisionServiceBase):
             verdict = 'watch'
             listing_recommendation = '当前真实数据可信度不足，先观察，不要直接执行。'
             reasons.append('data_trust_score 低于 0.6，系统已自动降级为 observe。')
-        trusted_market_data = normalized_analysis_context.get("trusted_market_data") or {}
         market_confidence = float(trusted_market_data.get("confidence") or normalized_analysis_context.get("confidence") or 0)
+        desired_action_level = None
+        watch_block_reason = ""
+        amazon_demand = float(amazon_signal.get("demand_score") or 0)
+        if amazon_demand > 0:
+            reasons.append(f"Amazon 竞争验证需求分 {amazon_demand:.2f}，评论量 {int(amazon_signal.get('review_count') or 0)}，卖家数 {int(amazon_signal.get('seller_count') or 0)}。")
+        opportunity_score = float(business_opportunity.get("opportunity_score") or 0)
+        if opportunity_score > 0:
+            reasons.append(f"商业机会综合分 {opportunity_score:.2f}，推荐 {business_opportunity.get('recommendation') or 'WATCH'}。")
+            if opportunity_score < 40:
+                verdict = "ignore"
+                desired_action_level = "WATCH"
+                watch_block_reason = "商业机会综合分低于 40，当前只建议观察，不建议直接执行。"
+            elif opportunity_score >= 75 and desired_action_level not in {"WATCH", "TEST"}:
+                desired_action_level = "SCALE"
         if bool(trusted_market_data.get("all_sources_mock")):
             verdict = "watch"
             risk_level = "high"
             reasons.append("市场侧当前全部是 mock 来源，系统强制把最高动作限制在 WATCH。")
-        desired_action_level = None
+            watch_block_reason = "市场数据全部是 mock，当前只能 WATCH。"
         if supply_inputs["supplier_confidence"] < 0.6:
             desired_action_level = "TEST"
             reasons.append("供应商可信度低于 0.6，禁止进入 AUTO_LIST，当前最多只能 TEST。")
         if bool(trusted_market_data.get("all_sources_mock")) or market_confidence <= 0.3:
             desired_action_level = "WATCH"
+            watch_block_reason = "市场可信度过低，当前只能 WATCH。"
         market_score = float((normalized_analysis_context.get("trusted_market_data") or {}).get("market_score") or normalized_analysis_context.get("market_score") or 0)
         if (
             supply_inputs["supplier_score"] > 80
@@ -322,7 +341,7 @@ class DecisionService(DecisionServiceBase):
                 "to": "WATCH",
             })
             execution_result["action_level"] = "WATCH"
-            execution_result["execution_block_reason"] = "市场数据全部为 mock 或市场可信度低于 0.3，当前只能 WATCH。"
+            execution_result["execution_block_reason"] = watch_block_reason or "当前只允许观察，不允许直接执行。"
         if desired_action_level == "TEST" and execution_result["action_level"] in {"SCALE", "AUTO_LIST"}:
             execution_result["override_history"].append({
                 "rule": "supplier_confidence_lt_0.6",

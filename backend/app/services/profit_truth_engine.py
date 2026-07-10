@@ -34,6 +34,7 @@ class ProfitTruthEngine:
             "gross_profit": round(float(selling_price) - float(product_cost), 2),
             "net_profit": real_profit,
             "margin_rate": round(real_profit / float(selling_price), 4) if float(selling_price) > 0 else 0.0,
+            "real_profit_margin": round(real_profit / float(selling_price), 4) if float(selling_price) > 0 else 0.0,
         }
 
     def calculate_from_supply_intelligence(

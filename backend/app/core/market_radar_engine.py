@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import UTC, datetime
 from statistics import mean
 
 from sqlalchemy.orm import Session
@@ -11,6 +12,7 @@ from app.adapters.market.shopify.shopify_market_provider import ShopifyMarketPro
 from app.adapters.market.tiktok.tiktok_market_provider import TikTokMarketProvider
 from app.core.keyword_intelligence_engine import keyword_intelligence_engine
 from app.repositories.market_analysis_history import market_analysis_history_repository
+from app.repositories.amazon_market_history import amazon_market_history_repository
 from app.repositories.market_signal_history import market_signal_history_repository
 
 
@@ -63,6 +65,10 @@ class MarketRadarEngine:
             "shopify": shopify_raw,
         }
         providers = self._apply_cache_if_needed(db=db, keyword=normalized_keyword, region=region, providers=providers)
+        amazon_growth = (
+            amazon_market_history_repository.growth_windows(db, keyword=normalized_keyword, marketplace=region)
+            if db is not None else {"7d": 0.0, "30d": 0.0, "90d": 0.0}
+        )
 
         google_signal = providers["google"]["signal"]
         amazon_signal = providers["amazon"]["signal"]
@@ -171,7 +177,7 @@ class MarketRadarEngine:
             "data_sources": providers,
             "platform_signals": {
                 "google": google_signal,
-                "amazon": amazon_signal,
+                "amazon": {**amazon_signal, "growth_windows": amazon_growth},
                 "tiktok": tiktok_signal,
                 "shopify": shopify_signal,
             },
@@ -194,6 +200,22 @@ class MarketRadarEngine:
                 keyword=normalized_keyword,
                 region=region,
                 providers=providers,
+            )
+            amazon_market_history_repository.create_signal_snapshot(
+                db,
+                keyword=normalized_keyword,
+                marketplace=region,
+                signal=amazon_signal,
+                status=str(providers["amazon"].get("source_status") or "unavailable"),
+                confidence=float(providers["amazon"].get("confidence") or 0),
+                timestamp=str(providers["amazon"].get("timestamp") or ""),
+            )
+            amazon_market_history_repository.create_history_point(
+                db,
+                keyword=normalized_keyword,
+                marketplace=region,
+                signal=amazon_signal,
+                captured_at=datetime.now(UTC),
             )
         return payload
 

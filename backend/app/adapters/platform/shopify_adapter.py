@@ -26,8 +26,8 @@ class ShopifyPlatformAdapter(PlatformAdapter):
     def _api_credentials_ready(self) -> bool:
         return bool(
             self._normalized_base_url()
-            and str(settings.shopify_api_key or "").strip()
-            and str(settings.shopify_api_secret or "").strip()
+            and str(settings.shopify_client_id or "").strip()
+            and str(settings.shopify_client_secret or "").strip()
         )
 
     def _error_state(self, error_code: str, detail: str) -> dict:
@@ -48,14 +48,18 @@ class ShopifyPlatformAdapter(PlatformAdapter):
     def _build_endpoint(self, path: str) -> str:
         return f"{self._normalized_base_url()}/admin/api/{self.api_version}/{path.lstrip('/')}"
 
+    def _build_shop_domain_endpoint(self, shop_domain: str, path: str) -> str:
+        normalized_domain = str(shop_domain or "").strip().removeprefix("https://").removeprefix("http://").strip("/")
+        return f"https://{normalized_domain}/admin/api/{self.api_version}/{path.lstrip('/')}"
+
     def _build_token_endpoint(self) -> str:
         return f"{self._normalized_base_url()}/admin/oauth/access_token"
 
     def _build_client_credentials_payload(self) -> bytes:
         return (
             f"grant_type=client_credentials&"
-            f"client_id={quote(str(settings.shopify_api_key or '').strip())}&"
-            f"client_secret={quote(str(settings.shopify_api_secret or '').strip())}"
+            f"client_id={quote(str(settings.shopify_client_id or '').strip())}&"
+            f"client_secret={quote(str(settings.shopify_client_secret or '').strip())}"
         ).encode("utf-8")
 
     def _access_token_alive(self) -> bool:
@@ -94,6 +98,9 @@ class ShopifyPlatformAdapter(PlatformAdapter):
         self._access_token_expires_at = time.time() + expires_in
         return access_token
 
+    def get_admin_access_token(self) -> str:
+        return self._get_access_token()
+
     def _request_json(self, endpoint: str) -> dict:
         if not self._api_credentials_ready():
             raise ValueError("SHOPIFY_API_NOT_CONFIGURED")
@@ -109,6 +116,20 @@ class ShopifyPlatformAdapter(PlatformAdapter):
             method="GET",
         )
         with urlopen(request, timeout=15) as response:
+            return json.loads(response.read().decode("utf-8", errors="ignore"))
+
+    def _request_json_with_token(self, *, endpoint: str, access_token: str) -> dict:
+        request = Request(
+            endpoint,
+            headers={
+                "X-Shopify-Access-Token": str(access_token or "").strip(),
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+                "User-Agent": "ShangHangAI/1.0",
+            },
+            method="GET",
+        )
+        with urlopen(request, timeout=20) as response:
             return json.loads(response.read().decode("utf-8", errors="ignore"))
 
     def _normalize_product(self, product: dict) -> dict:
@@ -129,6 +150,22 @@ class ShopifyPlatformAdapter(PlatformAdapter):
             "supplier": str(product.get("vendor") or "Shopify"),
             "availability": inventory_quantity > 0,
             "shipping_time": "shopify_admin_sync",
+        }
+
+    def _normalize_order(self, order: dict) -> dict:
+        return {
+            "id": str(order.get("id") or ""),
+            "name": str(order.get("name") or ""),
+            "current_total_price": float(order.get("current_total_price") or 0),
+            "total_price": float(order.get("total_price") or 0),
+            "currency": str(order.get("currency") or "USD"),
+            "line_items": list(order.get("line_items") or []),
+            "customer": dict(order.get("customer") or {}),
+            "shipping_address": dict(order.get("shipping_address") or {}),
+            "refunds": list(order.get("refunds") or []),
+            "source_name": str(order.get("source_name") or ""),
+            "created_at": str(order.get("created_at") or ""),
+            "financial_status": str(order.get("financial_status") or ""),
         }
 
     def _fetch_products(self) -> list[dict] | dict:
@@ -189,6 +226,36 @@ class ShopifyPlatformAdapter(PlatformAdapter):
                 "SHOPIFY_API_UNKNOWN_ERROR",
                 str(exc),
             )
+
+    def fetch_products_with_token(self, *, access_token: str, shop_domain: str) -> list[dict] | dict:
+        endpoint = self._build_shop_domain_endpoint(shop_domain, "products.json")
+        try:
+            payload = self._request_json_with_token(endpoint=endpoint, access_token=access_token)
+            products = payload.get("products")
+            if not isinstance(products, list):
+                return self._error_state("SHOPIFY_API_INVALID_RESPONSE", "Shopify products.json 返回结构不符合预期")
+            return [self._normalize_product(item) for item in products]
+        except HTTPError as exc:
+            return self._error_state("SHOPIFY_API_HTTP_ERROR", f"HTTP {exc.code}")
+        except URLError as exc:
+            return self._error_state("SHOPIFY_API_UNREACHABLE", str(exc.reason))
+        except Exception as exc:
+            return self._error_state("SHOPIFY_API_UNKNOWN_ERROR", str(exc))
+
+    def fetch_orders_with_token(self, *, access_token: str, shop_domain: str) -> list[dict] | dict:
+        endpoint = self._build_shop_domain_endpoint(shop_domain, "orders.json?status=any&limit=250")
+        try:
+            payload = self._request_json_with_token(endpoint=endpoint, access_token=access_token)
+            orders = payload.get("orders")
+            if not isinstance(orders, list):
+                return self._error_state("SHOPIFY_API_INVALID_RESPONSE", "Shopify orders.json 返回结构不符合预期")
+            return [self._normalize_order(item) for item in orders]
+        except HTTPError as exc:
+            return self._error_state("SHOPIFY_API_HTTP_ERROR", f"HTTP {exc.code}")
+        except URLError as exc:
+            return self._error_state("SHOPIFY_API_UNREACHABLE", str(exc.reason))
+        except Exception as exc:
+            return self._error_state("SHOPIFY_API_UNKNOWN_ERROR", str(exc))
 
     def search_product(self, keyword: str):
         products = self._fetch_products()

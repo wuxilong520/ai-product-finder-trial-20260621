@@ -7,6 +7,10 @@ class MarketAnalyzeRequest(BaseModel):
     category: str | None = Field(default=None, description="可选类目")
 
 
+class MarketConnectRequest(BaseModel):
+    shop_domain: str = Field(..., min_length=3, description="Shopify 店铺域名，例如 your-store.myshopify.com")
+
+
 class MarketAnalyzeResponse(BaseModel):
     keyword: str | None = None
     region: str | None = None
@@ -44,3 +48,29 @@ class MarketAnalyzeResponse(BaseModel):
     real_ratio: float | None = None
     partial_ratio: float | None = None
     mock_ratio: float | None = None
+    missing_credentials: list[str] = Field(default_factory=list)
+    real_data_ratio: float | None = None
+    confidence_score: float | None = None
+    source_reliability: dict | None = None
+    evidence_sources: list[dict] = Field(default_factory=list)
+    profit_potential: float | None = None
+    commercial_score: float | None = None
+    commercial_reality_score: float | None = None
+    real_sales_signal: float | None = None
+    customer_validation: float | None = None
+    market_fit_score: float | None = None
+    repeat_purchase_signal: float | None = None
+    profit_validation: float | None = None
+    consumer_interest: float | None = None
+    consumer_interest_score: float | None = None
+    commercial_intent: float | None = None
+    commercial_intent_score: float | None = None
+    commercial_competition: float | None = None
+    ad_market_value: float | None = None
+    brand_activity: float | None = None
+    purchase_signal: float | None = None
+    competition_pressure: float | None = None
+    trend_stage: str | None = None
+    trend_lifecycle: str | None = None
+    reality_sources: list[dict] = Field(default_factory=list)
+    opportunity_reason: str | None = None

@@ -33,6 +33,9 @@ class MarketSignalHistoryRepository:
         score: float,
         trend: float,
         status: str,
+        confidence: float = 0.0,
+        signal_strength: float = 0.0,
+        change_rate: float = 0.0,
     ) -> MarketSignalHistory:
         record = MarketSignalHistory(
             keyword=keyword,
@@ -41,6 +44,9 @@ class MarketSignalHistoryRepository:
             score=score,
             trend=trend,
             status=status,
+            confidence=confidence,
+            signal_strength=signal_strength,
+            change_rate=change_rate,
         )
         db.add(record)
         db.commit()

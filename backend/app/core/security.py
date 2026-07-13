@@ -2,9 +2,9 @@ from datetime import UTC, datetime, timedelta
 
 import jwt
 from passlib.context import CryptContext
-
 from app.core.config import settings
 from app.core.runtime import AppError
+from app.core.token_encryption import token_encryption
 
 
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
@@ -31,3 +31,11 @@ def decode_access_token(token: str) -> dict:
         return jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
     except jwt.PyJWTError as exc:
         raise AppError("TOKEN_INVALID", "Token 已失效或无效", "auth", 401) from exc
+
+
+def encrypt_token(value: str) -> str:
+    return token_encryption.encrypt(value)
+
+
+def decrypt_token(value: str) -> str:
+    return token_encryption.decrypt(value)

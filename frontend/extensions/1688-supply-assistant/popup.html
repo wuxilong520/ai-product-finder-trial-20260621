@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>商航AI供应链助手</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 16px;
+        width: 340px;
+        background: #0f172a;
+        color: #e5eefc;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .card {
+        border: 1px solid rgba(255,255,255,.08);
+        background: rgba(255,255,255,.04);
+        border-radius: 16px;
+        padding: 14px;
+        margin-bottom: 12px;
+      }
+      h1 {
+        font-size: 18px;
+        margin: 0 0 6px;
+      }
+      p, label, input, button {
+        font-size: 13px;
+      }
+      .muted {
+        color: rgba(229,238,252,.68);
+        line-height: 1.6;
+      }
+      .status {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(79,124,255,.18);
+        margin-top: 8px;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,.12);
+        background: rgba(0,0,0,.2);
+        color: #fff;
+        padding: 10px 12px;
+        margin-top: 6px;
+        margin-bottom: 10px;
+      }
+      button {
+        width: 100%;
+        border: 0;
+        border-radius: 12px;
+        padding: 10px 12px;
+        color: white;
+        background: linear-gradient(135deg, #4f7cff, #2a5ef0);
+        cursor: pointer;
+        margin-top: 8px;
+      }
+      button.secondary {
+        background: rgba(255,255,255,.08);
+      }
+      .message {
+        min-height: 20px;
+        margin-top: 8px;
+        color: #bfdbfe;
+        line-height: 1.5;
+      }
+      .error {
+        color: #fecaca;
+      }
+      .success {
+        color: #bbf7d0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>商航AI供应链助手</h1>
+      <div class="muted">只同步你当前打开页面里公开可见的 1688 商品信息。不会读取密码，不会上传 Cookie。</div>
+      <div id="status" class="status">状态：未连接</div>
+    </div>
+
+    <div class="card">
+      <label for="apiBaseUrl">商航AI地址</label>
+      <input id="apiBaseUrl" placeholder="例如 http://121.4.35.33" />
+      <label for="extensionCode">连接码</label>
+      <input id="extensionCode" placeholder="在商航AI供应链页生成连接码" />
+      <button id="connectButton">连接商航AI</button>
+    </div>
+
+    <div class="card">
+      <div class="muted">打开 1688 商品详情页后，点击下面按钮。</div>
+      <button id="syncButton" class="secondary">同步当前商品</button>
+      <div id="message" class="message"></div>
+    </div>
+
+    <script src="api.js"></script>
+    <script src="popup.js"></script>
+  </body>
+  </html>

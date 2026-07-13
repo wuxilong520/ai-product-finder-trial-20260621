@@ -203,6 +203,44 @@ export type SupplierMatchResponse = {
   is_mock?: boolean | null;
 };
 
+export type SupplyExtensionCodeResponse = {
+  extension_code: string;
+  expires_in_seconds: number;
+  status: string;
+  platform: string;
+};
+
+export type SupplyExtensionSessionResponse = {
+  access_token: string;
+  token_type: string;
+  expires_in_seconds: number;
+  platform: string;
+  status: string;
+};
+
+export type SupplyExtensionImportPayload = {
+  source: "1688_extension";
+  title: string;
+  url: string;
+  price_range: string;
+  moq: string;
+  supplier: {
+    name: string;
+    location?: string | null;
+  };
+  images: string[];
+  metadata: Record<string, unknown>;
+};
+
+export type SupplyExtensionImportResponse = {
+  imported: boolean;
+  source_type: string;
+  supplier_name?: string | null;
+  product_title: string;
+  keyword: string;
+  import_id: number;
+};
+
 export type OpportunityAnalyzeResponse = {
   keyword: string;
   market: string;

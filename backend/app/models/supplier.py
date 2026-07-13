@@ -95,3 +95,14 @@ class SupplySupplierHistory(TimestampMixin, Base):
     stock_change: Mapped[str | None] = mapped_column(String(50), nullable=True)
     feedback_status: Mapped[str | None] = mapped_column(String(100), nullable=True)
     snapshot: Mapped[dict] = mapped_column(json_field, nullable=False, default=dict)
+
+
+class SupplierExtensionImport(TimestampMixin, Base):
+    __tablename__ = "supplier_extension_imports"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    source: Mapped[str] = mapped_column(String(50), nullable=False, default="1688_extension")
+    product_title: Mapped[str] = mapped_column(Text, nullable=False)
+    supplier_name: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    payload_json: Mapped[dict] = mapped_column(json_field, nullable=False, default=dict)

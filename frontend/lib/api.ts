@@ -29,6 +29,10 @@ import {
   PublishV1Payload,
   PublishV1Response,
   SupplierMatchResponse,
+  SupplyExtensionCodeResponse,
+  SupplyExtensionImportPayload,
+  SupplyExtensionImportResponse,
+  SupplyExtensionSessionResponse,
   SendCodeResponse,
   TaskStatusResponse,
   User,
@@ -232,6 +236,54 @@ export async function resetPassword(email: string, code: string, newPassword: st
     throw new Error(await readErrorMessage(response, "重置密码失败"));
   }
 
+  return response.json();
+}
+
+export async function createSupplyExtensionCode(token: string): Promise<SupplyExtensionCodeResponse> {
+  ensureApiBase();
+  const response = await fetchWithTimeout(`${API_V1}/supply/extension/code`, {
+    method: "POST",
+    headers: {
+      ...buildAuthHeaders(token),
+    },
+  }, 15000);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "生成插件连接码失败"));
+  }
+  return response.json();
+}
+
+export async function createSupplyExtensionSession(extensionCode: string): Promise<SupplyExtensionSessionResponse> {
+  ensureApiBase();
+  const response = await fetchWithTimeout(`${API_V1}/supply/extension/session`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ extension_code: extensionCode }),
+  }, 15000);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "插件连接失败"));
+  }
+  return response.json();
+}
+
+export async function importSupplyExtensionPayload(
+  extensionToken: string,
+  payload: SupplyExtensionImportPayload
+): Promise<SupplyExtensionImportResponse> {
+  ensureApiBase();
+  const response = await fetchWithTimeout(`${API_V1}/supply/extension/import`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${extensionToken}`,
+    },
+    body: JSON.stringify(payload),
+  }, 30000);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "插件同步供应商数据失败"));
+  }
   return response.json();
 }
 

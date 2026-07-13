@@ -5,7 +5,7 @@ import { ExternalLink, Loader2, Search } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState, Input, InfoTile, StatusBadge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/design-system/components";
 import { ROUTES } from "@/config/routes";
-import { matchSuppliers } from "@/lib/api-gateway";
+import { createSupplyExtensionCode, matchSuppliers } from "@/lib/api-gateway";
 import { getToken } from "@/lib/auth";
 import { Language, t } from "@/lib/i18n";
 import type { SupplierMatchItem } from "@/lib/types";
@@ -28,6 +28,36 @@ export function SupplierCenter({
   const [maxPrice, setMaxPrice] = useState("");
   const [minScore, setMinScore] = useState("0");
   const [availableOnly, setAvailableOnly] = useState(true);
+  const [extensionCode, setExtensionCode] = useState("");
+  const [extensionCodeCopied, setExtensionCodeCopied] = useState(false);
+  const [extensionLoading, setExtensionLoading] = useState(false);
+  const [extensionError, setExtensionError] = useState("");
+
+  async function handleCreateExtensionCode() {
+    const token = getToken();
+    if (!token) {
+      window.location.href = ROUTES.login;
+      return;
+    }
+    setExtensionLoading(true);
+    setExtensionError("");
+    setExtensionCodeCopied(false);
+    try {
+      const result = await createSupplyExtensionCode(token);
+      setExtensionCode(result.extension_code);
+    } catch (err) {
+      setExtensionError(err instanceof Error ? err.message : "生成连接码失败");
+      setExtensionCode("");
+    } finally {
+      setExtensionLoading(false);
+    }
+  }
+
+  async function handleCopyExtensionCode() {
+    if (!extensionCode) return;
+    await navigator.clipboard.writeText(extensionCode);
+    setExtensionCodeCopied(true);
+  }
 
   async function handleSearch(targetKeyword?: string) {
     const finalKeyword = (targetKeyword || keyword).trim();
@@ -137,6 +167,43 @@ export function SupplierCenter({
           </div>
           <div className="rounded-2xl border border-[#4F7CFF]/20 bg-[#4F7CFF]/10 px-4 py-3 text-sm leading-7 text-[#D8E3FF]">
             当前这页已经能真实展示：供应商推荐、价格、MOQ、供应评分、供应可信度、认证情况、利润预估、风险提示。还没完全打通的是真实 1688 官方接口，不会假装成已接通。
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="text-sm font-semibold text-white">安装1688供应链助手</div>
+                <div className="mt-1 text-sm leading-7 text-white/60">
+                  通过浏览器插件同步你自己在 1688 页面里主动查看到的公开供应商数据。不会读取账号密码，也不会上传 Cookie。
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="secondary" onClick={() => window.alert("插件源码目录：frontend/extensions/1688-supply-assistant\n请按报告里的步骤，用 Chrome 加载已解压的扩展程序。")}>
+                  安装1688供应链助手
+                </Button>
+                <Button type="button" onClick={() => void handleCreateExtensionCode()} disabled={extensionLoading}>
+                  {extensionLoading ? "生成中..." : "生成连接码"}
+                </Button>
+              </div>
+            </div>
+            <div className="mt-3 rounded-2xl border border-white/8 bg-black/10 px-4 py-3 text-sm text-white/75">
+              真实流程：登录商航AI → 生成连接码 → 在插件里输入连接码 → 打开1688商品页 → 点击“同步当前商品”。
+            </div>
+            {extensionError ? (
+              <div className="mt-3 rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">
+                {extensionError}
+              </div>
+            ) : null}
+            {extensionCode ? (
+              <div className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+                <div>当前连接码：<span className="font-semibold tracking-[0.18em]">{extensionCode}</span></div>
+                <div className="mt-1 text-emerald-100/80">10分钟内有效，只能用于把插件连到你自己的商航AI账号。</div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button type="button" variant="secondary" onClick={() => void handleCopyExtensionCode()}>
+                    {extensionCodeCopied ? "已复制连接码" : "复制连接码"}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
           </div>
           {availableOnly && items.length > 0 && filteredItems.length > 0 && filteredItems.length === items.filter((item) => {
             const priceLimit = maxPrice ? Number(maxPrice) : null;

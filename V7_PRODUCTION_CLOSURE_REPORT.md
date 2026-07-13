@@ -1,9 +1,9 @@
 # V7_PRODUCTION_CLOSURE_REPORT
 
 ## 1. commit hash
-- local_commit: `4a54bec87ca8fad170909973beb16f33fbdab690`
-- gitee_commit: `4a54bec87ca8fad170909973beb16f33fbdab690`
-- github_commit: `4a54bec87ca8fad170909973beb16f33fbdab690`
+- local_commit: `b35caefa10633bc6b566a5cf899ab0d20c0076f1`
+- gitee_commit: `b35caefa10633bc6b566a5cf899ab0d20c0076f1`
+- github_commit: `b35caefa10633bc6b566a5cf899ab0d20c0076f1`
 
 ## 2. git状态
 
@@ -57,48 +57,63 @@
 - 本次 commit 只封装了 V7 市场层和它运行所需的直接依赖
 
 ## 3. 公网版本
-- server_git_head_current: `58a8cd834e787b74ee1910c872dff9dd7d23a20e`
-- server_scope_status: `V7_COMMIT_FILE_CONTENT_MATCH`
-- container_label: `4a54bec87ca8fad170909973beb16f33fbdab690`
-- running_api_status: `200 OK`
+- server_git_head_current: `b35caefa10633bc6b566a5cf899ab0d20c0076f1`
+- server_git_branch_current: `V7-commercial-signal-layer-production`
+- server_scope_status: `V7_GIT_HEAD_MATCH`
+- container_label: `b35caefa10633bc6b566a5cf899ab0d20c0076f1`
+- running_api_status: `GET 200 OK / POST 405 / anonymous GET 401`
+- extra_runtime_fix:
+  - 已停掉腾讯云定时任务 `auto-deploy-from-primary.sh`
+  - 原因：它会每分钟把服务器重新拉回旧版本 `main / 58a8cd8...`
 
 ## 4. 接口结果
+
+### 接口访问规则（真实）
+- `POST /api/v1/market/commercial-reality/report`：`405 Method Not Allowed`
+- `GET /api/v1/market/commercial-reality/report`：真实可用
+- 匿名 `GET`：`401 Unauthorized`
+- 带真实登录 token 的 `GET`：`200 OK`
 
 ### GET `/api/v1/market/commercial-reality/report`
 
 #### wireless earbuds / US
-- `market_score = 69.03`
-- `confidence = 0.834`
-- `commercial_score = 50.82`
-- `purchase_signal = 56.59`
-- `ad_market_value = 0.0`
-- `brand_activity = 84.7`
-- `commercial_competition = 84.7`
-- `recommendation = TEST`
-
-#### beauty products / US
-- `market_score = 73.89`
-- `confidence = 0.7548`
-- `commercial_score = 60.0`
-- `purchase_signal = 65.0`
-- `ad_market_value = 0.0`
-- `brand_activity = 100.0`
-- `commercial_competition = 100.0`
-- `recommendation = TEST`
-
-#### home decor / US
-- `market_score = 43.15`
-- `confidence = 0.727`
+- `market_score = 45.97`
+- `confidence = 0.8379`
 - `commercial_score = 1.5`
-- `purchase_signal = 11.0`
+- `purchase_signal = 11.38`
 - `ad_market_value = 0.0`
 - `brand_activity = 2.5`
 - `commercial_competition = 2.5`
 - `recommendation = WATCH`
+- `source_status`
+  - `google_ads = not_configured`
+  - `tiktok_ads = limited`
+  - `meta_ads = limited`
+  - `amazon_ads = real`
+
+#### beauty products / US
+- `market_score = 43.34`
+- `confidence = 0.7353`
+- `commercial_score = 0.75`
+- `purchase_signal = 10.49`
+- `ad_market_value = 0.0`
+- `brand_activity = 0.0`
+- `commercial_competition = 0.0`
+- `recommendation = WATCH`
+
+#### home decor / US
+- `market_score = 42.57`
+- `confidence = 0.7235`
+- `commercial_score = 0.75`
+- `purchase_signal = 10.49`
+- `ad_market_value = 0.0`
+- `brand_activity = 0.0`
+- `commercial_competition = 0.0`
+- `recommendation = WATCH`
 
 #### pet products / US
-- `market_score = 46.19`
-- `confidence = 0.7634`
+- `market_score = 46.41`
+- `confidence = 0.841`
 - `commercial_score = 1.5`
 - `purchase_signal = 11.38`
 - `ad_market_value = 0.0`
@@ -107,9 +122,11 @@
 - `recommendation = WATCH`
 
 ## 5. 当前市场真实性等级
-- 等级：`高`
-- 判断依据：`wireless earbuds / US` 当前 `confidence = 0.834`，市场真实来源仍以 Amazon / Bing / Walmart 为主
-- 但商业广告层仍不完整：
+- 等级：`中`
+- 判断依据：`wireless earbuds / US` 当前 `confidence = 0.8379`，但真实商业来源主要只稳定落在 `amazon_ads`
+- 真实可确认状态：
+  - `amazon_ads = real`
+- 仍未完成的商业广告层：
   - `Google Ads = not_configured`
   - `TikTok = limited`
   - `Meta = limited`
@@ -121,14 +138,17 @@
 
 ## 7. 最终真实结论
 - Gitee 分支 hash 和 GitHub 分支 hash 已一致
+- 腾讯云仓库 `HEAD` 已切到同一 hash
 - 腾讯云运行容器 label 已切到同一 hash
-- 腾讯云当前 V7 提交文件内容已和该 hash 对齐
-- 但腾讯云仓库 `HEAD` 仍是旧值 `58a8cd8...`
-- 原因不是本次失败，而是服务器仓库存在更早历史未收口脏树
+- 本次额外修复了一个真实生产问题：
+  - 腾讯云存在每分钟自动执行的旧版回滚任务
+  - 如果不先停掉，这次收口不可能成功
 - 所以本次已经完成的是：
   - `V7 提交版本闭环`
-  - `V7 文件内容闭环`
-  - `V7 运行版本闭环`
-- 尚未完成的是：
-  - `整仓所有历史改动统一到单一 Git HEAD`
-
+  - `V7 仓库版本闭环`
+  - `V7 腾讯云运行版本闭环`
+  - `V7 公网健康检查闭环`
+- 当前仍未完全理想的地方：
+  - `/api/v1/market/commercial-reality/report` 不是匿名接口，验收必须先登录
+  - 该接口当前只支持 `GET`，不支持 `POST`
+  - 市场真实商业源目前仍明显偏少，主要依赖 `amazon_ads`

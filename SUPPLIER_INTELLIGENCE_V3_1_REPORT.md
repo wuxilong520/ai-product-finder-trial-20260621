@@ -179,7 +179,7 @@
 
 腾讯云部署版本：
 
-- commit：`04d00a4`
+- commit：`53fea74`
 
 ### 公网验证1：供应链总接口
 
@@ -203,7 +203,7 @@
 - `200`
 - `supplier_name = Shenzhen Audio Factory`
 - `supplier_score = 80.2`
-- `supplier_real_score = 74.4`
+- `supplier_real_score = 79.8`
 - `risk_level = high`
 - `procurement_recommendation = 暂不建议采购`
 
@@ -216,14 +216,14 @@
 真实返回：
 
 - `200`
-- `real_score = 81.6`
+- `real_score = 82.0`
 - `authenticity_score = 100.0`
 - `risk.level = LOW`
 - `risk.score = 12.0`
 - `price_score = 82.0`
 - `moq_score = 20.0`
-- `stability_score = 86.0`
-- `supplier_confidence = 0.82`
+- `stability_score = 90.0`
+- `supplier_confidence = 0.88`
 - `recommendation = 推荐采购`
 
 ## 8. 当前供应链真实性等级

@@ -1,13 +1,13 @@
 # V7_PRODUCTION_CLOSURE_REPORT
 
 ## 1. commit hash
-- local_commit: TO_BE_FILLED
-- gitee_commit: TO_BE_FILLED
-- github_commit: TO_BE_FILLED
+- local_commit: `4a54bec87ca8fad170909973beb16f33fbdab690`
+- gitee_commit: `4a54bec87ca8fad170909973beb16f33fbdab690`
+- github_commit: `4a54bec87ca8fad170909973beb16f33fbdab690`
 
-## 2. git状态审计
+## 2. git状态
 
-### 属于 V7 的提交范围
+### 本次纳入 V7 收口的文件
 - `backend/app/core/market_intelligence_engine.py`
 - `backend/app/core/commercial_signal_engine.py`
 - `backend/app/core/purchase_signal_engine.py`
@@ -31,6 +31,8 @@
 - `backend/app/repositories/commercial_signal_history.py`
 - `backend/app/repositories/market_reality_history.py`
 - `backend/app/repositories/market_signal_history.py`
+- `backend/app/adapters/platform/shopify_adapter.py`
+- `backend/app/core/config.py`
 - `backend/alembic/versions/20260710_000024_add_market_signal_history_v3.py`
 - `backend/alembic/versions/20260710_000025_upgrade_market_signal_history_v4.py`
 - `backend/alembic/versions/20260710_000026_add_data_connections_v5.py`
@@ -39,40 +41,30 @@
 - `backend/alembic/versions/20260713_000029_add_commercial_signal_history_v7.py`
 - `deploy/tencent-cloud/nginx.http.conf`
 - `deploy/tencent-cloud/nginx.conf`
+- `MARKET_INTELLIGENCE_V7_COMMERCIAL_SIGNAL_REPORT.md`
 
 ### 历史垃圾 / 本次禁止提交的内容
-- 前端页面改动
-- 计费改动
-- 邮件改动
-- 脚本推送改动
+- 前端页面脏改动
+- 计费相关脏改动
+- 邮件相关脏改动
+- 无关脚本改动
 - `.env` 模板改动
-- 旧的供应链 / UI / 支付相关脏文件
-- 未进入本次提交的历史未收口文件
+- 历史 UI / 支付 / 供应链未收口文件
 
-### 当前真实情况
-- 本地工作区仍然存在大量历史脏改动
-- 本次 commit 只包含 V7 市场层和它运行所需的直接依赖
-- 没有把前端、支付、邮件、无关脚本一起塞进这次版本
+### 当前真实 git 审计结论
+- 本地工作区依然有大量历史脏改动
+- 本次提交没有把这些历史垃圾一起带入
+- 本次 commit 只封装了 V7 市场层和它运行所需的直接依赖
 
-## 3. 生产仓库清理
-- 已清理：`__pycache__`
-- 已清理：`.DS_Store`
-- 已清理：`._*`
-- 已清理：`frontend/tsconfig.tsbuildinfo`
-- 已清理：本地旧临时报告文件
-- 保留：业务代码
-- 保留：migration
-- 保留：部署模板
+## 3. 公网版本
+- server_git_head_current: `58a8cd834e787b74ee1910c872dff9dd7d23a20e`
+- server_scope_status: `V7_COMMIT_FILE_CONTENT_MATCH`
+- container_label: `4a54bec87ca8fad170909973beb16f33fbdab690`
+- running_api_status: `200 OK`
 
-## 4. 公网版本
-- server_git_head_before: `58a8cd8`
-- server_scope_status: TO_BE_FILLED
-- container_label: TO_BE_FILLED
-- running_api_status: TO_BE_FILLED
+## 4. 接口结果
 
-## 5. 接口结果
-
-### POST `/api/v1/market/commercial-reality/report`
+### GET `/api/v1/market/commercial-reality/report`
 
 #### wireless earbuds / US
 - `market_score = 69.03`
@@ -85,8 +77,8 @@
 - `recommendation = TEST`
 
 #### beauty products / US
-- `market_score = 73.78`
-- `confidence = 0.83`
+- `market_score = 73.89`
+- `confidence = 0.7548`
 - `commercial_score = 60.0`
 - `purchase_signal = 65.0`
 - `ad_market_value = 0.0`
@@ -96,7 +88,7 @@
 
 #### home decor / US
 - `market_score = 43.15`
-- `confidence = 0.81`
+- `confidence = 0.727`
 - `commercial_score = 1.5`
 - `purchase_signal = 11.0`
 - `ad_market_value = 0.0`
@@ -105,24 +97,38 @@
 - `recommendation = WATCH`
 
 #### pet products / US
-- `market_score = 74.5`
-- `confidence = 0.85`
-- `commercial_score = 60.0`
-- `purchase_signal = 65.0`
+- `market_score = 46.19`
+- `confidence = 0.7634`
+- `commercial_score = 1.5`
+- `purchase_signal = 11.38`
 - `ad_market_value = 0.0`
-- `brand_activity = 100.0`
-- `commercial_competition = 100.0`
-- `recommendation = TEST`
+- `brand_activity = 2.5`
+- `commercial_competition = 2.5`
+- `recommendation = WATCH`
 
-## 6. 当前市场真实性等级
+## 5. 当前市场真实性等级
 - 等级：`高`
-- 依据：`wireless earbuds / US` 当前 `real_data_ratio = 0.8791`，`confidence = 0.834`
-- 真实可用主来源：Amazon / Bing / Walmart
-- 受限来源：Reddit / YouTube / Pinterest / TikTok / Meta
-- 未配置来源：Google Ads
+- 判断依据：`wireless earbuds / US` 当前 `confidence = 0.834`，市场真实来源仍以 Amazon / Bing / Walmart 为主
+- 但商业广告层仍不完整：
+  - `Google Ads = not_configured`
+  - `TikTok = limited`
+  - `Meta = limited`
 
-## 7. 下一阶段建议
-- 第一优先级：补 `Google Ads` 商业账号配置，不然 `ad_market_value` 长期偏低
-- 第二优先级：把 `TikTok` 和 `Meta` 的商业信号从 `limited` 提升到可稳定读取
-- 第三优先级：单独做一次“历史脏仓库清账”，否则腾讯云 / Git / 本地不能做到整仓完全同哈希闭环
+## 6. 下一阶段建议
+- 第一优先级：补 `Google Ads` 商业账号配置
+- 第二优先级：提升 `TikTok` / `Meta` 商业信号稳定性
+- 第三优先级：单独做一次“整仓历史脏改动清账”
+
+## 7. 最终真实结论
+- Gitee 分支 hash 和 GitHub 分支 hash 已一致
+- 腾讯云运行容器 label 已切到同一 hash
+- 腾讯云当前 V7 提交文件内容已和该 hash 对齐
+- 但腾讯云仓库 `HEAD` 仍是旧值 `58a8cd8...`
+- 原因不是本次失败，而是服务器仓库存在更早历史未收口脏树
+- 所以本次已经完成的是：
+  - `V7 提交版本闭环`
+  - `V7 文件内容闭环`
+  - `V7 运行版本闭环`
+- 尚未完成的是：
+  - `整仓所有历史改动统一到单一 Git HEAD`
 

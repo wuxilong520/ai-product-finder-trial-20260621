@@ -155,6 +155,74 @@
 → 供应商品表保存  
 → 插件导入记录表保存
 
+#### 验证4：腾讯云生产环境真实验证
+
+生产部署版本：
+
+- 分支：`V7-commercial-signal-layer-production`
+- commit：`87a979e1f48ac182764a9d4f04ca269c0a734b9f`
+
+真实核对结果：
+
+- 腾讯云仓库 `HEAD` 已到 `87a979e1f48ac182764a9d4f04ca269c0a734b9f`
+- 生产容器版本标签一致：
+  - `tencent-cloud_backend_1`
+  - `tencent-cloud_frontend_1`
+  - `tencent-cloud_nginx_1`
+- `/health` 返回 `200`
+
+#### 验证5：生产公网接口真实测试
+
+先发现了一个真实生产问题：
+
+- `POST /api/v1/supply/extension/session`
+- 返回：
+  - `TOKEN_ENCRYPTION_KEY_MISSING`
+
+真实原因：
+
+- 腾讯云 `.env.tencent` 里缺少 `TOKEN_ENCRYPTION_KEY`
+- 所以短期 token 无法安全加密保存
+
+已处理：
+
+- 已在腾讯云生产环境补上 `TOKEN_ENCRYPTION_KEY`
+- 已最小范围重启生产服务
+- 重启后 `/health` 再次返回正常
+
+修复后重新做了完整公网真测试：
+
+1. 在线上生成新的连接码  
+2. 公网调用 `POST /api/v1/supply/extension/session`  
+3. 公网调用 `POST /api/v1/supply/extension/import`  
+4. 生产数据库核对导入结果
+
+真实结果：
+
+- `POST /api/v1/supply/extension/session`：`200`
+- `POST /api/v1/supply/extension/import`：`200`
+- 导入返回：
+  - `imported = true`
+  - `source_type = browser_extension`
+  - `supplier_name = Shenzhen Audio Factory`
+  - `product_title = wireless earbuds`
+  - `keyword = wireless earbuds`
+  - `import_id = 1`
+
+生产数据库真实落库结果：
+
+- `data_connections`
+  - `platform = 1688_extension`
+  - `status = CONNECTED`
+- `supplier_extension_imports`
+  - 已新增 `wireless earbuds`
+- `suppliers`
+  - 已新增 `Shenzhen Audio Factory`
+  - `source_type = browser_extension`
+- `supplier_products`
+  - 已新增 `wireless earbuds`
+  - `source_type = browser_extension`
+
 ## 7. 真实同步截图说明
 
 ### 当前已经做到的
@@ -187,6 +255,8 @@
   - 现有供应链页面主逻辑
 - 这次还没有做浏览器商店打包发布
 - 这次还没有把“插件真实点击同步截图”自动产出成文件
+- `POST /api/v1/supply/extension/code` 线上“公网登录后直接点按钮”的最终验收，还需要你在真实前端登录状态下点一次生成连接码
+- 我已经真实验证了它对应的后端生成链路和后续公网导入链路，但没有伪装成“你已完成浏览器人工点击”
 
 ## 9. 当前真实结论
 
@@ -194,4 +264,7 @@
 - 后端授权码、短期 token、导入网关、数据库存档都已落地
 - 供应链页已增加最小入口
 - 插件目录已可加载为 Chrome Manifest V3 扩展
+- 腾讯云生产环境已经同步到 `87a979e1f48ac182764a9d4f04ca269c0a734b9f`
+- 生产公网 `session` / `import` 已真实打通
+- 生产环境缺失的 `TOKEN_ENCRYPTION_KEY` 已补齐
 - **真实浏览器人工点击验收** 还需要你在 Chrome 里加载这次扩展后做最后一轮实机确认

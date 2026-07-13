@@ -268,10 +268,16 @@ export function SupplierCenter({
                   <InfoTile label={text.supplierStatus} value={item.availability} />
                 </div>
                 <div className="mt-4 grid gap-4 md:grid-cols-4">
+                  <InfoTile label="供应商真实性" value={item.supplier_real_score != null ? `${Number(item.supplier_real_score).toFixed(1)} / 100` : "待判断"} />
+                  <InfoTile label="价格竞争力" value={item.price_competitiveness_score != null ? `${Number(item.price_competitiveness_score).toFixed(1)}` : "待判断"} />
+                  <InfoTile label="供应风险" value={item.risk_level || "待判断"} />
+                  <InfoTile label="采购建议" value={item.procurement_recommendation || "待判断"} />
+                </div>
+                <div className="mt-4 grid gap-4 md:grid-cols-4">
                   <InfoTile label="供应可信度" value={item.supplier_confidence != null ? `${Math.round(Number(item.supplier_confidence) * 100)}%` : "待确认"} />
                   <InfoTile label="认证情况" value={item.certification || "暂无"} />
                   <InfoTile label="交付时效" value={item.delivery_time ? `${item.delivery_time} 天` : "待确认"} />
-                  <InfoTile label="建议采购" value={item.procurement_recommendation || "待判断"} />
+                  <InfoTile label="MOQ合理性" value={item.moq_score != null ? `${Number(item.moq_score).toFixed(1)}` : "待判断"} />
                 </div>
                 {(item.risk_flags || []).length ? (
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -402,7 +408,11 @@ function buildSupplierSummary(item: SupplierMatchItem) {
   const priceText = item.supplier_price != null ? "价格已经返回" : "价格还没完整返回";
   const scoreText = item.match_score >= 70 ? "匹配度比较高" : item.match_score >= 45 ? "匹配度中等" : "匹配度偏弱";
   const stockText = /available|instock|ready|现货|有货/i.test(item.availability || "") ? "当前看起来还能供货" : "当前供货状态一般";
-  const supplierText = item.supplier_score != null ? `供应评分大约 ${Number(item.supplier_score).toFixed(1)} 分` : "供应评分还在补充";
+  const supplierText = item.supplier_real_score != null
+    ? `真实性大约 ${Number(item.supplier_real_score).toFixed(1)} 分`
+    : item.supplier_score != null
+      ? `供应评分大约 ${Number(item.supplier_score).toFixed(1)} 分`
+      : "供应评分还在补充";
   const riskText = (item.risk_flags || []).length ? `需要留意 ${(item.risk_flags || []).slice(0, 2).join("、")}` : "当前没有额外风险提示";
   return `${item.platform} 这条货源现在 ${scoreText}，${stockText}，${priceText}，${supplierText}，${riskText}。`;
 }

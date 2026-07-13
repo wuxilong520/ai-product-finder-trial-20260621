@@ -11,10 +11,12 @@ from sqlalchemy.orm import Session
 
 from app.adapters.supply.alibaba_1688_adapter import AlibabaQuery
 from app.adapters.supply.pinduoduo_supply_adapter import PinduoduoSupplyAdapter
+from app.core.supplier_intelligence_engine import supplier_intelligence_engine
+from app.core.supplier_ranking_engine import supplier_ranking_engine
 from app.adapters.supply.source_manager import source_manager
 from app.core.supplier_scoring_engine import supplier_scoring_engine
 from app.core.supply_monitor import supply_monitor
-from app.models.supplier import Supplier, SupplierProduct, SupplyAnalysisHistory, SupplySupplierHistory
+from app.models.supplier import Supplier, SupplierPriceHistory, SupplierProduct, SupplyAnalysisHistory, SupplySupplierHistory
 from app.services.supply_cost_engine import supply_cost_engine
 
 
@@ -62,16 +64,7 @@ class SupplyIntelligenceEngine:
                 raw_suppliers.append(self._normalize_supplier(item=item, source_name=source_name, query=query))
 
         suppliers = self._score_suppliers(db, raw_suppliers=raw_suppliers, query=query)
-        suppliers = sorted(
-            suppliers,
-            key=lambda item: (
-                bool(item.get("is_mock")),
-                -float(item.get("supplier_score") or 0),
-                -float(item.get("supplier_confidence") or 0),
-                float(item.get("price_mid") or 999999),
-                int(item.get("min_order_quantity") or 999999),
-            ),
-        )[:10]
+        suppliers = supplier_ranking_engine.rank(suppliers)[:10]
 
         selected_supplier = suppliers[0] if suppliers else None
         is_mock = bool(selected_supplier.get("is_mock")) if selected_supplier else False
@@ -93,9 +86,11 @@ class SupplyIntelligenceEngine:
             "suppliers": suppliers,
             "selected_supplier": selected_supplier,
             "supplier_score": float(selected_supplier.get("supplier_score") or 0) if selected_supplier else 0.0,
+            "supplier_real_score": float(selected_supplier.get("supplier_real_score") or 0) if selected_supplier else 0.0,
             "supplier_quality": str(selected_supplier.get("supplier_level") or "D") if selected_supplier else "D",
             "supplier_confidence": float(selected_supplier.get("supplier_confidence") or 0) if selected_supplier else 0.0,
             "supplier_risk": list(selected_supplier.get("risk_flags") or []) if selected_supplier else ["supplier_unverified"],
+            "risk_level": str(selected_supplier.get("risk_level") or "HIGH") if selected_supplier else "HIGH",
             "cost_estimate": cost_estimate,
             "profit_preview": profit_preview,
             "confidence": confidence,
@@ -195,6 +190,24 @@ class SupplyIntelligenceEngine:
                 product_title=str(item.get("product_title") or ""),
             )
             risk_flags.extend(monitor_result.get("risk_alert", []))
+            intelligence_report = supplier_intelligence_engine.analyze_candidate(
+                db,
+                item={
+                    **item,
+                    "price_min": price_min,
+                    "price_max": price_max,
+                    "delivery_score": delivery_score,
+                    "confidence_score": float(item.get("confidence_score") or 0),
+                    "delivery_time": item.get("delivery_time"),
+                    "score_reasons": score_meta["reason"],
+                },
+                keyword=query.keyword,
+                category=query.category,
+                expected_price=query.expected_price,
+                quantity=query.quantity,
+            )
+            risk_flags.extend(intelligence_report.get("risk_flags") or [])
+            estimated_profit = round(max(0.0, float(query.expected_price or 0) - price_mid), 2) if query.expected_price else 0.0
             scored.append(
                 {
                     **item,
@@ -202,11 +215,18 @@ class SupplyIntelligenceEngine:
                     "market_match": market_match,
                     "supplier_score": score_meta["score"],
                     "supplier_level": score_meta["level"],
-                    "supplier_confidence": round(float(item.get("confidence_score") or 0), 4),
+                    "supplier_confidence": round(float(intelligence_report.get("supplier_confidence") or item.get("confidence_score") or 0), 4),
+                    "supplier_real_score": float(intelligence_report.get("supplier_real_score") or 0),
+                    "supplier_authenticity_score": float(intelligence_report.get("supplier_authenticity_score") or 0),
+                    "price_competitiveness_score": float(intelligence_report.get("price_competitiveness_score") or price_advantage),
+                    "moq_score": float(intelligence_report.get("moq_score") or 0),
+                    "supplier_risk_score": float(intelligence_report.get("supplier_risk_score") or 0),
+                    "risk_level": str(intelligence_report.get("risk_level") or "MEDIUM"),
                     "supplier_quality_score": score_meta["score"],
-                    "recommendation": score_meta["recommendation"],
-                    "score_reasons": score_meta["reason"],
-                    "estimated_profit": round(max(0.0, float(query.expected_price or 0) - price_mid), 2) if query.expected_price else 0.0,
+                    "recommendation": intelligence_report.get("recommendation") or score_meta["recommendation"],
+                    "score_reasons": list(dict.fromkeys([*(score_meta["reason"] or []), *list(intelligence_report.get("risk_flags") or [])])),
+                    "estimated_profit": estimated_profit,
+                    "profit_contribution": round(min(100.0, max(0.0, estimated_profit)), 2),
                     "price_change": monitor_result.get("price_change", 0.0),
                     "stock_change": monitor_result.get("stock_change", "unknown"),
                     "delivery_score": round(float(delivery_score or 0), 2),
@@ -301,9 +321,11 @@ class SupplyIntelligenceEngine:
             }
         score = float(selected_supplier.get("supplier_score") or 0)
         margin = float(profit_preview.get("margin_rate") or 0)
-        if score >= 80 and margin >= 0.3 and confidence >= 0.7:
+        supplier_real_score = float(selected_supplier.get("supplier_real_score") or 0)
+        risk_level = str(selected_supplier.get("risk_level") or "HIGH")
+        if supplier_real_score >= 75 and score >= 80 and margin >= 0.3 and confidence >= 0.7 and risk_level != "HIGH":
             return {"decision": "建议采购", "reason": "供应评分、利润率、可信度都达标。"}
-        if score >= 65 and margin >= 0.15 and confidence >= 0.5:
+        if supplier_real_score >= 50 and score >= 65 and margin >= 0.15 and confidence >= 0.5 and risk_level != "HIGH":
             return {"decision": "建议小批量测试", "reason": "可以先小批量验证，不建议直接放量。"}
         return {"decision": "暂不建议采购", "reason": "供应链可信度或利润空间不足。"}
 
@@ -415,6 +437,16 @@ class SupplyIntelligenceEngine:
         record.transaction_info = item.get("transaction_info")
         record.raw_snapshot = item
         db.add(record)
+        db.flush()
+        db.add(
+            SupplierPriceHistory(
+                supplier_id=supplier_id,
+                product_id=record.id,
+                price=float(item.get("price_mid") or item.get("price_min") or 0),
+                moq=int(item.get("min_order_quantity") or 0),
+                record_source=str(item.get("source_type") or "cache_database"),
+            )
+        )
 
     def _append_supplier_history(self, db: Session, *, item: dict, keyword: str, payload: dict) -> None:
         profit_preview = payload.get("profit_preview") or {}

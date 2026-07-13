@@ -15,6 +15,7 @@ class BusinessOpportunityEngine:
         amazon_confidence: float,
         supplier_confidence: float,
         profit_confidence: float,
+        supplier_real_score: float | None = None,
         statuses: dict[str, str] | None = None,
         supply_score: float | None = None,
         profit_score: float | None = None,
@@ -30,6 +31,7 @@ class BusinessOpportunityEngine:
         confidence_bonus = normalized_market_confidence * 100 * 0.1
         computed_supply_score = float(supply_score if supply_score is not None else supplier_quality or 0)
         computed_profit_score = float(profit_score if profit_score is not None else normalized_profit_margin or 0)
+        normalized_supplier_real_score = float(supplier_real_score if supplier_real_score is not None else supplier_quality or 0)
         normalized_purchase_signal = float(purchase_signal or 0)
         normalized_commercial_score = float(commercial_score if commercial_score is not None else commercial_reality_score or 0)
         commercial_reality_bonus = normalized_commercial_score * 0.08 + normalized_purchase_signal * 0.07
@@ -75,6 +77,10 @@ class BusinessOpportunityEngine:
             recommendation = "WATCH" if recommendation in {"BUY", "TEST"} else recommendation
         elif normalized_market_confidence < 0.8 and recommendation == "BUY":
             recommendation = "TEST"
+        if normalized_supplier_real_score < 50:
+            recommendation = "WATCH" if recommendation in {"BUY", "TEST"} else recommendation
+        elif normalized_supplier_real_score < 75 and recommendation == "BUY":
+            recommendation = "WATCH"
         risk_flags: list[str] = []
         statuses = statuses or {}
         if normalized_market_score < 40:
@@ -83,6 +89,8 @@ class BusinessOpportunityEngine:
             risk_flags.append("weak_amazon_demand")
         if float(supplier_quality or 0) < 60:
             risk_flags.append("low_supplier_quality")
+        if normalized_supplier_real_score < 50:
+            risk_flags.append("low_supplier_real_score")
         if float(normalized_profit_margin or 0) < 20:
             risk_flags.append("low_profit_margin")
         if confidence < 0.6:
@@ -95,6 +103,7 @@ class BusinessOpportunityEngine:
             "market_score": round(normalized_market_score, 2),
             "amazon_score": round(float(amazon_demand or 0), 2),
             "supplier_score": round(float(supplier_quality or 0), 2),
+            "supplier_real_score": round(normalized_supplier_real_score, 2),
             "profit_margin": round(float(normalized_profit_margin or 0), 2),
             "opportunity_score": opportunity_score,
             "recommendation": recommendation,

@@ -106,3 +106,14 @@ class SupplierExtensionImport(TimestampMixin, Base):
     product_title: Mapped[str] = mapped_column(Text, nullable=False)
     supplier_name: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     payload_json: Mapped[dict] = mapped_column(json_field, nullable=False, default=dict)
+
+
+class SupplierPriceHistory(TimestampMixin, Base):
+    __tablename__ = "supplier_price_history"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    supplier_id: Mapped[int] = mapped_column(ForeignKey("suppliers.id", ondelete="CASCADE"), index=True, nullable=False)
+    product_id: Mapped[int | None] = mapped_column(ForeignKey("supplier_products.id", ondelete="SET NULL"), index=True, nullable=True)
+    price: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    moq: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    record_source: Mapped[str] = mapped_column(String(50), nullable=False, default="cache_database")

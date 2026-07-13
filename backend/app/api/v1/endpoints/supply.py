@@ -4,7 +4,9 @@ from sqlalchemy.orm import Session
 from app.api.deps import db_session, get_request_context
 from app.core.runtime import AppError, error_response
 from app.core.supply_intelligence_engine import SupplyQuery, supply_intelligence_engine
-from app.schemas.supplier import SupplierMatchRequest, SupplierMatchResponse
+from app.core.supplier_intelligence_engine import supplier_intelligence_engine
+from app.models.supplier import Supplier
+from app.schemas.supplier import SupplierIntelligenceResponse, SupplierMatchRequest, SupplierMatchResponse
 from app.services.browser_import_service import BrowserImportPayload, browser_import_service
 from app.services.supply_import_service import supply_import_service
 
@@ -42,8 +44,11 @@ def supply_intelligence(
                 "availability": "available" if not item.get("is_mock") else "mock",
                 "moq": item.get("min_order_quantity"),
                 "supplier_score": item.get("supplier_score"),
+                "supplier_real_score": item.get("supplier_real_score"),
                 "supplier_level": item.get("supplier_level"),
                 "supplier_confidence": item.get("supplier_confidence"),
+                "price_competitiveness_score": item.get("price_competitiveness_score"),
+                "moq_score": item.get("moq_score"),
                 "profit_estimate": item.get("estimated_profit"),
                 "risk_flags": item.get("risk_flags", []),
                 "data_source": item.get("data_source"),
@@ -62,6 +67,7 @@ def supply_intelligence(
         return SupplierMatchResponse(
             suppliers=suppliers,
             supplier_score=result.get("supplier_score"),
+            supplier_real_score=result.get("supplier_real_score"),
             supplier_confidence=result.get("supplier_confidence"),
             confidence=result.get("confidence"),
             source_type=result.get("data_source"),
@@ -76,6 +82,48 @@ def supply_intelligence(
         return error_response(exc.error_code, exc.message, exc.stage, exc.status_code)
     except Exception as exc:
         return error_response("SUPPLY_INTELLIGENCE_FAILED", str(exc), "supply", status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@router.get("/supply/supplier/{supplier_id}/intelligence", response_model=SupplierIntelligenceResponse)
+def supplier_intelligence_detail(
+    supplier_id: int,
+    keyword: str | None = None,
+    expected_price: float | None = None,
+    quantity: int | None = None,
+    db: Session = Depends(db_session),
+    auth_context=Depends(get_request_context),
+):
+    del auth_context
+    try:
+        supplier = db.get(Supplier, supplier_id)
+        if not supplier:
+            return error_response("SUPPLIER_NOT_FOUND", "没有找到这个供应商。", "supply", status.HTTP_404_NOT_FOUND)
+        result = supplier_intelligence_engine.analyze_supplier(
+            db,
+            supplier=supplier,
+            keyword=keyword,
+            expected_price=expected_price,
+            quantity=quantity,
+        )
+        return SupplierIntelligenceResponse(
+            supplier=result.get("supplier") or {},
+            real_score=float(result.get("supplier_real_score") or 0),
+            authenticity_score=float(result.get("supplier_authenticity_score") or 0),
+            risk={
+                "level": result.get("risk_level"),
+                "score": result.get("supplier_risk_score"),
+                "flags": result.get("risk_flags") or [],
+            },
+            price_score=float(result.get("price_competitiveness_score") or 0),
+            moq_score=float(result.get("moq_score") or 0),
+            stability_score=float(result.get("stability_score") or 0),
+            supplier_confidence=float(result.get("supplier_confidence") or 0),
+            recommendation=str(result.get("recommendation") or "建议观察"),
+        )
+    except AppError as exc:
+        return error_response(exc.error_code, exc.message, exc.stage, exc.status_code)
+    except Exception as exc:
+        return error_response("SUPPLIER_INTELLIGENCE_FAILED", str(exc), "supply", status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @router.post("/supply/browser/import")

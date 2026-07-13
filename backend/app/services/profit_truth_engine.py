@@ -64,14 +64,19 @@ class ProfitTruthEngine:
         risk_flags = list(supply_intelligence.get("risk_flags") or [])
         if is_mock:
             risk_flags.append("mock_data_used")
-        confidence = 0.2 if is_mock else float(supply_intelligence.get("confidence") or 0.6)
+        supply_confidence = float(supply_intelligence.get("supplier_confidence") or 0)
+        supplier_real_score = float(supply_intelligence.get("supplier_real_score") or 0)
+        supplier_factor = max(0.2, min(1.0, (supplier_real_score / 100) * 0.55 + supply_confidence * 0.45))
+        confidence = 0.2 if is_mock else float(supply_intelligence.get("confidence") or 0.6) * supplier_factor
         result.update(
             {
                 "profit_truth_score": round(max(0.0, min(1.0, confidence)), 4),
                 "is_mock_cost": is_mock,
                 "risk_flags": sorted(set(risk_flags)),
                 "supplier_score": float(supply_intelligence.get("supplier_score") or 0),
+                "supplier_real_score": supplier_real_score,
                 "supplier_quality": str(supply_intelligence.get("supplier_quality") or "not_recommended"),
+                "supplier_confidence": round(supply_confidence, 4),
                 "confidence": round(max(0.0, min(1.0, confidence)), 4),
             }
         )

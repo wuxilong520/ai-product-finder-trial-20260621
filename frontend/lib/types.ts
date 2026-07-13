@@ -153,8 +153,11 @@ export type SupplierMatchItem = {
   availability: string;
   moq?: number | null;
   supplier_score?: number | null;
+  supplier_real_score?: number | null;
   supplier_level?: string | null;
   supplier_confidence?: number | null;
+  price_competitiveness_score?: number | null;
+  moq_score?: number | null;
   profit_estimate?: number | null;
   risk_flags?: string[];
   data_source?: string | null;
@@ -172,6 +175,7 @@ export type SupplierMatchItem = {
 export type SupplierMatchResponse = {
   suppliers: SupplierMatchItem[];
   supplier_score?: number | null;
+  supplier_real_score?: number | null;
   supplier_confidence?: number | null;
   confidence?: number | null;
   source_type?: string | null;

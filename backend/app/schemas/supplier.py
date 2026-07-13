@@ -21,8 +21,11 @@ class SupplierMatchItem(BaseModel):
     availability: str
     moq: int | None = None
     supplier_score: float | None = None
+    supplier_real_score: float | None = None
     supplier_level: str | None = None
     supplier_confidence: float | None = None
+    price_competitiveness_score: float | None = None
+    moq_score: float | None = None
     profit_estimate: float | None = None
     risk_flags: list[str] = Field(default_factory=list)
     data_source: str | None = None
@@ -40,6 +43,7 @@ class SupplierMatchItem(BaseModel):
 class SupplierMatchResponse(BaseModel):
     suppliers: list[SupplierMatchItem]
     supplier_score: float | None = None
+    supplier_real_score: float | None = None
     supplier_confidence: float | None = None
     confidence: float | None = None
     source_type: str | None = None
@@ -49,3 +53,15 @@ class SupplierMatchResponse(BaseModel):
     profit_preview: dict | None = None
     procurement_recommendation: dict | None = None
     is_mock: bool | None = None
+
+
+class SupplierIntelligenceResponse(BaseModel):
+    supplier: dict
+    real_score: float
+    authenticity_score: float
+    risk: dict
+    price_score: float
+    moq_score: float
+    stability_score: float
+    supplier_confidence: float
+    recommendation: str

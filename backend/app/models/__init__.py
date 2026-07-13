@@ -16,7 +16,7 @@ from app.models.platform import Platform
 from app.models.product import Product, ProductImage, ProductKeyword, SourcingLink
 from app.models.product_intelligence import ProductIntelligence
 from app.models.request_metric import RequestMetricRecord
-from app.models.supplier import Supplier, SupplierProduct, SupplyAnalysisHistory, SupplySupplierHistory
+from app.models.supplier import Supplier, SupplierExtensionImport, SupplierPriceHistory, SupplierProduct, SupplyAnalysisHistory, SupplySupplierHistory
 from app.models.supplier_match import SupplierMatch
 from app.models.user import User
 
@@ -45,6 +45,8 @@ __all__ = [
     "ProductKeyword",
     "RequestMetricRecord",
     "Supplier",
+    "SupplierExtensionImport",
+    "SupplierPriceHistory",
     "SupplierProduct",
     "SupplyAnalysisHistory",
     "SupplySupplierHistory",

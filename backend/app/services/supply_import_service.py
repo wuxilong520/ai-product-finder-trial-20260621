@@ -11,7 +11,7 @@ from xml.etree import ElementTree as ET
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.supplier import Supplier, SupplierProduct, SupplySupplierHistory
+from app.models.supplier import Supplier, SupplierPriceHistory, SupplierProduct, SupplySupplierHistory
 
 
 @dataclass(frozen=True)
@@ -232,6 +232,17 @@ class SupplyImportService:
             product.transaction_info = f"{record.source_type} imported"
             product.raw_snapshot = record.__dict__
             db.add(product)
+
+        db.flush()
+        db.add(
+            SupplierPriceHistory(
+                supplier_id=supplier.id,
+                product_id=product.id,
+                price=record.price,
+                moq=record.moq,
+                record_source=record.source_type,
+            )
+        )
 
         db.add(
             SupplySupplierHistory(

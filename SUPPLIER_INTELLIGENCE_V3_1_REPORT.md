@@ -177,10 +177,54 @@
 
 ## 7. 公网验证
 
-当前状态：
+腾讯云部署版本：
 
-- 还未写入本节最终结果
-- 下一步会在腾讯云部署完成后，补入真实公网接口结果
+- commit：`04d00a4`
+
+### 公网验证1：供应链总接口
+
+调用：
+
+- `POST /api/v1/supply/intelligence`
+
+参数：
+
+```json
+{
+  "keyword": "wireless earbuds",
+  "target_market": "US",
+  "expected_price": 39.9,
+  "quantity": 100
+}
+```
+
+真实返回：
+
+- `200`
+- `supplier_name = Shenzhen Audio Factory`
+- `supplier_score = 80.2`
+- `supplier_real_score = 74.4`
+- `risk_level = high`
+- `procurement_recommendation = 暂不建议采购`
+
+### 公网验证2：供应商智能详情接口
+
+调用：
+
+- `GET /api/v1/supply/supplier/2/intelligence?keyword=wireless%20earbuds&expected_price=39.9&quantity=100`
+
+真实返回：
+
+- `200`
+- `real_score = 81.6`
+- `authenticity_score = 100.0`
+- `risk.level = LOW`
+- `risk.score = 12.0`
+- `price_score = 82.0`
+- `moq_score = 20.0`
+- `stability_score = 86.0`
+- `supplier_confidence = 0.82`
+- `recommendation = 推荐采购`
 
 ## 8. 当前供应链真实性等级
 

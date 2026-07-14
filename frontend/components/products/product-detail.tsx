@@ -19,7 +19,7 @@ export function ProductDetail({
   const intelligence = analysisReport?.intelligence;
   const analysis = analysisReport?.analysis;
   const productImages = Array.isArray(product.images) ? product.images : [];
-  const productSourceUrl = product.source_url && product.source_url.trim() ? product.source_url : null;
+  const productSourceUrl = toSafeHttpUrl(product.source_url);
   const intelligenceReasons = Array.isArray(intelligence?.reason) ? intelligence.reason : [];
   const analysisCoreKeywords = Array.isArray(analysis?.core_keywords) ? analysis.core_keywords : [];
   const analysisSellingPoints = Array.isArray(analysis?.selling_points) ? analysis.selling_points : [];
@@ -201,4 +201,12 @@ function getRecommendationMeta(value: "sell" | "monitor" | "ignore", lang: Langu
     return { label: text.productMetaMonitor, color: "linear-gradient(90deg, #fbbf24, #f59e0b)" };
   }
   return { label: text.productMetaIgnore, color: "linear-gradient(90deg, #fb7185, #ef4444)" };
+}
+
+function toSafeHttpUrl(value?: string | null) {
+  if (!value || typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (!/^https?:\/\//i.test(trimmed)) return null;
+  return trimmed;
 }

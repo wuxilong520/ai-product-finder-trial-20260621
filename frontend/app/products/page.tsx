@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
 import { ProductList } from "@/components/products/product-list";
-import { Button, Card, InfoTile } from "@/design-system/components";
+import { ActionCard, Button, Card, CardContent, InfoTile, SectionIntro } from "@/design-system/components";
 import { ROUTES } from "@/config/routes";
 import { getProducts, isAuthError } from "@/lib/api-gateway";
 import { TOKEN_KEY } from "@/lib/auth";
@@ -52,28 +52,32 @@ export default async function ProductsPage({
     <XBorderLayout lang={lang} activePath="products">
       <div className="space-y-6">
         <Card className="border-white/6 bg-[#111A2E] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
-          <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-            <div>
-              <div className="mb-3 inline-flex rounded-full border border-[#4F7CFF]/20 bg-[#4F7CFF]/10 px-3 py-1 text-xs font-medium text-[#4F7CFF]">
-                商品资产中心
-              </div>
-              <h1 className="text-[28px] font-bold tracking-tight text-white">{text.productListTitle}</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-white/56">
-                {text.productListBusinessDesc.replace("{count}", String(products.total))}
-              </p>
-            </div>
-            <div className="grid gap-4 md:grid-cols-3 xl:min-w-[760px]">
+          <CardContent className="p-0">
+            <SectionIntro
+              eyebrow="商品资产中心"
+              title={text.productListTitle}
+              description={text.productListBusinessDesc.replace("{count}", String(products.total))}
+              action={(
+                <Button asChild className="h-full bg-[#4F7CFF] hover:bg-[#4F7CFF]/90">
+                  <Link href={ROUTES.home}>
+                    {pageText.back}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
+            />
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
               <InfoTile label={pageText.total} value={String(products.total)} />
               <InfoTile label={pageText.current} value={pageText.module} />
-              <Button asChild className="h-full bg-[#4F7CFF] hover:bg-[#4F7CFF]/90">
-                <Link href={ROUTES.home}>
-                  {pageText.back}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+              <InfoTile label="你现在要做的" value="挑出值得继续分析的商品" />
             </div>
-          </div>
+          </CardContent>
         </Card>
+        <div className="grid gap-4 md:grid-cols-3">
+          <ActionCard title="先看市场" description="如果你还不确定方向，先回市场雷达页判断需求和趋势。" href={ROUTES.insights} label="去市场页" />
+          <ActionCard title="看商业机会" description="如果你已经有方向，直接进机会页看利润、供应和风险。" href={ROUTES.insightsOpportunities} label="去机会页" />
+          <ActionCard title="进采购池" description="如果你已经开始对比商品和货源，直接进采购池统一筛选。" href={ROUTES.actionProcurement} label="去采购池" />
+        </div>
         <ProductList products={products.items} total={products.total} lang={lang} />
       </div>
     </XBorderLayout>

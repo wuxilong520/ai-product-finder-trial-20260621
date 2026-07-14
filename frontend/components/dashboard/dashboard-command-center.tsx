@@ -8,7 +8,7 @@ import { ArrowRight, BarChart3, Flame, PackageSearch, ShieldAlert, ShoppingBag, 
 import { PlanAccessPanel } from "@/components/billing/plan-access-panel";
 import { MarketAnalysisCard } from "@/components/market/market-analysis-card";
 import { ROUTES, productDetailRoute } from "@/config/routes";
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, InfoTile, Input } from "@/design-system/components";
+import { ActionCard, Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, InfoTile, Input, KpiTile, SectionIntro } from "@/design-system/components";
 import type { CurrentBillingStatus } from "@/lib/api/billing";
 import { Language } from "@/lib/i18n";
 import type {
@@ -188,6 +188,11 @@ export function DashboardCommandCenter({
     },
   ];
 
+  const todayOpportunityCount = marketOpportunities.length;
+  const procurementCount = newestProducts.length;
+  const analysisCount = latestRuns.length;
+  const potentialProfit = totalProfit > 0 ? `¥${totalProfit.toFixed(2)}` : "待形成";
+
   return (
     <div className="space-y-6">
       <Card className="border-white/6 bg-[linear-gradient(135deg,rgba(79,124,255,0.16),rgba(17,26,46,0.95))]">
@@ -231,29 +236,59 @@ export function DashboardCommandCenter({
         </CardContent>
       </Card>
 
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <KpiTile label="今日市场机会" value={`${todayOpportunityCount} 个`} hint="今天优先值得继续看的方向数量" />
+        <KpiTile label="采购池商品数量" value={`${procurementCount} 个`} hint="当前首页抓到的最近商品规模" />
+        <KpiTile label="AI分析次数" value={`${analysisCount} 次`} hint="最近已经执行过的分析任务数量" />
+        <KpiTile label="潜在利润机会" value={potentialProfit} hint="基于当前推荐商品的合计利润空间" />
+      </section>
+
       <section className="grid gap-4 xl:grid-cols-3">
-        <StageEntryCard
+        <ActionCard
           title="我还没想好卖什么"
-          desc="先从类目和关键词开始，判断这个方向到底有没有增长。"
+          description="先从类目和关键词开始，判断这个方向到底有没有增长。"
           href={ROUTES.insights}
           label="先去看市场"
           badge="适合刚开始"
         />
-        <StageEntryCard
+        <ActionCard
           title="我已经有类目方向"
-          desc="比如你已经决定做家电，那就继续筛到更值得做的具体商品。"
+          description="比如你已经决定做家电，那就继续筛到更值得做的具体商品。"
           href={ROUTES.insightsOpportunities}
           label="继续筛商品"
           badge="适合已经有方向"
         />
-        <StageEntryCard
+        <ActionCard
           title="我已经在比货和利润"
-          desc="说明你已经接近执行，下一步就是对比 1688 货源和利润空间。"
+          description="说明你已经接近执行，下一步就是对比 1688 货源和利润空间。"
           href={ROUTES.actionSuppliers}
           label="进入供应链匹配"
           badge="适合准备上架"
         />
       </section>
+
+      <Card className="border-white/6 bg-[#111A2E]">
+        <CardContent className="p-6">
+          <SectionIntro
+            eyebrow="Dashboard"
+            title="你今天最适合从哪里开始"
+            description="如果你是第一次进来，就从市场分析开始。如果你已经有商品方向，就直接进商品机会、采购池和供应链。首页的目标不是堆数据，而是让你 5 秒知道下一步。"
+          />
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {dashboardQuickActions.map((item) => (
+              <div key={item.title} className="rounded-3xl border border-white/8 bg-white/[0.03] p-5">
+                <div className="inline-flex rounded-2xl bg-[#4F7CFF]/12 p-2 text-[#9CC0FF]">{item.icon}</div>
+                <div className="mt-4 text-base font-semibold text-white">{item.title}</div>
+                <div className="mt-2 text-sm leading-7 text-white/60">{item.desc}</div>
+                <Link href={item.href} className="mt-5 inline-flex items-center text-sm font-medium text-[#9CC0FF]">
+                  {item.label}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <Card className="border-white/6 bg-[#111A2E]">

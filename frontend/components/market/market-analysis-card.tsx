@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Activity, AlertTriangle, BarChart3, ExternalLink, Loader2, Search, ShoppingBag, TrendingUp } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState, InfoTile, Input, StatusBadge } from "@/design-system/components";
+import { ROUTES } from "@/config/routes";
 import { analyzeMarketKeyword, matchSuppliers } from "@/lib/api-gateway";
 import { getToken } from "@/lib/auth";
 import { Language, t } from "@/lib/i18n";
@@ -215,6 +217,51 @@ export function MarketAnalysisCard({ lang = "zh", initialKeyword }: { lang?: Lan
                     label="1688 匹配词"
                     value={platformCompatibility?.alibaba_match?.length ? platformCompatibility.alibaba_match.join(" / ") : "当前还没有匹配词"}
                   />
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+              <Card className="border-white/8 bg-white/5">
+                <CardHeader>
+                  <CardTitle className="text-lg">数据来源说明</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm leading-7 text-white/68">
+                  <div className="rounded-2xl border border-white/8 bg-black/10 p-4">
+                    这页主要综合 Google、Amazon、TikTok、Shopify 等市场信号来判断需求、趋势和竞争。
+                  </div>
+                  <div className="rounded-2xl border border-white/8 bg-black/10 p-4">
+                    如果某个来源没有拿到真实数据，系统应该降低可信度，而不是假装数据已经完整。
+                  </div>
+                  <div className="rounded-2xl border border-white/8 bg-black/10 p-4">
+                    你看这页时，重点不是记住每个分数，而是先判断：这个方向要不要继续进入采购池和供应链阶段。
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-white/8 bg-white/5">
+                <CardHeader>
+                  <CardTitle className="text-lg">下一步动作</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Link
+                    href={`${ROUTES.actionProcurement}${currentKeyword ? `?keyword=${encodeURIComponent(currentKeyword)}` : ""}`}
+                    className="block rounded-2xl border border-[#4F7CFF]/20 bg-[#4F7CFF]/10 p-4 text-sm font-medium text-[#D8E3FF] transition hover:bg-[#4F7CFF]/16"
+                  >
+                    加入采购池
+                  </Link>
+                  <Link
+                    href={`${ROUTES.insightsOpportunities}${currentKeyword ? `?keyword=${encodeURIComponent(currentKeyword)}` : ""}`}
+                    className="block rounded-2xl border border-white/10 bg-white/5 p-4 text-sm font-medium text-white/80 transition hover:bg-white/10"
+                  >
+                    继续看商业机会
+                  </Link>
+                  <Link
+                    href={`${ROUTES.actionSuppliers}${currentKeyword ? `?keyword=${encodeURIComponent(currentKeyword)}` : ""}`}
+                    className="block rounded-2xl border border-white/10 bg-white/5 p-4 text-sm font-medium text-white/80 transition hover:bg-white/10"
+                  >
+                    继续看供应链
+                  </Link>
                 </CardContent>
               </Card>
             </div>

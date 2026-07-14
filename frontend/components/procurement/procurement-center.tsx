@@ -27,6 +27,10 @@ export function ProcurementCenter({
   const [items, setItems] = useState<ProcurementPoolItem[]>([]);
   const [analyzingId, setAnalyzingId] = useState<number | null>(null);
   const [selected, setSelected] = useState<number[]>([]);
+  const [maxPrice, setMaxPrice] = useState("");
+  const [minProfit, setMinProfit] = useState("");
+  const [minSupplierScore, setMinSupplierScore] = useState("");
+  const [riskFilter, setRiskFilter] = useState("all");
 
   async function loadPool(targetKeyword?: string) {
     const finalKeyword = (targetKeyword || keyword).trim();
@@ -80,6 +84,28 @@ export function ProcurementCenter({
     [selected],
   );
 
+  const filteredItems = useMemo(() => {
+    const priceLimit = maxPrice ? Number(maxPrice) : null;
+    const profitFloor = minProfit ? Number(minProfit) : null;
+    const supplierFloor = minSupplierScore ? Number(minSupplierScore) : null;
+
+    return items.filter((item) => {
+      if (priceLimit != null && !Number.isNaN(priceLimit) && item.min_price > priceLimit) {
+        return false;
+      }
+      if (profitFloor != null && !Number.isNaN(profitFloor) && item.estimated_profit < profitFloor) {
+        return false;
+      }
+      if (supplierFloor != null && !Number.isNaN(supplierFloor) && item.supplier_score < supplierFloor) {
+        return false;
+      }
+      if (riskFilter !== "all" && item.risk_level !== riskFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [items, maxPrice, minProfit, minSupplierScore, riskFilter]);
+
   return (
     <div className="space-y-5">
       <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
@@ -93,7 +119,7 @@ export function ProcurementCenter({
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-4">
             <InfoTile label="当前关键词" value={keyword || "未填写"} />
-            <InfoTile label="当前商品数" value={`${items.length} 个`} />
+            <InfoTile label="当前商品数" value={`${filteredItems.length} / ${items.length} 个`} />
             <InfoTile label="比较池" value={`${selected.length}/5`} />
             <InfoTile label="当前排序" value={sortLabel(sort)} />
           </div>
@@ -124,6 +150,21 @@ export function ProcurementCenter({
               </button>
             ))}
           </div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <Input value={maxPrice} onChange={(event) => setMaxPrice(event.target.value)} placeholder="价格筛选：最高成本" />
+            <Input value={minProfit} onChange={(event) => setMinProfit(event.target.value)} placeholder="利润筛选：最低利润" />
+            <Input value={minSupplierScore} onChange={(event) => setMinSupplierScore(event.target.value)} placeholder="供应评分：最低分" />
+            <select
+              value={riskFilter}
+              onChange={(event) => setRiskFilter(event.target.value)}
+              className="h-11 rounded-2xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none transition focus:border-[#4F7CFF]/40"
+            >
+              <option value="all" className="bg-[#121c2c]">风险筛选：全部</option>
+              <option value="low" className="bg-[#121c2c]">风险最低</option>
+              <option value="medium" className="bg-[#121c2c]">中风险</option>
+              <option value="high" className="bg-[#121c2c]">高风险</option>
+            </select>
+          </div>
           <div className="rounded-2xl border border-[#4F7CFF]/20 bg-[#4F7CFF]/10 px-4 py-3 text-sm leading-7 text-[#D8E3FF]">
             当前采购池只吃真实来源：现有供应链数据库 + 1688插件主动导入。没有后台偷偷爬1688，也没有伪造20个假商品来充数。
           </div>
@@ -140,7 +181,7 @@ export function ProcurementCenter({
       </Card>
 
       <div className="grid gap-5 xl:grid-cols-2">
-        {items.length ? items.map((item) => {
+        {filteredItems.length ? filteredItems.map((item) => {
           const isSelected = selected.includes(item.id);
           return (
             <Card key={item.id} className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
@@ -207,7 +248,10 @@ export function ProcurementCenter({
         }) : (
           <Card className="border-white/8 bg-[#121c2c] xl:col-span-2">
             <CardContent className="py-10">
-              <EmptyState text="当前还没有采购池商品。先去1688插件导入，或者直接用关键词读取已有真实供应链数据。" />
+              <EmptyState
+                title={items.length ? "当前筛选后没有商品" : "当前还没有采购池商品"}
+                text={items.length ? "你可以放宽价格、利润、供应评分或风险筛选条件。" : "先去1688插件导入，或者直接用关键词读取已有真实供应链数据。"}
+              />
             </CardContent>
           </Card>
         )}

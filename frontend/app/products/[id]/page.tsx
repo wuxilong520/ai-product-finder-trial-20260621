@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
 import { ProductDetail } from "@/components/products/product-detail";
 import { MarketAnalysisCard } from "@/components/market/market-analysis-card";
-import { Button, Card, InfoTile } from "@/design-system/components";
+import { ActionCard, Button, Card, CardContent, InfoTile, SectionIntro } from "@/design-system/components";
 import { ROUTES } from "@/config/routes";
 import { getProduct, isAuthError } from "@/lib/api-gateway";
 import { TOKEN_KEY } from "@/lib/auth";
@@ -51,19 +51,32 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     <XBorderLayout lang={lang} activePath="products">
       <div className="space-y-6">
         <Card className="border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
-          <h1 className="text-3xl font-semibold tracking-tight text-white">{text.productDetailTitle}</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-7 text-white/60">{text.productDetailDesc}</p>
-          <div className="mt-5 grid gap-4 md:grid-cols-3">
-            <InfoTile label={pageText.flow} value={pageText.flowValue} />
-            <InfoTile label={pageText.next} value={pageText.nextValue} />
-            <Button asChild className="h-full">
-              <Link href={ROUTES.home}>
-                {pageText.back}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
+          <CardContent className="p-0">
+            <SectionIntro
+              eyebrow="商航AI · 商品详情"
+              title={text.productDetailTitle}
+              description={text.productDetailDesc}
+              action={(
+                <Button asChild className="h-11">
+                  <Link href={ROUTES.home}>
+                    {pageText.back}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
+            />
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
+              <InfoTile label={pageText.flow} value={pageText.flowValue} />
+              <InfoTile label={pageText.next} value={pageText.nextValue} />
+              <InfoTile label="当前商品" value={product.title_zh || product.title} />
+            </div>
+          </CardContent>
         </Card>
+        <div className="grid gap-4 md:grid-cols-3">
+          <ActionCard title="查看市场分析" description="先确认这个商品在海外市场有没有需求和机会。" href={`${ROUTES.insights}?keyword=${encodeURIComponent(product.title_zh || product.title)}`} label="去看市场" />
+          <ActionCard title="进入采购池" description="如果你想把这个方向继续推进，就进采购池统一比较。 " href={`${ROUTES.actionProcurement}?keyword=${encodeURIComponent(product.title_zh || product.title)}`} label="去采购池" />
+          <ActionCard title="查看供应链" description="继续对比 1688 货源、成本、MOQ 和风险。" href={`${ROUTES.actionSuppliers}?keyword=${encodeURIComponent(product.title_zh || product.title)}`} label="去看供应链" />
+        </div>
         <ProductDetail product={product} analysisReport={null} lang={lang} />
         <MarketAnalysisCard lang={lang} initialKeyword={product.title_zh || product.title} />
       </div>

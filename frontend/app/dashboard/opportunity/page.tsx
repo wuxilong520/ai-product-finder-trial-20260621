@@ -2,9 +2,11 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
+import { ShopifyConnectCard } from "@/components/market/shopify-connect-card";
 import { ROUTES } from "@/config/routes";
-import { Badge, Button, Card } from "@/design-system/components";
+import { Badge, Button, Card, CardContent, KpiTile, SectionIntro } from "@/design-system/components";
 import { analyzeOpportunity, getOpportunityHistory } from "@/lib/api";
+import { getMarketConnections } from "@/lib/api/market";
 
 export default async function OpportunityDashboardPage() {
   const cookieStore = await cookies();
@@ -13,9 +15,10 @@ export default async function OpportunityDashboardPage() {
   if (!token) redirect(ROUTES.login);
 
   const keyword = "wireless earbuds";
-  const [opportunity, history] = await Promise.all([
+  const [opportunity, history, connections] = await Promise.all([
     analyzeOpportunity({ keyword, marketplace: "US", region: "US" }, token),
     getOpportunityHistory(token, 12),
+    getMarketConnections(token).catch(() => ({})),
   ]);
 
   const opportunitySummary = buildOpportunitySummary(opportunity.decision);
@@ -24,21 +27,25 @@ export default async function OpportunityDashboardPage() {
   return (
     <XBorderLayout lang={lang} activePath="action">
       <div className="space-y-6">
-        <div>
-          <div className="text-xs uppercase tracking-[0.24em] text-white/40">商航AI · 商业机会闭环</div>
-          <h1 className="mt-2 text-3xl font-bold text-white">商品机会页</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-7 text-white/55">
-            这页只回答一件事：这个商品方向值不值得推进。页面把市场、供应链、利润和 Shopify 动作放到一条线上，让你看完就能决定是观察、测试还是继续放量。
-          </p>
-        </div>
+        <Card className="border-white/8 bg-[#111A2E]">
+          <CardContent className="p-6">
+            <SectionIntro
+              eyebrow="商航AI · 商业机会中心"
+              title="把市场、供应链、利润和执行放在一条线上看"
+              description="这页只回答一件事：这个商品方向值不值得推进。你看完就能决定是观察、测试还是继续放量。"
+            />
+          </CardContent>
+        </Card>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <Metric title="市场分" value={String(opportunity.market_score)} desc={`需求 ${opportunity.market_signal.demand_score} / 趋势 ${opportunity.market_signal.trend_direction}`} />
-          <Metric title="供应分" value={String(opportunity.supplier_score)} desc={`来源 ${opportunity.supplier_signal.supplier_source}`} />
-          <Metric title="利润率" value={`${opportunity.profit_margin.toFixed(2)}%`} desc={`预估售价 ${opportunity.profit_signal.expected_price}`} />
-          <Metric title="机会总分" value={String(opportunity.opportunity_score)} desc={`可信度 ${(opportunity.confidence * 100).toFixed(0)}%`} />
-          <Metric title="当前动作" value={opportunity.decision} desc={opportunitySummary} tone={decisionTone(opportunity.decision)} />
+          <KpiTile label="市场评分" value={String(opportunity.market_score)} hint={`需求 ${opportunity.market_signal.demand_score} / 趋势 ${opportunity.market_signal.trend_direction}`} />
+          <KpiTile label="利润空间" value={`${opportunity.profit_margin.toFixed(2)}%`} hint={`预估售价 ${opportunity.profit_signal.expected_price}`} />
+          <KpiTile label="供应难度" value={String(opportunity.supplier_score)} hint={`来源 ${opportunity.supplier_signal.supplier_source}`} />
+          <KpiTile label="机会总分" value={String(opportunity.opportunity_score)} hint={`可信度 ${(opportunity.confidence * 100).toFixed(0)}%`} />
+          <KpiTile label="当前动作" value={opportunity.decision} hint={opportunitySummary} className={decisionToneClass(opportunity.decision)} />
         </div>
+
+        <ShopifyConnectCard token={token} initialConnection={(connections as Record<string, any>)?.shopify} />
 
         <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
           <Card className="border-white/8 bg-[#111A2E] p-6">
@@ -180,6 +187,14 @@ function Metric({
       <div className="mt-2 text-sm leading-6 text-white/55">{desc}</div>
     </Card>
   );
+}
+
+function decisionToneClass(decision: string) {
+  const normalized = String(decision || "").toUpperCase();
+  if (normalized === "BUY" || normalized === "SCALE") return "border-emerald-400/20 bg-emerald-400/10";
+  if (normalized === "TEST") return "border-[#4F7CFF]/20 bg-[#4F7CFF]/10";
+  if (normalized === "WATCH") return "border-amber-400/20 bg-amber-400/10";
+  return "border-rose-400/20 bg-rose-400/10";
 }
 
 function SectionCard({ title, rows }: { title: string; rows: Array<[string, string]> }) {

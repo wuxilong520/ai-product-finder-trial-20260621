@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
-import { Card, CardContent, CardHeader, CardTitle, InfoTile } from "@/design-system/components";
+import { Card, CardContent, CardHeader, CardTitle, InfoTile, KpiTile, SectionIntro } from "@/design-system/components";
 import { PlanAccessPanel } from "@/components/billing/plan-access-panel";
 import { PricingOrdersPanel } from "@/components/billing/pricing-orders-panel";
 import { UpgradeEntry } from "@/components/billing/upgrade-entry";
@@ -121,16 +121,20 @@ export default async function SettingsPage() {
     <XBorderLayout lang={lang} activePath="settings">
       <div className="space-y-6">
         <Card className="border-white/8 bg-[#121c2c] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="text-xs uppercase tracking-[0.24em] text-white/40">商航AI · 账户中心</div>
-              <h1 className="text-3xl font-semibold tracking-tight text-white">{text.title}</h1>
-              <p className="mt-2 text-sm leading-7 text-white/60">
-                这里不是技术后台，而是你的配置中心。你在这里看账号、套餐、工作区、API Key、店铺绑定和订单状态，再决定下一步怎么继续用商航AI。
-              </p>
+          <CardContent className="p-0">
+            <SectionIntro
+              eyebrow="商航AI · 用户中心"
+              title={text.title}
+              description="这里不是技术后台，而是你的配置中心。你在这里看账号、套餐、工作区、API Key、店铺绑定和订单状态，再决定下一步怎么继续用商航AI。"
+              action={<UpgradeEntry label="去充值 / 升级" />}
+            />
+            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <KpiTile label="当前套餐" value={overview.billing.plan_name} hint="先确认你现在能用哪些能力" />
+              <KpiTile label="店铺状态" value={overview.store_links.shopify.status_text} hint="看 Shopify 读取和发布现在走到哪一步" />
+              <KpiTile label="账号状态" value={overview.user.is_active ? text.active : "已停用"} hint="确认当前账户是否正常可用" />
+              <KpiTile label="API Key" value={hasApiKey ? "已就绪" : "未生成"} hint="接外部工具时会用到" />
             </div>
-            <UpgradeEntry label="去充值 / 升级" />
-          </div>
+          </CardContent>
         </Card>
 
         <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">

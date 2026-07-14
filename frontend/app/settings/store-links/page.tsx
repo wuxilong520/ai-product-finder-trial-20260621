@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
-import { Card, CardContent, CardHeader, CardTitle, InfoTile, Button } from "@/design-system/components";
+import { Card, CardContent, CardHeader, CardTitle, InfoTile, Button, KpiTile, SectionIntro } from "@/design-system/components";
 import { StoreLinkGate } from "@/components/settings/store-link-gate";
 import { ROUTES } from "@/config/routes";
 import { TOKEN_KEY } from "@/lib/auth";
@@ -89,11 +89,19 @@ export default async function StoreLinksPage() {
     <XBorderLayout lang={lang} activePath="settings">
       <div className="space-y-6">
         <Card className="border-white/8 bg-[#121c2c] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
-          <div className="text-xs uppercase tracking-[0.24em] text-white/40">商航AI · 店铺绑定</div>
-          <h1 className="text-3xl font-semibold tracking-tight text-white">店铺绑定</h1>
-          <p className="mt-2 text-sm leading-7 text-white/60">
-            这个页面现在不再放空话，直接告诉你 Shopify 到底已经接到哪一步：真实读取、用户自助绑定、真实发布，分别到什么状态。
-          </p>
+          <CardContent className="p-0">
+            <SectionIntro
+              eyebrow="商航AI · Shopify Center"
+              title="店铺绑定"
+              description="这个页面现在不再放空话，直接告诉你 Shopify 到底已经接到哪一步：真实读取、用户自助绑定、真实发布，分别到什么状态。"
+            />
+            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <KpiTile label="店铺状态" value={shopify.status_text} hint="先看当前是不是已接通" />
+              <KpiTile label="真实读取" value={shopify.admin_read_ready ? "已打开" : "未打开"} hint="能不能读取商品和订单数据" />
+              <KpiTile label="绑定状态" value={shopify.oauth_status === "reserved" ? "待收口" : shopify.oauth_status} hint="用户能不能自己完成连接" />
+              <KpiTile label="发布状态" value={shopify.publish_ready ? "可继续验证" : "未正式放开"} hint="这决定后面是否能继续执行发布" />
+            </div>
+          </CardContent>
         </Card>
 
         <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">

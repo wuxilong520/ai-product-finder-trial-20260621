@@ -19,7 +19,7 @@ export function ProductList({ products, total, lang }: { products: Product[]; to
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [batchDeleting, setBatchDeleting] = useState(false);
-  const [view, setView] = useState<"table" | "card">("table");
+  const [view, setView] = useState<"table" | "card">("card");
   const text = t(lang);
   const allVisibleIds = useMemo(() => products.map((product) => product.id), [products]);
   const allSelected = products.length > 0 && selectedIds.length === products.length;

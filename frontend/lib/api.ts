@@ -18,6 +18,11 @@ import {
   OpportunityAnalyzeResponse,
   OpportunityExecuteResponse,
   OpportunityHistoryResponse,
+  ProcurementCompareResponse,
+  ProcurementFavoriteResponse,
+  ProcurementImportResponse,
+  ProcurementPoolItem,
+  ProcurementPoolResponse,
   Product,
   ProductBatchDeleteResponse,
   ProductIntelligenceEngineResponse,
@@ -283,6 +288,125 @@ export async function importSupplyExtensionPayload(
   }, 30000);
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "插件同步供应商数据失败"));
+  }
+  return response.json();
+}
+
+export async function getProcurementPool(
+  params: {
+    keyword?: string;
+    category?: string;
+    priceRange?: string;
+    profitRange?: string;
+    supplierScore?: number;
+    riskLevel?: string;
+    sort?: string;
+  },
+  token?: string,
+): Promise<ProcurementPoolResponse> {
+  ensureApiBase();
+  const url = new URL(`${API_V1}/procurement/pool`);
+  if (params.keyword) url.searchParams.set("keyword", params.keyword);
+  if (params.category) url.searchParams.set("category", params.category);
+  if (params.priceRange) url.searchParams.set("price_range", params.priceRange);
+  if (params.profitRange) url.searchParams.set("profit_range", params.profitRange);
+  if (params.supplierScore != null) url.searchParams.set("supplier_score", String(params.supplierScore));
+  if (params.riskLevel) url.searchParams.set("risk_level", params.riskLevel);
+  if (params.sort) url.searchParams.set("sort", params.sort);
+  const response = await fetchWithTimeout(url.toString(), {
+    headers: {
+      ...buildAuthHeaders(token),
+    },
+    cache: "no-store",
+  }, 30000);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "读取采购池失败"));
+  }
+  return response.json();
+}
+
+export async function getProcurementProduct(id: number | string, token?: string): Promise<ProcurementPoolItem> {
+  ensureApiBase();
+  const response = await fetchWithTimeout(`${API_V1}/procurement/product/${id}`, {
+    headers: {
+      ...buildAuthHeaders(token),
+    },
+    cache: "no-store",
+  }, 30000);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "读取采购池商品失败"));
+  }
+  return response.json();
+}
+
+export async function importProcurementPayload(
+  authToken: string,
+  payload: SupplyExtensionImportPayload,
+): Promise<ProcurementImportResponse> {
+  ensureApiBase();
+  const response = await fetchWithTimeout(`${API_V1}/procurement/import`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${authToken}`,
+    },
+    body: JSON.stringify(payload),
+  }, 30000);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "加入采购池失败"));
+  }
+  return response.json();
+}
+
+export async function analyzeProcurementItem(id: number | string, token?: string) {
+  ensureApiBase();
+  const response = await fetchWithTimeout(`${API_V1}/procurement/analyze/${id}`, {
+    method: "POST",
+    headers: {
+      ...buildAuthHeaders(token),
+    },
+  }, 30000);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "采购池AI分析失败"));
+  }
+  return response.json();
+}
+
+export async function favoriteProcurementItem(
+  poolItemId: number,
+  action: string,
+  token?: string,
+): Promise<ProcurementFavoriteResponse> {
+  ensureApiBase();
+  const response = await fetchWithTimeout(`${API_V1}/procurement/favorite`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...buildAuthHeaders(token),
+    },
+    body: JSON.stringify({
+      pool_item_id: poolItemId,
+      action,
+    }),
+  }, 15000);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "采购池操作失败"));
+  }
+  return response.json();
+}
+
+export async function compareProcurementItems(ids: Array<number | string>, token?: string): Promise<ProcurementCompareResponse> {
+  ensureApiBase();
+  const url = new URL(`${API_V1}/procurement/compare`);
+  url.searchParams.set("ids", ids.join(","));
+  const response = await fetchWithTimeout(url.toString(), {
+    headers: {
+      ...buildAuthHeaders(token),
+    },
+    cache: "no-store",
+  }, 30000);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "采购池比较失败"));
   }
   return response.json();
 }

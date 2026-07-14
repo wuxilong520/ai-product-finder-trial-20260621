@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from app.api import result_query, task_submission
-from app.api.v1.endpoints import admin, analyze, api_keys, auth, billing, business_truth, dashboard, decision, decision_explain, deploy, governance, listing, market, opportunity, p5, products, publish, suppliers, supply, supply_extension
+from app.api.v1.endpoints import admin, analyze, api_keys, auth, billing, business_truth, dashboard, decision, decision_explain, deploy, governance, listing, market, opportunity, p5, procurement, products, publish, suppliers, supply, supply_extension
 
 
 api_router = APIRouter(prefix="/api/v1")
@@ -20,6 +20,7 @@ api_router.include_router(business_truth.router, tags=["商业真实性增强层
 api_router.include_router(governance.router, tags=["数据治理"])
 api_router.include_router(market.router, tags=["市场情报"])
 api_router.include_router(opportunity.router, tags=["商业机会"])
+api_router.include_router(procurement.router, tags=["采购池"])
 api_router.include_router(suppliers.router, tags=["供应链匹配"])
 api_router.include_router(supply.router, tags=["供应链智能"])
 api_router.include_router(supply_extension.router, tags=["1688 插件导入"])

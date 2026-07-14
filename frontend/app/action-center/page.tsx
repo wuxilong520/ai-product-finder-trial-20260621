@@ -8,8 +8,9 @@ export default async function ActionCenterPage() {
   const text = lang === "en"
     ? {
         title: "Action Center",
-        desc: "Handle AI picks, profit review, supplier suggestions, price comparisons, and execution status in one place.",
+        desc: "Handle AI picks, procurement pool, profit review, supplier suggestions, price comparisons, and execution status in one place.",
         top10: "Top 10 Picks",
+        procurement: "Procurement Pool",
         profit: "Profit Review",
         supplier: "Supplier Suggestions",
         compare: "Price Compare",
@@ -22,8 +23,9 @@ export default async function ActionCenterPage() {
       }
     : {
         title: "商业执行",
-        desc: "这里统一处理 AI 推荐商品、利润分析、供应商推荐、价格对比和执行状态。",
+        desc: "这里统一处理 AI 推荐商品、采购池、利润分析、供应商推荐、价格对比和执行状态。",
         top10: "推荐商品TOP10",
+        procurement: "采购池",
         profit: "利润分析",
         supplier: "供应商推荐",
         compare: "价格对比",
@@ -43,8 +45,9 @@ export default async function ActionCenterPage() {
             <CardTitle>{text.title}</CardTitle>
             <p className="text-sm leading-7 text-white/55">{text.desc}</p>
           </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-5">
+          <CardContent className="grid gap-4 md:grid-cols-6">
             <MetricCard label={text.top10} value={text.single} />
+            <MetricCard label={text.procurement} value={text.linked} />
             <MetricCard label={text.profit} value={text.linked} />
             <MetricCard label={text.supplier} value={text.real} />
             <MetricCard label={text.compare} value={text.direct} />

@@ -14,6 +14,7 @@ from app.models.market_intelligence import MarketIntelligence
 from app.models.market_signal_history import MarketSignalHistory
 from app.models.platform import Platform
 from app.models.product import Product, ProductImage, ProductKeyword, SourcingLink
+from app.models.procurement import ProcurementAnalysisHistory, ProcurementPoolItem, ProcurementSupplierItem, ProductGroup, SupplierRealityHistory
 from app.models.product_intelligence import ProductIntelligence
 from app.models.request_metric import RequestMetricRecord
 from app.models.supplier import Supplier, SupplierExtensionImport, SupplierPriceHistory, SupplierProduct, SupplyAnalysisHistory, SupplySupplierHistory
@@ -43,11 +44,16 @@ __all__ = [
     "ProductImage",
     "ProductIntelligence",
     "ProductKeyword",
+    "ProcurementAnalysisHistory",
+    "ProcurementPoolItem",
+    "ProcurementSupplierItem",
     "RequestMetricRecord",
+    "ProductGroup",
     "Supplier",
     "SupplierExtensionImport",
     "SupplierPriceHistory",
     "SupplierProduct",
+    "SupplierRealityHistory",
     "SupplyAnalysisHistory",
     "SupplySupplierHistory",
     "SourcingLink",

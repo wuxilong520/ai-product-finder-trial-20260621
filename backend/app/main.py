@@ -24,7 +24,7 @@ from app.billing import order as billing_order  # noqa: F401
 from app.services.auth import auth_service
 from app.services.task_status import task_status_service
 from app.workspace.service import workspace_service
-from app.models import analysis, auth_identity, business_truth, category, crawl_run, decision_recommendation, market_analysis_history, market_intelligence, market_signal_history, platform, product, product_intelligence, request_metric, supplier, supplier_match, user  # noqa: F401
+from app.models import analysis, auth_identity, business_truth, category, crawl_run, decision_recommendation, market_analysis_history, market_intelligence, market_signal_history, platform, procurement, product, product_intelligence, request_metric, supplier, supplier_match, user  # noqa: F401
 from app.workspace import model as workspace_model  # noqa: F401
 from app.api_key import model as api_key_model  # noqa: F401
 from app.quota import model as quota_model  # noqa: F401

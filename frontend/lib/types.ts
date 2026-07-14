@@ -245,6 +245,76 @@ export type SupplyExtensionImportResponse = {
   import_id: number;
 };
 
+export type ProcurementPoolSupplierItem = {
+  id: number;
+  supplier_id?: number | null;
+  supplier_name: string;
+  price: number;
+  moq?: number | null;
+  delivery_time?: number | null;
+  supplier_score: number;
+  risk_score: number;
+  supplier_truth_score: number;
+  source_type: string;
+};
+
+export type ProcurementAnalysis = {
+  product_score: number;
+  market_score: number;
+  supplier_score: number;
+  profit_score: number;
+  risk_level: string;
+  recommendation: string;
+  reason: string[];
+  profit?: Record<string, unknown>;
+  market?: Record<string, unknown>;
+};
+
+export type ProcurementPoolItem = {
+  id: number;
+  keyword: string;
+  category?: string | null;
+  title: string;
+  image?: string | null;
+  description?: string | null;
+  source_platform: string;
+  source_url?: string | null;
+  supplier_count: number;
+  min_price: number;
+  max_price: number;
+  avg_price: number;
+  estimated_profit: number;
+  market_score: number;
+  status: string;
+  supplier_score: number;
+  risk_level: string;
+  created_at: string;
+  suppliers?: ProcurementPoolSupplierItem[];
+  analysis?: ProcurementAnalysis | null;
+};
+
+export type ProcurementPoolResponse = {
+  items: ProcurementPoolItem[];
+  total: number;
+};
+
+export type ProcurementCompareResponse = {
+  items: ProcurementPoolItem[];
+  count: number;
+};
+
+export type ProcurementImportResponse = {
+  imported: boolean;
+  pool_item_id: number;
+  created: boolean;
+};
+
+export type ProcurementFavoriteResponse = {
+  ok: boolean;
+  status: string;
+  pool_item_id: number;
+};
+
 export type OpportunityAnalyzeResponse = {
   keyword: string;
   market: string;

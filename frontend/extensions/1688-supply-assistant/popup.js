@@ -4,6 +4,7 @@ const apiBaseUrlInput = document.getElementById("apiBaseUrl");
 const extensionCodeInput = document.getElementById("extensionCode");
 const connectButton = document.getElementById("connectButton");
 const syncButton = document.getElementById("syncButton");
+const procurementButton = document.getElementById("procurementButton");
 
 function setMessage(text, type = "") {
   messageNode.textContent = text || "";
@@ -90,6 +91,43 @@ connectButton.addEventListener("click", () => {
 
 syncButton.addEventListener("click", () => {
   void syncCurrentProduct();
+});
+
+async function importCurrentProcurement() {
+  const localState = await chrome.storage.local.get(["apiBaseUrl"]);
+  const sessionState = await chrome.storage.session.get(["extensionToken", "expiresAt"]);
+  const apiBaseUrl = (localState.apiBaseUrl || "").trim();
+  const token = sessionState.extensionToken;
+  const expiresAt = sessionState.expiresAt || 0;
+  if (!apiBaseUrl || !token || Date.now() >= expiresAt) {
+    setStatus(false);
+    setMessage("连接已过期，请重新生成连接码并连接。", "error");
+    return;
+  }
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id || !tab.url || !/1688\.com/i.test(tab.url)) {
+    setMessage("请先打开1688商品详情页，再点加入采购池。", "error");
+    return;
+  }
+  procurementButton.disabled = true;
+  setMessage("正在读取当前商品页面...");
+  try {
+    const response = await chrome.tabs.sendMessage(tab.id, { type: "SHANGHANG_EXTRACT_SUPPLY" });
+    if (!response?.ok || !response?.payload) {
+      throw new Error("当前页面没有读到完整商品信息，请确认已经打开商品详情页。");
+    }
+    setMessage("正在加入商航采购池...");
+    const result = await window.ShanghangExtensionApi.importCurrentProcurement(apiBaseUrl, token, response.payload);
+    setMessage(`已加入采购池，商品ID：${result.pool_item_id}`, "success");
+  } catch (error) {
+    setMessage(error instanceof Error ? error.message : "加入采购池失败", "error");
+  } finally {
+    procurementButton.disabled = false;
+  }
+}
+
+procurementButton.addEventListener("click", () => {
+  void importCurrentProcurement();
 });
 
 void loadState();

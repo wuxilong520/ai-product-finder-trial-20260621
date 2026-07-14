@@ -26,6 +26,8 @@ export const ROUTES = {
   actionTopPicks: "/action-center/top-picks",
   actionProfit: "/action-center/profit-review",
   actionSuppliers: "/action-center/suppliers",
+  actionProcurement: "/action-center/procurement",
+  actionProcurementCompare: "/action-center/procurement/compare",
   actionPriceCompare: "/action-center/price-compare",
   actionLaunchQueue: "/action-center/launch-queue",
   executionDashboard: "/dashboard/execution",

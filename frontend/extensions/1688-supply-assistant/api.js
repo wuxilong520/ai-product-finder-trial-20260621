@@ -29,7 +29,24 @@ async function importCurrentSupply(apiBaseUrl, token, payload) {
   return data;
 }
 
+async function importCurrentProcurement(apiBaseUrl, token, payload) {
+  const response = await fetch(`${apiBaseUrl.replace(/\/+$/, "")}/api/v1/procurement/import`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data?.message || data?.detail || "加入采购池失败");
+  }
+  return data;
+}
+
 window.ShanghangExtensionApi = {
   exchangeExtensionCode,
-  importCurrentSupply
+  importCurrentSupply,
+  importCurrentProcurement
 };

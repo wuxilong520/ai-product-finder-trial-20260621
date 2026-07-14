@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, Loader2, Search } from "lucide-react";
 
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState, Input, InfoTile, StatusBadge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/design-system/components";
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState, Input, InfoTile, KpiTile, SectionIntro, StatusBadge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/design-system/components";
 import { ROUTES } from "@/config/routes";
 import { createSupplyExtensionCode, matchSuppliers } from "@/lib/api-gateway";
 import { getToken } from "@/lib/auth";
@@ -28,6 +28,7 @@ export function SupplierCenter({
   const [maxPrice, setMaxPrice] = useState("");
   const [minScore, setMinScore] = useState("0");
   const [availableOnly, setAvailableOnly] = useState(true);
+  const [sortBy, setSortBy] = useState<"highest_score" | "lowest_price" | "lowest_risk">("highest_score");
   const [extensionCode, setExtensionCode] = useState("");
   const [extensionCodeCopied, setExtensionCodeCopied] = useState(false);
   const [extensionLoading, setExtensionLoading] = useState(false);
@@ -110,16 +111,41 @@ export function SupplierCenter({
     return baseFiltered;
   }, [availableOnly, items, maxPrice, minScore]);
 
+  const rankedItems = useMemo(() => {
+    const list = [...filteredItems];
+    if (sortBy === "lowest_price") {
+      return list.sort((a, b) => (a.supplier_price ?? Number.MAX_SAFE_INTEGER) - (b.supplier_price ?? Number.MAX_SAFE_INTEGER));
+    }
+    if (sortBy === "lowest_risk") {
+      return list.sort((a, b) => riskWeight(a.risk_level) - riskWeight(b.risk_level));
+    }
+    return list.sort((a, b) => {
+      const scoreA = Number(a.supplier_real_score ?? a.supplier_score ?? a.match_score ?? 0);
+      const scoreB = Number(b.supplier_real_score ?? b.supplier_score ?? b.match_score ?? 0);
+      return scoreB - scoreA;
+    });
+  }, [filteredItems, sortBy]);
+
   return (
     <div className="space-y-5">
       <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
-        <CardHeader>
-          <div className="text-xs uppercase tracking-[0.24em] text-white/40">商航AI · 供应链匹配页</div>
-          <CardTitle>先把能接得住的 1688 货源筛出来，再决定要不要继续做</CardTitle>
-          <p className="text-sm text-white/55">
-            这一步不是拍板上架，而是先确认：这个商品在 1688 这类供货入口里，有没有价格合适、匹配度够高、当前还能供货的货源。
-          </p>
-        </CardHeader>
+        <CardContent className="p-6">
+          <SectionIntro
+            eyebrow="商航AI · 供应链竞争中心"
+            title="把供应商当成竞争池来比较，而不是后台列表"
+            description="这一步不是拍板上架，而是先确认：这个商品有没有价格合适、真实性更高、MOQ 更合理、风险更低的供应商。你可以先排序，再决定要不要继续采购。"
+          />
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <KpiTile label="当前商品" value={keyword || "未指定"} hint="现在正在比较的商品关键词" />
+        <KpiTile label="供应商数量" value={`${rankedItems.length} 个`} hint="当前筛选后还能继续看的供应商数量" />
+        <KpiTile label="当前筛选" value={availableOnly ? "只看可供货" : "显示全部"} hint="避免把没货的结果排到前面" />
+        <KpiTile label="当前排序" value={sortByLabel(sortBy)} hint="你可以自己决定按评分、价格或风险看" />
+      </div>
+
+      <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-3">
             <InfoTile label="当前类目" value={initialCategory || "未指定"} />
@@ -164,6 +190,22 @@ export function SupplierCenter({
               />
               只看当前显示为可供货
             </label>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {[
+              ["highest_score", "评分最高"],
+              ["lowest_price", "价格最低"],
+              ["lowest_risk", "风险最低"],
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setSortBy(value as "highest_score" | "lowest_price" | "lowest_risk")}
+                className={`rounded-2xl border px-4 py-3 text-sm transition ${sortBy === value ? "border-[#4F7CFF]/30 bg-[#4F7CFF]/12 text-[#D8E3FF]" : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"}`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
           <div className="rounded-2xl border border-[#4F7CFF]/20 bg-[#4F7CFF]/10 px-4 py-3 text-sm leading-7 text-[#D8E3FF]">
             当前这页已经能真实展示：供应商推荐、价格、MOQ、供应评分、供应可信度、认证情况、利润预估、风险提示。还没完全打通的是真实 1688 官方接口，不会假装成已接通。
@@ -241,13 +283,14 @@ export function SupplierCenter({
       <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
           <CardHeader>
-            <CardTitle>当前更值得继续看的货源结果</CardTitle>
+            <CardTitle>供应商排行卡</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {filteredItems.length ? filteredItems.map((item, index) => (
+            {rankedItems.length ? rankedItems.map((item, index) => (
               <a key={`${item.platform}-${item.supplier_url}-${index}`} href={item.supplier_url} target="_blank" rel="noreferrer" className="block rounded-[18px] border border-white/8 bg-white/[0.03] p-4 transition hover:bg-white/[0.06]">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="neutral">#{index + 1}</Badge>
                     <Badge variant="brand">{item.platform}</Badge>
                     <StatusBadge status={item.match_score >= 70 ? "success" : item.match_score >= 45 ? "warning" : "blocked"} label={`${text.supplierMatchScore} ${Math.round(item.match_score)}`} />
                   </div>
@@ -294,6 +337,13 @@ export function SupplierCenter({
                     用这个结果继续做利润决策
                   </Link>
                   <Link
+                    href={item.supplier_url}
+                    target="_blank"
+                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10"
+                  >
+                    查看供应商详情
+                  </Link>
+                  <Link
                     href={`${ROUTES.createTask}?keyword=${encodeURIComponent(keyword || item.supplier_title)}`}
                     className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10"
                   >
@@ -301,7 +351,7 @@ export function SupplierCenter({
                   </Link>
                 </div>
               </a>
-            )) : <EmptyState text={items.length ? "当前筛选条件下没有结果，你可以放宽价格或匹配分。" : text.supplierEmpty} />}
+            )) : <EmptyState title={items.length ? "当前筛选下没有供应商" : "当前还没有供应商结果"} text={items.length ? "你可以放宽价格、评分或可供货筛选条件。" : text.supplierEmpty} />}
           </CardContent>
         </Card>
 
@@ -325,19 +375,25 @@ export function SupplierCenter({
               <Table>
                 <TableHeader>
                   <tr>
+                    <TableHead>排行</TableHead>
+                    <TableHead>供应商</TableHead>
                     <TableHead>{text.supplierPlatform}</TableHead>
-                    <TableHead>{text.title}</TableHead>
                     <TableHead>{text.supplierPrice}</TableHead>
-                    <TableHead>{text.supplierMatchScore}</TableHead>
+                    <TableHead>真实性评分</TableHead>
+                    <TableHead>价格竞争力</TableHead>
+                    <TableHead>风险</TableHead>
                   </tr>
                 </TableHeader>
                 <TableBody>
-                  {filteredItems.map((item, index) => (
+                  {rankedItems.map((item, index) => (
                     <TableRow key={`table-${item.platform}-${index}`}>
+                      <TableCell>#{index + 1}</TableCell>
+                      <TableCell>{item.supplier_name || item.supplier_title}</TableCell>
                       <TableCell>{item.platform}</TableCell>
-                      <TableCell>{item.supplier_title}</TableCell>
                       <TableCell>{item.supplier_price != null ? `${item.currency || ""} ${Number(item.supplier_price).toFixed(2)}` : text.supplierPending}</TableCell>
-                      <TableCell>{Math.round(item.match_score)}</TableCell>
+                      <TableCell>{item.supplier_real_score != null ? Number(item.supplier_real_score).toFixed(1) : "待判断"}</TableCell>
+                      <TableCell>{item.price_competitiveness_score != null ? Number(item.price_competitiveness_score).toFixed(1) : "待判断"}</TableCell>
+                      <TableCell>{item.risk_level || "待判断"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -350,14 +406,14 @@ export function SupplierCenter({
               <CardTitle>优先合作顺序</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {[...filteredItems].sort((a, b) => b.match_score - a.match_score).slice(0, 5).map((item, index) => (
+              {rankedItems.slice(0, 5).map((item, index) => (
                 <div key={`rank-${item.platform}-${index}`} className="flex items-center justify-between rounded-[16px] border border-white/8 bg-white/[0.03] px-4 py-3">
                   <div>
                     <div className="text-sm font-medium text-white">TOP {index + 1} · {item.platform}</div>
                     <div className="mt-1 text-xs text-white/45">{item.supplier_title}</div>
                   </div>
-                  <Badge variant={item.match_score >= 70 ? "success" : item.match_score >= 45 ? "warning" : "neutral"} className="px-3 py-1.5 text-sm">
-                    {Math.round(item.match_score)}
+                  <Badge variant={riskWeight(item.risk_level) === 1 ? "success" : riskWeight(item.risk_level) === 2 ? "warning" : "error"} className="px-3 py-1.5 text-sm">
+                    {item.procurement_recommendation || Math.round(item.match_score)}
                   </Badge>
                 </div>
               ))}
@@ -384,6 +440,20 @@ export function SupplierCenter({
       </div>
     </div>
   );
+}
+
+function sortByLabel(value: "highest_score" | "lowest_price" | "lowest_risk") {
+  if (value === "lowest_price") return "价格最低";
+  if (value === "lowest_risk") return "风险最低";
+  return "评分最高";
+}
+
+function riskWeight(value?: string | null) {
+  const normalized = String(value || "").toLowerCase();
+  if (normalized === "low") return 1;
+  if (normalized === "medium") return 2;
+  if (normalized === "high") return 3;
+  return 9;
 }
 
 function HintCard({ title, desc }: { title: string; desc: string }) {

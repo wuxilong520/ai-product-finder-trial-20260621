@@ -18,6 +18,8 @@ export function ProductDetail({
 }) {
   const intelligence = analysisReport?.intelligence;
   const analysis = analysisReport?.analysis;
+  const productImages = Array.isArray(product.images) ? product.images : [];
+  const productSourceUrl = product.source_url && product.source_url.trim() ? product.source_url : null;
   const recommendationMeta = intelligence ? getRecommendationMeta(intelligence.recommendation, lang) : null;
   const text = t(lang);
 
@@ -26,8 +28,8 @@ export function ProductDetail({
       <Card className="section-card">
         <CardHeader className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="flex flex-1 gap-4">
-            {product.images?.[0]?.image_url ? (
-              <img src={product.images[0].image_url} alt={product.title} className="h-24 w-24 rounded-3xl border border-app-border object-cover shadow-app-soft" />
+            {productImages[0]?.image_url ? (
+              <img src={productImages[0].image_url} alt={product.title} className="h-24 w-24 rounded-3xl border border-app-border object-cover shadow-app-soft" />
             ) : (
               <div className="h-24 w-24 rounded-3xl border border-app-border bg-white/5" />
             )}
@@ -51,11 +53,13 @@ export function ProductDetail({
             </div>
             </div>
           </div>
-          <Button asChild variant="outline">
-            <Link href={product.source_url} target="_blank">
-              {text.detailOpenSource}
-            </Link>
-          </Button>
+          {productSourceUrl ? (
+            <Button asChild variant="outline">
+              <Link href={productSourceUrl} target="_blank">
+                {text.detailOpenSource}
+              </Link>
+            </Button>
+          ) : null}
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
@@ -136,8 +140,8 @@ export function ProductDetail({
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
-            {product.images.length > 0 ? (
-              product.images.map((image) => (
+            {productImages.length > 0 ? (
+              productImages.map((image) => (
                 <img key={image.id} src={image.image_url} alt={product.title} className="h-52 w-full rounded-2xl border border-app-border object-cover shadow-app-soft" />
               ))
             ) : (

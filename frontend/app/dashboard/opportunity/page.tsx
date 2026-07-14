@@ -4,13 +4,14 @@ import { redirect } from "next/navigation";
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
 import { ShopifyConnectCard } from "@/components/market/shopify-connect-card";
 import { ROUTES } from "@/config/routes";
+import { TOKEN_KEY } from "@/lib/auth";
 import { Badge, Button, Card, CardContent, KpiTile, SectionIntro } from "@/design-system/components";
 import { analyzeOpportunity, getOpportunityHistory } from "@/lib/api";
 import { getMarketConnections } from "@/lib/api/market";
 
 export default async function OpportunityDashboardPage() {
   const cookieStore = await cookies();
-  const token = cookieStore.get("shanghang_token")?.value;
+  const token = cookieStore.get(TOKEN_KEY)?.value;
   const lang = (cookieStore.get("shanghang_lang")?.value as "zh" | "en") || "zh";
   if (!token) redirect(ROUTES.login);
 

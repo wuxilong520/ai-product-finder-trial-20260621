@@ -16,13 +16,22 @@ export default async function OpportunityDashboardPage() {
   if (!token) redirect(ROUTES.login);
 
   const keyword = "wireless earbuds";
-  const [opportunity, history, connections] = await Promise.all([
-    analyzeOpportunity({ keyword, marketplace: "US", region: "US" }, token),
-    getOpportunityHistory(token, 12),
-    getMarketConnections(token).catch(() => ({})),
+  const [opportunityResult, historyResult, connectionResult] = await Promise.allSettled([
+    withTimeout(analyzeOpportunity({ keyword, marketplace: "US", region: "US" }, token), 15000, "商业机会分析超时"),
+    withTimeout(getOpportunityHistory(token, 12), 10000, "机会历史读取超时"),
+    withTimeout(getMarketConnections(token), 8000, "连接状态读取超时"),
   ]);
 
-  const opportunitySummary = buildOpportunitySummary(opportunity.decision);
+  const opportunity = opportunityResult.status === "fulfilled" ? opportunityResult.value : null;
+  const history = historyResult.status === "fulfilled" ? historyResult.value : { items: [] };
+  const connections = connectionResult.status === "fulfilled" ? connectionResult.value : {};
+  const pageErrors = [
+    opportunityResult.status === "rejected" ? `商业机会数据暂时没拿到：${humanizeError(opportunityResult.reason)}` : null,
+    historyResult.status === "rejected" ? `历史记录暂时没拿到：${humanizeError(historyResult.reason)}` : null,
+    connectionResult.status === "rejected" ? `Shopify 连接状态暂时没拿到：${humanizeError(connectionResult.reason)}` : null,
+  ].filter(Boolean) as string[];
+
+  const opportunitySummary = buildOpportunitySummary(opportunity?.decision);
   const latestHistory = history.items[0];
 
   return (
@@ -38,12 +47,23 @@ export default async function OpportunityDashboardPage() {
           </CardContent>
         </Card>
 
+        {pageErrors.length ? (
+          <Card className="border-amber-400/20 bg-amber-400/10">
+            <CardContent className="space-y-2 p-5 text-sm text-amber-100">
+              <div className="font-medium">这页已经打开了，但有部分实时数据暂时没回来。</div>
+              {pageErrors.map((item) => (
+                <div key={item}>{item}</div>
+              ))}
+            </CardContent>
+          </Card>
+        ) : null}
+
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <KpiTile label="市场评分" value={String(opportunity.market_score)} hint={`需求 ${opportunity.market_signal.demand_score} / 趋势 ${opportunity.market_signal.trend_direction}`} />
-          <KpiTile label="利润空间" value={`${opportunity.profit_margin.toFixed(2)}%`} hint={`预估售价 ${opportunity.profit_signal.expected_price}`} />
-          <KpiTile label="供应难度" value={String(opportunity.supplier_score)} hint={`来源 ${opportunity.supplier_signal.supplier_source}`} />
-          <KpiTile label="机会总分" value={String(opportunity.opportunity_score)} hint={`可信度 ${(opportunity.confidence * 100).toFixed(0)}%`} />
-          <KpiTile label="当前动作" value={opportunity.decision} hint={opportunitySummary} className={decisionToneClass(opportunity.decision)} />
+          <KpiTile label="市场评分" value={metricValue(opportunity?.market_score)} hint={opportunity ? `需求 ${opportunity.market_signal.demand_score} / 趋势 ${opportunity.market_signal.trend_direction}` : "等待实时市场结果"} />
+          <KpiTile label="利润空间" value={opportunity ? `${opportunity.profit_margin.toFixed(2)}%` : "暂未返回"} hint={opportunity ? `预估售价 ${opportunity.profit_signal.expected_price}` : "等待利润结果"} />
+          <KpiTile label="供应难度" value={metricValue(opportunity?.supplier_score)} hint={opportunity ? `来源 ${opportunity.supplier_signal.supplier_source}` : "等待供应链结果"} />
+          <KpiTile label="机会总分" value={metricValue(opportunity?.opportunity_score)} hint={opportunity ? `可信度 ${(opportunity.confidence * 100).toFixed(0)}%` : "等待机会总分"} />
+          <KpiTile label="当前动作" value={opportunity?.decision || "等待结果"} hint={opportunitySummary} className={decisionToneClass(opportunity?.decision)} />
         </div>
 
         <ShopifyConnectCard token={token} initialConnection={(connections as Record<string, any>)?.shopify} />
@@ -57,44 +77,44 @@ export default async function OpportunityDashboardPage() {
                   当前关键词：`{keyword}`。下面这块是这次机会判断最核心的四层：市场、供应、利润、执行。
                 </div>
               </div>
-              <Badge variant="neutral">{opportunity.market}</Badge>
+              <Badge variant="neutral">{opportunity?.market || "等待结果"}</Badge>
             </div>
 
             <div className="mt-5 space-y-4">
               <SectionCard
                 title="1. 市场信号"
                 rows={[
-                  ["需求评分", `${opportunity.market_signal.demand_score}`],
-                  ["趋势方向", opportunity.market_signal.trend_direction],
-                  ["竞争强度", opportunity.market_signal.competition_level],
-                  ["市场可信度", `${(opportunity.market_signal.confidence * 100).toFixed(0)}%`],
+                  ["需求评分", metricValue(opportunity?.market_signal.demand_score)],
+                  ["趋势方向", opportunity?.market_signal.trend_direction || "等待结果"],
+                  ["竞争强度", opportunity?.market_signal.competition_level || "等待结果"],
+                  ["市场可信度", opportunity ? `${(opportunity.market_signal.confidence * 100).toFixed(0)}%` : "等待结果"],
                 ]}
               />
               <SectionCard
                 title="2. 供应链确认"
                 rows={[
-                  ["供应商评分", `${opportunity.supplier_signal.supplier_score}`],
-                  ["供货来源", opportunity.supplier_signal.supplier_source],
-                  ["拿货成本", `${opportunity.supplier_signal.product_cost}`],
-                  ["起订量 MOQ", `${opportunity.supplier_signal.MOQ}`],
+                  ["供应商评分", metricValue(opportunity?.supplier_signal.supplier_score)],
+                  ["供货来源", opportunity?.supplier_signal.supplier_source || "等待结果"],
+                  ["拿货成本", metricValue(opportunity?.supplier_signal.product_cost)],
+                  ["起订量 MOQ", metricValue(opportunity?.supplier_signal.MOQ)],
                 ]}
               />
               <SectionCard
                 title="3. 利润验证"
                 rows={[
-                  ["预估售价", `${opportunity.profit_signal.expected_price}`],
-                  ["毛利润", `${opportunity.profit_signal.gross_margin}`],
-                  ["净利润率", `${opportunity.profit_signal.net_margin}%`],
-                  ["利润可信度", `${(opportunity.profit_signal.profit_confidence * 100).toFixed(0)}%`],
+                  ["预估售价", metricValue(opportunity?.profit_signal.expected_price)],
+                  ["毛利润", metricValue(opportunity?.profit_signal.gross_margin)],
+                  ["净利润率", opportunity ? `${opportunity.profit_signal.net_margin}%` : "等待结果"],
+                  ["利润可信度", opportunity ? `${(opportunity.profit_signal.profit_confidence * 100).toFixed(0)}%` : "等待结果"],
                 ]}
               />
               <SectionCard
                 title="4. Shopify 动作"
                 rows={[
-                  ["店铺可执行", opportunity.execution.shopify_ready ? "可以" : "当前没有真实店铺商品信号"],
-                  ["允许建草稿", opportunity.execution.draft_allowed ? "允许" : "不允许"],
-                  ["允许直接发", opportunity.execution.publish_allowed ? "允许" : "不允许"],
-                  ["当前平台动作", opportunity.shopify_action],
+                  ["店铺可执行", opportunity ? (opportunity.execution.shopify_ready ? "可以" : "当前没有真实店铺商品信号") : "等待结果"],
+                  ["允许建草稿", opportunity ? (opportunity.execution.draft_allowed ? "允许" : "不允许") : "等待结果"],
+                  ["允许直接发", opportunity ? (opportunity.execution.publish_allowed ? "允许" : "不允许") : "等待结果"],
+                  ["当前平台动作", opportunity?.shopify_action || "等待结果"],
                 ]}
               />
             </div>
@@ -104,12 +124,12 @@ export default async function OpportunityDashboardPage() {
             <Card className="border-white/8 bg-[#111A2E] p-6">
               <div className="text-sm font-medium text-white">现在建议你怎么做</div>
               <div className="mt-4 rounded-3xl border border-white/8 bg-white/5 p-5">
-                <div className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${decisionChip(opportunity.decision)}`}>
-                  {opportunity.decision}
+                <div className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${decisionChip(opportunity?.decision)}`}>
+                  {opportunity?.decision || "等待结果"}
                 </div>
                 <div className="mt-4 text-lg font-semibold text-white">{opportunitySummary}</div>
                 <div className="mt-2 text-sm leading-7 text-white/60">
-                  {buildActionCopy(opportunity.decision, opportunity.execution.draft_allowed, opportunity.execution.publish_allowed)}
+                  {buildActionCopy(opportunity?.decision, opportunity?.execution.draft_allowed, opportunity?.execution.publish_allowed)}
                 </div>
                 <div className="mt-4 flex flex-wrap gap-3">
                   <Button asChild>
@@ -125,7 +145,7 @@ export default async function OpportunityDashboardPage() {
             <Card className="border-white/8 bg-[#111A2E] p-6">
               <div className="text-sm font-medium text-white">风险提醒</div>
               <div className="mt-4 space-y-3 text-sm text-white/70">
-                {opportunity.risk_flags.length ? (
+                {opportunity?.risk_flags?.length ? (
                   opportunity.risk_flags.map((item) => (
                     <div key={item} className="rounded-2xl border border-amber-400/15 bg-amber-400/10 px-4 py-3 text-amber-100">
                       {humanizeRisk(item)}
@@ -170,27 +190,7 @@ export default async function OpportunityDashboardPage() {
   );
 }
 
-function Metric({
-  title,
-  value,
-  desc,
-  tone = "text-white",
-}: {
-  title: string;
-  value: string;
-  desc: string;
-  tone?: string;
-}) {
-  return (
-    <Card className="border-white/8 bg-[#111A2E] p-5">
-      <div className="text-xs text-white/45">{title}</div>
-      <div className={`mt-2 text-2xl font-semibold ${tone}`}>{value}</div>
-      <div className="mt-2 text-sm leading-6 text-white/55">{desc}</div>
-    </Card>
-  );
-}
-
-function decisionToneClass(decision: string) {
+function decisionToneClass(decision?: string | null) {
   const normalized = String(decision || "").toUpperCase();
   if (normalized === "BUY" || normalized === "SCALE") return "border-emerald-400/20 bg-emerald-400/10";
   if (normalized === "TEST") return "border-[#4F7CFF]/20 bg-[#4F7CFF]/10";
@@ -214,16 +214,18 @@ function SectionCard({ title, rows }: { title: string; rows: Array<[string, stri
   );
 }
 
-function buildOpportunitySummary(decision: string) {
+function buildOpportunitySummary(decision?: string | null) {
   const normalized = String(decision || "").toUpperCase();
+  if (!normalized) return "页面已经打开，正在等待实时商业机会结果返回。";
   if (normalized === "BUY") return "这条机会已经通过市场、供应和利润三层判断，可以继续推进放量准备。";
   if (normalized === "TEST") return "这条机会值得先小步测试，先建 Shopify 草稿，再看真实反馈。";
   if (normalized === "WATCH") return "这条机会先观察，不建议马上投入上架动作。";
   return "这条机会当前不建议进入执行动作。";
 }
 
-function buildActionCopy(decision: string, draftAllowed: boolean, publishAllowed: boolean) {
+function buildActionCopy(decision?: string | null, draftAllowed?: boolean, publishAllowed?: boolean) {
   const normalized = String(decision || "").toUpperCase();
+  if (!normalized) return "当前实时接口比较慢，这页先把结构和入口稳稳打开，等结果回来后再显示动作建议。";
   if (normalized === "TEST") {
     return draftAllowed
       ? "当前适合先做 Shopify Draft。也就是先上草稿，不直接发布，先看后面的利润和反馈。"
@@ -238,15 +240,7 @@ function buildActionCopy(decision: string, draftAllowed: boolean, publishAllowed
   return "当前先不要做执行动作，避免把不成熟商品推到店铺。";
 }
 
-function decisionTone(decision: string) {
-  const normalized = String(decision || "").toUpperCase();
-  if (normalized === "BUY") return "text-emerald-300";
-  if (normalized === "TEST") return "text-amber-300";
-  if (normalized === "WATCH") return "text-white/80";
-  return "text-rose-300";
-}
-
-function decisionChip(decision: string) {
+function decisionChip(decision?: string | null) {
   const normalized = String(decision || "").toUpperCase();
   if (normalized === "BUY") return "bg-emerald-400/15 text-emerald-200";
   if (normalized === "TEST") return "bg-amber-400/15 text-amber-200";
@@ -262,4 +256,24 @@ function humanizeRisk(flag: string) {
     high_competition: "竞争太密，进场后容易被卷价格。",
   };
   return mapper[flag] || flag;
+}
+
+async function withTimeout<T>(promise: Promise<T>, ms: number, message: string) {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => reject(new Error(message)), ms);
+    }),
+  ]);
+}
+
+function humanizeError(error: unknown) {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === "string" && error) return error;
+  return "暂时读取失败";
+}
+
+function metricValue(value: number | string | null | undefined) {
+  if (value == null || value === "") return "等待结果";
+  return String(value);
 }

@@ -14,6 +14,7 @@ export function ProductIntelligencePanel({ productId, lang }: { productId: numbe
   const [data, setData] = useState<ProductIntelligenceEngineResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const reasons = Array.isArray(data?.reasons) ? data.reasons : [];
 
   useEffect(() => {
     let cancelled = false;
@@ -76,17 +77,17 @@ export function ProductIntelligencePanel({ productId, lang }: { productId: numbe
               <InfoTile label={text.productIntelRisk} value={scoreText(data.risk_score)} />
               <InfoTile label={text.productIntelRecommend} value={scoreText(data.recommendation_score)} />
             </div>
-            <div className="rounded-2xl border border-app-border bg-white/5 p-4 shadow-app-soft">
-              <p className="text-sm text-app-text-muted">{text.productIntelReasons}</p>
-              <div className="mt-3 space-y-2">
-                {data.reasons.map((item) => (
-                  <p key={item} className="text-sm text-app-text-secondary">
-                    - {item}
-                  </p>
-                ))}
+              <div className="rounded-2xl border border-app-border bg-white/5 p-4 shadow-app-soft">
+                <p className="text-sm text-app-text-muted">{text.productIntelReasons}</p>
+                <div className="mt-3 space-y-2">
+                  {reasons.length ? reasons.map((item) => (
+                    <p key={item} className="text-sm text-app-text-secondary">
+                      - {item}
+                    </p>
+                  )) : <p className="text-sm text-app-text-secondary">- {text.emptyState}</p>}
+                </div>
               </div>
             </div>
-          </div>
         ) : (
           <EmptyState text={text.productIntelEmpty} />
         )}

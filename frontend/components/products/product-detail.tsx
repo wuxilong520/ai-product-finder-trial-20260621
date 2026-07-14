@@ -20,6 +20,11 @@ export function ProductDetail({
   const analysis = analysisReport?.analysis;
   const productImages = Array.isArray(product.images) ? product.images : [];
   const productSourceUrl = product.source_url && product.source_url.trim() ? product.source_url : null;
+  const intelligenceReasons = Array.isArray(intelligence?.reason) ? intelligence.reason : [];
+  const analysisCoreKeywords = Array.isArray(analysis?.core_keywords) ? analysis.core_keywords : [];
+  const analysisSellingPoints = Array.isArray(analysis?.selling_points) ? analysis.selling_points : [];
+  const analysisSourcingKeywords = Array.isArray(analysis?.sourcing_keywords) ? analysis.sourcing_keywords : [];
+  const sourceLinks = (analysis?.source_links || {}) as Record<string, string | undefined>;
   const recommendationMeta = intelligence ? getRecommendationMeta(intelligence.recommendation, lang) : null;
   const text = t(lang);
 
@@ -90,11 +95,11 @@ export function ProductDetail({
               <div className="rounded-2xl border border-app-border bg-white/5 p-4 shadow-app-soft">
                 <p className="text-sm text-app-text-muted">{text.detailReason}</p>
                 <div className="mt-3 space-y-2">
-                  {intelligence.reason.map((item) => (
+                  {intelligenceReasons.length ? intelligenceReasons.map((item) => (
                     <p key={item} className="text-sm text-app-text-secondary">
                       - {item}
                     </p>
-                  ))}
+                  )) : <p className="text-sm text-app-text-secondary">- {text.emptyState}</p>}
                 </div>
               </div>
             </div>
@@ -113,14 +118,14 @@ export function ProductDetail({
                 <p className="text-sm text-app-text-muted">{text.detailTitleZh}</p>
                 <p className="mt-1 text-base font-semibold text-white">{analysis.title_zh}</p>
               </div>
-              <TagGroup title={text.detailKeywords} items={analysis.core_keywords} lang={lang} />
-              <TagGroup title={text.detailSellingPoints} items={analysis.selling_points} lang={lang} />
-              <TagGroup title={text.detailSourcingKeywords} items={analysis.sourcing_keywords} lang={lang} />
+              <TagGroup title={text.detailKeywords} items={analysisCoreKeywords} lang={lang} />
+              <TagGroup title={text.detailSellingPoints} items={analysisSellingPoints} lang={lang} />
+              <TagGroup title={text.detailSourcingKeywords} items={analysisSourcingKeywords} lang={lang} />
               <div>
                 <p className="text-sm text-app-text-muted">{text.detailSourceLinks}</p>
                 <div className="mt-2 flex flex-col gap-2">
-                  <LinkTile href={analysis.source_links["1688_url"]} label={text.open1688} />
-                  <LinkTile href={analysis.source_links["pdd_url"]} label={text.openPdd} />
+                  <LinkTile href={sourceLinks["1688_url"]} label={text.open1688} />
+                  <LinkTile href={sourceLinks["pdd_url"]} label={text.openPdd} />
                 </div>
               </div>
             </div>

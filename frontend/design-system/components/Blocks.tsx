@@ -212,10 +212,25 @@ export function TagList({ items, emptyText }: { items: string[]; emptyText?: str
   );
 }
 
-export function LinkTile({ href, label }: { href: string; label: string }) {
+export function LinkTile({ href, label }: { href?: string; label: string }) {
+  const safeHref = toSafeExternalHref(href);
+  if (!safeHref) {
+    return (
+      <div className="group flex items-center justify-between rounded-2xl border border-app-border bg-white/5 px-4 py-3 no-underline">
+        <div className="flex items-center gap-3">
+          <div className="rounded-xl bg-app-brand-soft p-2 text-app-brand-secondary">
+            <Globe2 className="h-4 w-4" />
+          </div>
+          <span className="font-medium text-white">{label}</span>
+        </div>
+        <span className="text-sm text-app-text-muted">当前没有可打开链接</span>
+      </div>
+    );
+  }
+
   return (
     <Link
-      href={href}
+      href={safeHref}
       target="_blank"
       className="group flex items-center justify-between rounded-2xl border border-app-border bg-white/5 px-4 py-3 no-underline transition hover:-translate-y-0.5 hover:border-app-border-strong hover:bg-white/8 hover:shadow-app-soft"
     >
@@ -262,4 +277,12 @@ export function StatusSummary({
       <StatusBadge status={status} label={label} />
     </div>
   );
+}
+
+function toSafeExternalHref(href?: string) {
+  if (!href || typeof href !== "string") return null;
+  const trimmed = href.trim();
+  if (!trimmed) return null;
+  if (!/^https?:\/\//i.test(trimmed)) return null;
+  return trimmed;
 }

@@ -14,6 +14,7 @@ export function BusinessTruthCard({ productId, lang }: { productId: number; lang
   const [data, setData] = useState<BusinessTruthRecommendResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const reasons = Array.isArray(data?.reasons) ? data.reasons : [];
 
   useEffect(() => {
     let cancelled = false;
@@ -81,11 +82,11 @@ export function BusinessTruthCard({ productId, lang }: { productId: number; lang
             <div className="rounded-2xl border border-app-border bg-white/5 p-4 shadow-app-soft">
               <p className="text-sm text-app-text-muted">利润判断说明</p>
               <div className="mt-3 space-y-2">
-                {data.reasons.map((item) => (
+                {reasons.length ? reasons.map((item) => (
                   <p key={item} className="text-sm text-app-text-secondary">
                     - {item}
                   </p>
-                ))}
+                )) : <p className="text-sm text-app-text-secondary">- {text.emptyState}</p>}
               </div>
             </div>
           </div>

@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+import inspect
 
 from sqlalchemy.orm import Session
 
@@ -127,7 +128,11 @@ class ProductService:
         if not product:
             raise AppError("PRODUCT_NOT_FOUND", "没找到这个商品", "db", 404)
 
-        ai_result = analyze_title_with_ai(db, product.title, workspace_id=workspace_id)
+        ai_signature = inspect.signature(analyze_title_with_ai)
+        if "db" in ai_signature.parameters:
+            ai_result = analyze_title_with_ai(db, product.title, workspace_id=workspace_id)
+        else:
+            ai_result = analyze_title_with_ai(product.title)
         product.title_zh = ai_result.get("title_zh")
         try:
             product_repository.save(db, product)

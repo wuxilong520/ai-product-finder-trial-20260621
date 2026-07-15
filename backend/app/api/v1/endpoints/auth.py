@@ -12,7 +12,9 @@ from app.core.config import settings
 from app.core.runtime import AppError
 from app.schemas.auth import (
     LoginResponse,
+    LogoutRequest,
     PasswordResetRequest,
+    TokenRefreshRequest,
     SendCodeRequest,
     SendCodeResponse,
     UserCreate,
@@ -103,9 +105,11 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     if not user:
         raise AppError("LOGIN_FAILED", "账号或密码错误", "auth", 401)
 
-    token = auth_service.create_login_token(user)
+    tokens = auth_service.create_login_tokens(user)
+    auth_service.issue_refresh_session(db, user, tokens["refresh_token"])
     return LoginResponse(
-        access_token=token,
+        access_token=tokens["access_token"],
+        refresh_token=tokens["refresh_token"],
         token_type="bearer",
         user=UserRead.model_validate(user),
     )
@@ -114,12 +118,31 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 @router.post("/login/code", response_model=LoginResponse)
 def login_with_code(payload: VerifyCodeLoginRequest, db: Session = Depends(db_session)):
     user = auth_service.login_with_code(db, email=payload.email, code=payload.code)
-    token = auth_service.create_login_token(user)
+    tokens = auth_service.create_login_tokens(user)
+    auth_service.issue_refresh_session(db, user, tokens["refresh_token"])
     return LoginResponse(
-        access_token=token,
+        access_token=tokens["access_token"],
+        refresh_token=tokens["refresh_token"],
         token_type="bearer",
         user=UserRead.model_validate(user),
     )
+
+
+@router.post("/refresh", response_model=LoginResponse)
+def refresh_token(payload: TokenRefreshRequest, db: Session = Depends(db_session)):
+    user, tokens = auth_service.refresh_login(db, payload.refresh_token)
+    return LoginResponse(
+        access_token=tokens["access_token"],
+        refresh_token=tokens["refresh_token"],
+        token_type="bearer",
+        user=UserRead.model_validate(user),
+    )
+
+
+@router.post("/logout")
+def logout(payload: LogoutRequest, db: Session = Depends(db_session)):
+    auth_service.logout(db, payload.refresh_token)
+    return {"success": True}
 
 
 @router.post("/password/reset")

@@ -8,6 +8,7 @@ class UserCreate(BaseModel):
         examples=["testuser01@example.com"],
         description="注册邮箱",
     )
+    username: str | None = Field(default=None, min_length=2, max_length=80, description="用户名")
     password: str = Field(
         min_length=8,
         examples=["Test@123456"],
@@ -19,6 +20,7 @@ class UserCreate(BaseModel):
         "json_schema_extra": {
             "example": {
                 "email": "testuser01@example.com",
+                "username": "testuser01",
                 "password": "Test@123456",
                 "full_name": "测试用户01",
             }
@@ -73,12 +75,16 @@ class SendCodeResponse(BaseModel):
 class UserRead(BaseModel):
     id: int
     email: EmailStr
+    username: str
     full_name: str | None = None
     role: str
+    status: str
     workspace_id: int | None = None
     is_active: bool
     is_superuser: bool
     last_login_at: datetime | None = None
+    failed_login_attempts: int = 0
+    locked_until: datetime | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -87,6 +93,7 @@ class UserRead(BaseModel):
 
 class LoginResponse(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str
     user: UserRead
 
@@ -94,19 +101,30 @@ class LoginResponse(BaseModel):
         "json_schema_extra": {
             "example": {
                 "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.token",
+                "refresh_token": "refresh.example.token",
                 "token_type": "bearer",
                 "user": {
                     "id": 1,
                     "email": "testuser01@example.com",
+                    "username": "testuser01",
                     "full_name": "测试用户01",
                     "is_active": True,
                     "is_superuser": False,
+                    "status": "active",
                     "created_at": "2026-06-20T10:00:00+08:00",
                     "updated_at": "2026-06-20T10:00:00+08:00",
                 },
             }
         }
     }
+
+
+class TokenRefreshRequest(BaseModel):
+    refresh_token: str = Field(min_length=16)
+
+
+class LogoutRequest(BaseModel):
+    refresh_token: str | None = None
 
 
 class TokenPayload(BaseModel):

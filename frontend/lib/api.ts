@@ -156,6 +156,36 @@ export async function login(email: string, password: string): Promise<LoginRespo
   return response.json();
 }
 
+export async function refreshLogin(refreshToken: string): Promise<LoginResponse> {
+  ensureApiBase();
+  const response = await fetchWithTimeout(`${API_V1}/auth/refresh`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  }, 15000);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "刷新登录失败"));
+  }
+  return response.json();
+}
+
+export async function logout(refreshToken?: string): Promise<{ success: boolean }> {
+  ensureApiBase();
+  const response = await fetchWithTimeout(`${API_V1}/auth/logout`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ refresh_token: refreshToken || null }),
+  }, 15000);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "退出失败"));
+  }
+  return response.json();
+}
+
 export async function loginWithCode(email: string, code: string): Promise<LoginResponse> {
   ensureApiBase();
   const response = await fetchWithTimeout(`${API_V1}/auth/login/code`, {
@@ -182,6 +212,7 @@ export async function registerUser(email: string, password: string, verification
     },
     body: JSON.stringify({
       email,
+      username: email.split("@")[0],
       password,
       verification_code: verificationCode,
       full_name: fullName || null,

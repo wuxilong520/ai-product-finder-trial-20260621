@@ -1,6 +1,7 @@
 from app.models.analysis import AIAnalysisResult
 from app.models.amazon_market_signal import AmazonMarketHistory, AmazonMarketSignal
 from app.models.auth_identity import AuthChallenge, AuthVerificationCode
+from app.models.auth_session import AuthRefreshToken
 from app.models.base import TimestampMixin
 from app.models.business_truth import BusinessTruthDecision
 from app.models.business_opportunity_history import BusinessOpportunityHistory
@@ -27,6 +28,7 @@ __all__ = [
     "AmazonMarketSignal",
     "AuthChallenge",
     "AuthVerificationCode",
+    "AuthRefreshToken",
     "BillingOrder",
     "BusinessTruthDecision",
     "BusinessOpportunityHistory",

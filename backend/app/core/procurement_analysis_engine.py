@@ -5,8 +5,8 @@ from statistics import mean
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.market_intelligence_engine import market_intelligence_engine
 from app.models.procurement import ProcurementAnalysisHistory, ProcurementPoolItem, ProcurementSupplierItem
+from app.services.market_intelligence_engine import market_intelligence_engine
 from app.services.profit_truth_engine import profit_truth_engine
 
 

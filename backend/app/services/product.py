@@ -18,7 +18,7 @@ from app.services.task_status import task_status_service
 
 
 class ProductService:
-    async def crawl_and_save(self, db: Session, url: str, user_id: int) -> CrawlResult:
+    async def crawl_and_save(self, db: Session, url: str, user_id: int, workspace_id: int | None = None) -> CrawlResult:
         await task_status_service.update("crawl", "pending", "采集任务已创建", {"url": url})
         await task_status_service.update("crawl", "running", "正在采集商品页面", {"url": url})
         platform_code = detect_platform(url)
@@ -46,7 +46,7 @@ class ProductService:
                 raise exc
             raise AppError("REAL_SCRAPE_FAILED", f"采集失败：{exc}", "scrape", 500) from exc
 
-        product = product_repository.get_by_source_url(db, preview.source_url)
+        product = product_repository.get_by_source_url(db, preview.source_url, workspace_id=workspace_id)
         if product:
             product.title = preview.title
             product.current_price = preview.price
@@ -62,6 +62,7 @@ class ProductService:
                     db,
                     platform_id=platform.id,
                     created_by_user_id=user_id,
+                    workspace_id=workspace_id,
                     source_url=preview.source_url,
                     title=preview.title,
                     current_price=preview.price,
@@ -91,15 +92,22 @@ class ProductService:
         await task_status_service.update("crawl", "success", "采集完成", {"url": url, "product_id": product.id})
         return result
 
-    def analyze_product(self, db: Session, payload: AnalyzeRequest, user_id: int | None) -> tuple[Product, AnalyzeResult, ProductIntelligenceResult]:
+    def analyze_product(
+        self,
+        db: Session,
+        payload: AnalyzeRequest,
+        user_id: int | None,
+        *,
+        workspace_id: int | None = None,
+    ) -> tuple[Product, AnalyzeResult, ProductIntelligenceResult]:
         product = None
         if payload.product_id is not None:
-            product = product_repository.get_by_id(db, payload.product_id)
+            product = product_repository.get_by_id(db, payload.product_id, workspace_id=workspace_id)
         elif payload.title:
             shopify_platform = platform_repository.get_by_code(db, "shopify")
             if not shopify_platform:
                 raise AppError("PLATFORM_INIT_FAILED", "平台初始化不完整", "db", 500)
-            existing_product = product_repository.get_by_source_url(db, f"manual://{payload.title}")
+            existing_product = product_repository.get_by_source_url(db, f"manual://{workspace_id or 0}/{payload.title}", workspace_id=workspace_id)
             if existing_product:
                 product = existing_product
             else:
@@ -108,7 +116,8 @@ class ProductService:
                         db,
                         platform_id=shopify_platform.id,
                         created_by_user_id=user_id,
-                        source_url=f"manual://{payload.title}",
+                        workspace_id=workspace_id,
+                        source_url=f"manual://{workspace_id or 0}/{payload.title}",
                         title=payload.title,
                         review_count=0,
                     )
@@ -118,7 +127,7 @@ class ProductService:
         if not product:
             raise AppError("PRODUCT_NOT_FOUND", "没找到这个商品", "db", 404)
 
-        ai_result = analyze_title_with_ai(product.title)
+        ai_result = analyze_title_with_ai(db, product.title, workspace_id=workspace_id)
         product.title_zh = ai_result.get("title_zh")
         try:
             product_repository.save(db, product)
@@ -129,7 +138,7 @@ class ProductService:
             analysis = analysis_repository.create(
                 db,
                 product_id=product.id,
-                model_name=settings.openai_model,
+                model_name=ai_result.get("model_name") or settings.openai_model,
                 prompt_version="v1",
                 title_zh=ai_result.get("title_zh"),
                 core_keywords=ai_result.get("core_keywords") or [],
@@ -188,18 +197,29 @@ class ProductService:
             },
         )
         intelligence_payload = analyze_product_intelligence(
+            db,
             title=refreshed_product.title,
             price=refreshed_product.current_price,
             images=[image.image_url for image in refreshed_product.images],
             rating=refreshed_product.rating,
             review_count=refreshed_product.review_count,
             source_url=refreshed_product.source_url,
+            workspace_id=workspace_id,
         )
         intelligence_result = ProductIntelligenceResult(**intelligence_payload)
         log_info(f"ANALYZE_OK | product_id={product.id} | title={product.title} | sourcing_keyword={sourcing_keyword}")
+        refreshed_product = product_repository.get_by_id(db, product.id, workspace_id=workspace_id) or refreshed_product
         return refreshed_product, analysis_result, intelligence_result
 
-    async def analyze_full(self, db: Session, url: str, user_id: int | None, lang: str = "zh") -> dict:
+    async def analyze_full(
+        self,
+        db: Session,
+        url: str,
+        user_id: int | None,
+        lang: str = "zh",
+        *,
+        workspace_id: int | None = None,
+    ) -> dict:
         await task_status_service.update("analyze", "pending", "分析任务已创建", {"url": url, "lang": lang})
         try:
             await task_status_service.update("analyze", "running", "正在抓页面并准备分析", {"url": url, "lang": lang})
@@ -230,6 +250,7 @@ class ProductService:
                     db,
                     AnalyzeRequest(title=title),
                     user_id,
+                    workspace_id=workspace_id,
                 )
                 result = {
                     "status": "OK",
@@ -290,23 +311,23 @@ class ProductService:
             )
             raise
 
-    def list_products(self, db: Session, search: str | None, skip: int, limit: int):
-        return product_repository.list(db, search, skip, limit)
+    def list_products(self, db: Session, search: str | None, skip: int, limit: int, workspace_id: int | None = None):
+        return product_repository.list(db, search, skip, limit, workspace_id=workspace_id)
 
-    def get_product(self, db: Session, product_id: int):
-        return product_repository.get_by_id(db, product_id)
+    def get_product(self, db: Session, product_id: int, workspace_id: int | None = None):
+        return product_repository.get_by_id(db, product_id, workspace_id=workspace_id)
 
-    def delete_product(self, db: Session, product_id: int) -> bool:
-        product = product_repository.get_by_id(db, product_id)
+    def delete_product(self, db: Session, product_id: int, workspace_id: int | None = None) -> bool:
+        product = product_repository.get_by_id(db, product_id, workspace_id=workspace_id)
         if not product:
             return False
         product_repository.delete(db, product)
         return True
 
-    def batch_delete_products(self, db: Session, product_ids: list[int]) -> list[int]:
+    def batch_delete_products(self, db: Session, product_ids: list[int], workspace_id: int | None = None) -> list[int]:
         existing_products = []
         for product_id in product_ids:
-            product = product_repository.get_by_id(db, product_id)
+            product = product_repository.get_by_id(db, product_id, workspace_id=workspace_id)
             if product:
                 existing_products.append(product)
         if not existing_products:

@@ -1,15 +1,17 @@
 from datetime import UTC, datetime, timedelta
 import random
 import secrets
+import re
 
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.audit_logger import audit_logger
 from app.core.runtime import AppError
-from app.core.security import create_access_token, get_password_hash, verify_password
+from app.core.security import create_access_token, create_refresh_token, get_password_hash, verify_password
 from app.api_key.service import api_key_service
 from app.repositories.auth_identity import auth_identity_repository
+from app.repositories.auth_session import auth_session_repository
 from app.repositories.user import user_repository
 from app.schemas.auth import AuthChallengeResponse, UserCreate, UserRegisterRequest
 from app.billing.service import billing_service
@@ -18,13 +20,36 @@ from app.workspace.service import workspace_service
 
 
 class AuthService:
+    login_failure_limit = 5
+
+    def _is_user_active(self, user) -> bool:
+        return bool(getattr(user, "is_active", False)) and str(getattr(user, "status", "active")).lower() == "active"
+
     def _resolve_registration_role(self, *, requested_role: str | None = None, system_init: bool = False) -> str:
         role = (requested_role or "user").strip().lower()
         if role == "owner" and not system_init:
             raise PermissionError("owner 只能由系统初始化创建")
         if not system_init:
-            return "user"
+            return "member"
         return role
+
+    def _resolve_username(self, email: str, username: str | None = None) -> str:
+        candidate = str(username or "").strip()
+        if candidate:
+            return candidate[:80]
+        local_part = email.split("@", 1)[0]
+        normalized = re.sub(r"[^a-zA-Z0-9_\u4e00-\u9fa5]+", "_", local_part).strip("_")
+        return (normalized or local_part or "member")[:80]
+
+    def _resolve_unique_username(self, db: Session, email: str, username: str | None = None) -> str:
+        base = self._resolve_username(email, username)
+        candidate = base
+        suffix = 2
+        while user_repository.get_by_username(db, candidate):
+            tail = f"_{suffix}"
+            candidate = f"{base[: max(1, 80 - len(tail))]}{tail}"
+            suffix += 1
+        return candidate
 
     def _generate_code(self) -> str:
         return f"{random.randint(100000, 999999)}"
@@ -64,11 +89,15 @@ class AuthService:
         user = user_repository.create(
             db,
             email=payload.email,
+            username=self._resolve_unique_username(db, payload.email, getattr(payload, "username", None)),
             password_hash=get_password_hash(payload.password),
             full_name=payload.full_name,
             role=self._resolve_registration_role(system_init=False),
+            status="active",
             is_active=True,
             is_superuser=False,
+            failed_login_attempts=0,
+            locked_until=None,
         )
         workspace = workspace_service.get_or_create_default(db, user)
         user.workspace_id = workspace.id
@@ -132,10 +161,14 @@ class AuthService:
         user = user_repository.get_by_email(db, email)
         if not user:
             return None
+        if user.locked_until and user.locked_until > datetime.now(UTC):
+            raise AppError("LOGIN_LOCKED", "账号暂时被锁定，请稍后再试", "auth", 403)
         if not verify_password(password, user.password_hash):
+            self._record_failed_login(db, user)
             return None
-        if not user.is_active:
+        if not self._is_user_active(user):
             raise AppError("USER_BANNED", "你的账号已被封号，请联系团队处理", "auth", 403)
+        self._clear_failed_login(db, user)
         user.last_login_at = datetime.now(UTC)
         user_repository.save(db, user)
         audit_logger.write(
@@ -150,8 +183,9 @@ class AuthService:
         user = user_repository.get_by_email(db, email)
         if not user:
             raise AppError("USER_NOT_FOUND", "这个邮箱还没有注册，请先注册", "auth", 404)
-        if not user.is_active:
+        if not self._is_user_active(user):
             raise AppError("USER_BANNED", "你的账号已被封号，请联系团队处理", "auth", 403)
+        self._clear_failed_login(db, user)
         user.last_login_at = datetime.now(UTC)
         user_repository.save(db, user)
         audit_logger.write(
@@ -167,20 +201,80 @@ class AuthService:
         if not user:
             raise AppError("USER_NOT_FOUND", "这个邮箱还没有注册", "auth", 404)
         user.password_hash = get_password_hash(new_password)
+        self._clear_failed_login(db, user)
         db.add(user)
         db.commit()
         db.refresh(user)
         return user
 
-    def create_login_token(self, user) -> str:
-        return create_access_token(
+    def create_login_tokens(self, user) -> dict:
+        access_token = create_access_token(
             subject=user.id,
             expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
             extra_payload={
                 "workspace_id": user.workspace_id,
                 "role": getattr(user, "role", "user"),
+                "status": getattr(user, "status", "active"),
             },
         )
+        refresh_token = create_refresh_token(
+            subject=user.id,
+            extra_payload={
+                "workspace_id": user.workspace_id,
+                "role": getattr(user, "role", "member"),
+                "status": getattr(user, "status", "active"),
+            },
+        )
+        return {"access_token": access_token, "refresh_token": refresh_token}
+
+    def issue_refresh_session(self, db: Session, user, refresh_token: str) -> None:
+        payload = self._decode_token(refresh_token)
+        auth_session_repository.create(
+            db,
+            user_id=user.id,
+            workspace_id=user.workspace_id,
+            token_jti=str(payload.get("jti") or ""),
+            token=refresh_token,
+            expires_at=datetime.fromtimestamp(int(payload["exp"]), tz=UTC),
+        )
+
+    def refresh_login(self, db: Session, refresh_token: str):
+        payload = self._decode_token(refresh_token)
+        if payload.get("token_type") != "refresh":
+            raise AppError("TOKEN_INVALID", "刷新令牌无效", "auth", 401)
+        token_jti = str(payload.get("jti") or "")
+        record = auth_session_repository.get_active_by_jti(db, token_jti)
+        if not record:
+            raise AppError("TOKEN_INVALID", "刷新令牌已失效", "auth", 401)
+        user = user_repository.get_by_id(db, int(payload.get("sub") or 0))
+        if not user or not self._is_user_active(user):
+            raise AppError("AUTH_USER_INVALID", "用户不存在或已停用", "auth", 401)
+        auth_session_repository.touch(db, record)
+        tokens = self.create_login_tokens(user)
+        self.issue_refresh_session(db, user, tokens["refresh_token"])
+        return user, tokens
+
+    def logout(self, db: Session, refresh_token: str | None):
+        if refresh_token:
+            auth_session_repository.revoke_by_token(db, refresh_token)
+
+    def _decode_token(self, token: str) -> dict:
+        from app.core.security import decode_access_token
+
+        return decode_access_token(token)
+
+    def _record_failed_login(self, db: Session, user) -> None:
+        user.failed_login_attempts = int(getattr(user, "failed_login_attempts", 0)) + 1
+        if user.failed_login_attempts >= self.login_failure_limit:
+            user.locked_until = datetime.now(UTC) + timedelta(minutes=15)
+        user_repository.save(db, user)
+
+    def _clear_failed_login(self, db: Session, user) -> None:
+        if int(getattr(user, "failed_login_attempts", 0)) == 0 and getattr(user, "locked_until", None) is None:
+            return
+        user.failed_login_attempts = 0
+        user.locked_until = None
+        user_repository.save(db, user)
 
     def ensure_default_admin(self, db: Session):
         existing = user_repository.get_by_email(db, settings.first_superuser_email)
@@ -189,11 +283,15 @@ class AuthService:
         user = user_repository.create(
             db,
             email=settings.first_superuser_email,
+            username=self._resolve_unique_username(db, settings.first_superuser_email, "admin"),
             password_hash=get_password_hash(settings.first_superuser_password),
             full_name="System Admin",
             role=self._resolve_registration_role(requested_role="owner", system_init=True),
+            status="active",
             is_active=True,
             is_superuser=True,
+            failed_login_attempts=0,
+            locked_until=None,
         )
         workspace = workspace_service.get_or_create_default(db, user)
         user.workspace_id = workspace.id

@@ -23,6 +23,7 @@ class ProcurementPoolService:
         db: Session,
         *,
         user_id: int,
+        workspace_id: int | None = None,
         payload: dict,
     ) -> dict:
         supply_record = {
@@ -56,6 +57,7 @@ class ProcurementPoolService:
         result = self._upsert_pool_item_from_supplier_product(
             db,
             user_id=user_id,
+            workspace_id=workspace_id,
             supplier=supplier,
             product=product,
             source_type="1688_EXTENSION",
@@ -68,6 +70,7 @@ class ProcurementPoolService:
         db: Session,
         *,
         user_id: int,
+        workspace_id: int | None = None,
         keyword: str | None = None,
         category: str | None = None,
         price_range: tuple[float | None, float | None] | None = None,
@@ -79,6 +82,8 @@ class ProcurementPoolService:
         if keyword:
             self.hydrate_from_existing_supply(db, user_id=user_id, keyword=keyword, category=category)
         stmt: Select = select(ProcurementPoolItem).where(ProcurementPoolItem.user_id == user_id)
+        if workspace_id is not None:
+            stmt = stmt.where(ProcurementPoolItem.workspace_id == workspace_id)
         if keyword:
             stmt = stmt.where(ProcurementPoolItem.keyword.ilike(f"%{keyword.strip()}%"))
         if category:
@@ -98,7 +103,7 @@ class ProcurementPoolService:
             "total": len(enriched),
         }
 
-    def hydrate_from_existing_supply(self, db: Session, *, user_id: int, keyword: str, category: str | None = None) -> int:
+    def hydrate_from_existing_supply(self, db: Session, *, user_id: int, workspace_id: int | None = None, keyword: str, category: str | None = None) -> int:
         rows = db.execute(
             select(Supplier, SupplierProduct)
             .join(SupplierProduct, SupplierProduct.supplier_id == Supplier.id)
@@ -110,6 +115,7 @@ class ProcurementPoolService:
             result = self._upsert_pool_item_from_supplier_product(
                 db,
                 user_id=user_id,
+                workspace_id=workspace_id,
                 supplier=supplier,
                 product=product,
                 category_override=category,
@@ -119,22 +125,36 @@ class ProcurementPoolService:
         db.commit()
         return created
 
-    def get_pool_item(self, db: Session, *, user_id: int, pool_item_id: int) -> dict:
+    def get_pool_item(self, db: Session, *, user_id: int, pool_item_id: int, workspace_id: int | None = None) -> dict:
         item = db.scalar(
             select(ProcurementPoolItem)
             .where(ProcurementPoolItem.user_id == user_id)
             .where(ProcurementPoolItem.id == pool_item_id)
         )
+        if workspace_id is not None:
+            item = db.scalar(
+                select(ProcurementPoolItem)
+                .where(ProcurementPoolItem.user_id == user_id)
+                .where(ProcurementPoolItem.workspace_id == workspace_id)
+                .where(ProcurementPoolItem.id == pool_item_id)
+            )
         if not item:
             raise AppError("PROCUREMENT_ITEM_NOT_FOUND", "采购池里没有这个商品。", "procurement", 404)
         return self._serialize_pool_item(db, item, include_suppliers=True, include_analysis=True)
 
-    def favorite(self, db: Session, *, user_id: int, pool_item_id: int, action: str) -> dict:
+    def favorite(self, db: Session, *, user_id: int, pool_item_id: int, action: str, workspace_id: int | None = None) -> dict:
         item = db.scalar(
             select(ProcurementPoolItem)
             .where(ProcurementPoolItem.user_id == user_id)
             .where(ProcurementPoolItem.id == pool_item_id)
         )
+        if workspace_id is not None:
+            item = db.scalar(
+                select(ProcurementPoolItem)
+                .where(ProcurementPoolItem.user_id == user_id)
+                .where(ProcurementPoolItem.workspace_id == workspace_id)
+                .where(ProcurementPoolItem.id == pool_item_id)
+            )
         if not item:
             raise AppError("PROCUREMENT_ITEM_NOT_FOUND", "采购池里没有这个商品。", "procurement", 404)
         normalized = action.strip().upper()
@@ -150,24 +170,32 @@ class ProcurementPoolService:
         db.commit()
         return {"ok": True, "status": item.status, "pool_item_id": item.id}
 
-    def compare(self, db: Session, *, user_id: int, pool_item_ids: list[int]) -> dict:
+    def compare(self, db: Session, *, user_id: int, pool_item_ids: list[int], workspace_id: int | None = None) -> dict:
         limited_ids = pool_item_ids[:5]
         items = list(
             db.scalars(
                 select(ProcurementPoolItem)
                 .where(ProcurementPoolItem.user_id == user_id)
+                .where(ProcurementPoolItem.workspace_id == workspace_id if workspace_id is not None else True)
                 .where(ProcurementPoolItem.id.in_(limited_ids))
             ).all()
         )
         result = [self._serialize_pool_item(db, item, include_suppliers=True, include_analysis=True) for item in items]
         return {"items": result, "count": len(result)}
 
-    def analyze_pool_item(self, db: Session, *, user_id: int, pool_item_id: int) -> dict:
+    def analyze_pool_item(self, db: Session, *, user_id: int, pool_item_id: int, workspace_id: int | None = None) -> dict:
         item = db.scalar(
             select(ProcurementPoolItem)
             .where(ProcurementPoolItem.user_id == user_id)
             .where(ProcurementPoolItem.id == pool_item_id)
         )
+        if workspace_id is not None:
+            item = db.scalar(
+                select(ProcurementPoolItem)
+                .where(ProcurementPoolItem.user_id == user_id)
+                .where(ProcurementPoolItem.workspace_id == workspace_id)
+                .where(ProcurementPoolItem.id == pool_item_id)
+            )
         if not item:
             raise AppError("PROCUREMENT_ITEM_NOT_FOUND", "采购池里没有这个商品。", "procurement", 404)
         suppliers = list(
@@ -182,10 +210,17 @@ class ProcurementPoolService:
         db.commit()
         return procurement_analysis_engine.analyze(db, pool_item=item, supplier_items=suppliers)
 
-    def count_pool_items(self, db: Session, *, user_id: int) -> int:
-        return int(db.scalar(select(func.count(ProcurementPoolItem.id)).where(ProcurementPoolItem.user_id == user_id)) or 0)
+    def count_pool_items(self, db: Session, *, user_id: int, workspace_id: int | None = None) -> int:
+        stmt = select(func.count(ProcurementPoolItem.id)).where(ProcurementPoolItem.user_id == user_id)
+        if workspace_id is not None:
+            stmt = stmt.where(ProcurementPoolItem.workspace_id == workspace_id)
+        return int(db.scalar(stmt) or 0)
 
     def resolve_user_from_token(self, db: Session, *, authorization: str | None) -> int:
+        user_id, _workspace_id = self.resolve_user_context_from_token(db, authorization=authorization)
+        return user_id
+
+    def resolve_user_context_from_token(self, db: Session, *, authorization: str | None) -> tuple[int, int | None]:
         if not authorization or not authorization.startswith("Bearer "):
             raise AppError("AUTH_MISSING", "缺少登录信息", "auth", 401)
         raw_token = authorization.removeprefix("Bearer ").strip()
@@ -196,13 +231,17 @@ class ProcurementPoolService:
         user = user_repository.get_by_id(db, int(user_id))
         if not user:
             raise AppError("AUTH_USER_INVALID", "用户不存在", "auth", 401)
-        return int(user.id)
+        workspace_id = payload.get("workspace_id")
+        if workspace_id is None:
+            workspace_id = getattr(user, "workspace_id", None)
+        return int(user.id), int(workspace_id) if workspace_id is not None else None
 
     def _upsert_pool_item_from_supplier_product(
         self,
         db: Session,
         *,
         user_id: int,
+        workspace_id: int | None,
         supplier: Supplier,
         product: SupplierProduct | None,
         category_override: str | None = None,
@@ -229,8 +268,9 @@ class ProcurementPoolService:
         created = False
         if not item:
             item = ProcurementPoolItem(
-                user_id=user_id,
-                product_group_id=group.id,
+            user_id=user_id,
+            workspace_id=workspace_id,
+            product_group_id=group.id,
                 keyword=keyword,
                 category=category_override or supplier.product_category,
                 title=title,
@@ -316,6 +356,7 @@ class ProcurementPoolService:
         if not existing:
             existing = ProcurementSupplierItem(
                 pool_item_id=item.id,
+                workspace_id=item.workspace_id,
                 supplier_id=supplier.id,
                 supplier_product_id=product.id if product else None,
                 supplier_name=supplier.name,

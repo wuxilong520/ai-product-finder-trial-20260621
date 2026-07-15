@@ -13,6 +13,10 @@ from app.quota.service import quota_service
 from app.repositories.user import user_repository
 from app.workspace.service import workspace_service
 
+
+def _is_user_active(user: User) -> bool:
+    return bool(getattr(user, "is_active", False)) and str(getattr(user, "status", "active")).lower() == "active"
+
 def db_session() -> Generator[Session, None, None]:
     yield from get_db()
 
@@ -29,8 +33,10 @@ def get_current_user(
         if not key_record:
             raise AppError("API_KEY_INVALID", "API Key 无效", "auth", 401)
         user = user_repository.get_by_id(db, key_record.user_id)
-        if not user or not user.is_active:
-            raise AppError("AUTH_USER_INVALID", "用户不存在或已停用", "auth", 401)
+        if not user:
+            raise AppError("AUTH_USER_INVALID", "用户不存在", "auth", 401)
+        if not _is_user_active(user):
+            raise AppError("AUTH_USER_BANNED", "你的账号已被封号，请联系团队处理", "auth", 403)
         return user
 
     payload = decode_access_token(token)
@@ -39,8 +45,10 @@ def get_current_user(
         raise AppError("AUTH_INVALID", "登录信息无效", "auth", 401)
 
     user = user_repository.get_by_id(db, int(user_id))
-    if not user or not user.is_active:
-        raise AppError("AUTH_USER_INVALID", "用户不存在或已停用", "auth", 401)
+    if not user:
+        raise AppError("AUTH_USER_INVALID", "用户不存在", "auth", 401)
+    if not _is_user_active(user):
+        raise AppError("AUTH_USER_BANNED", "你的账号已被封号，请联系团队处理", "auth", 403)
     return user
 
 
@@ -95,6 +103,6 @@ def _build_request_context(
     return RequestAuthContext(
         user_id=current_user.id,
         workspace_id=workspace.id,
-        role=getattr(current_user, "role", "owner"),
+        role=getattr(current_user, "role", "user"),
         api_key_id=api_key_id,
     )

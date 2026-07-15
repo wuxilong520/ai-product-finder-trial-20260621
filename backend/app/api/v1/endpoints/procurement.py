@@ -48,6 +48,7 @@ def get_procurement_pool(
         return procurement_pool_service.list_pool(
             db,
             user_id=auth_context.user_id,
+            workspace_id=auth_context.workspace_id,
             keyword=keyword,
             category=category,
             price_range=_parse_range(price_range),
@@ -69,7 +70,7 @@ def get_procurement_product(
     auth_context=Depends(get_request_context),
 ):
     try:
-        return procurement_pool_service.get_pool_item(db, user_id=auth_context.user_id, pool_item_id=pool_item_id)
+        return procurement_pool_service.get_pool_item(db, user_id=auth_context.user_id, pool_item_id=pool_item_id, workspace_id=auth_context.workspace_id)
     except AppError as exc:
         return error_response(exc.error_code, exc.message, exc.stage, exc.status_code)
     except Exception as exc:
@@ -83,10 +84,11 @@ def import_procurement_payload(
     db: Session = Depends(db_session),
 ):
     try:
-        user_id = procurement_pool_service.resolve_user_from_token(db, authorization=authorization)
+        user_id, workspace_id = procurement_pool_service.resolve_user_context_from_token(db, authorization=authorization)
         result = procurement_pool_service.import_from_extension_payload(
             db,
             user_id=user_id,
+            workspace_id=workspace_id,
             payload=payload.model_dump(mode="json"),
         )
         return {
@@ -107,7 +109,7 @@ def analyze_procurement_item(
     auth_context=Depends(get_request_context),
 ):
     try:
-        return procurement_pool_service.analyze_pool_item(db, user_id=auth_context.user_id, pool_item_id=pool_item_id)
+        return procurement_pool_service.analyze_pool_item(db, user_id=auth_context.user_id, pool_item_id=pool_item_id, workspace_id=auth_context.workspace_id)
     except AppError as exc:
         return error_response(exc.error_code, exc.message, exc.stage, exc.status_code)
     except Exception as exc:
@@ -126,6 +128,7 @@ def favorite_procurement_item(
             user_id=auth_context.user_id,
             pool_item_id=payload.pool_item_id,
             action=payload.action,
+            workspace_id=auth_context.workspace_id,
         )
     except AppError as exc:
         return error_response(exc.error_code, exc.message, exc.stage, exc.status_code)
@@ -141,7 +144,7 @@ def compare_procurement_items(
 ):
     try:
         pool_item_ids = [int(value.strip()) for value in ids.split(",") if value.strip().isdigit()]
-        return procurement_pool_service.compare(db, user_id=auth_context.user_id, pool_item_ids=pool_item_ids)
+        return procurement_pool_service.compare(db, user_id=auth_context.user_id, pool_item_ids=pool_item_ids, workspace_id=auth_context.workspace_id)
     except AppError as exc:
         return error_response(exc.error_code, exc.message, exc.stage, exc.status_code)
     except Exception as exc:

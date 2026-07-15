@@ -21,12 +21,16 @@ export type AccountOverview = {
   user: {
     id: number;
     email: string;
+    username: string;
     full_name?: string | null;
     role: string;
+    status: string;
     workspace_id?: number | null;
     is_active: boolean;
     is_superuser: boolean;
     last_login_at?: string | null;
+    failed_login_attempts?: number;
+    locked_until?: string | null;
     created_at: string;
     updated_at: string;
   };

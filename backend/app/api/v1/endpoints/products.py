@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 import asyncio
 
-from app.api.deps import db_session, get_current_user
+from app.api.deps import db_session, get_request_context
 from app.core.runtime import AppError, error_response
 from app.schemas.product import (
     AnalyzeRequest,
@@ -45,10 +45,10 @@ async def extract_public_product(payload: PublicProductExtractRequest):
 async def crawl_product(
     payload: CrawlRequest,
     db: Session = Depends(db_session),
-    current_user=Depends(get_current_user),
+    auth_context=Depends(get_request_context),
 ):
     try:
-        result = await product_service.crawl_and_save(db, payload.url, current_user.id)
+        result = await product_service.crawl_and_save(db, payload.url, auth_context.user_id, workspace_id=auth_context.workspace_id)
     except AppError as exc:
         return error_response(exc.error_code, exc.message, exc.stage, exc.status_code)
     except Exception as exc:
@@ -60,12 +60,17 @@ async def crawl_product(
 def analyze_product(
     payload: AnalyzeRequest,
     db: Session = Depends(db_session),
-    current_user=Depends(get_current_user),
+    auth_context=Depends(get_request_context),
 ):
     asyncio.run(task_status_service.update("analyze", "pending", "分析任务已创建", {"product_id": payload.product_id, "title": payload.title}))
     asyncio.run(task_status_service.update("analyze", "running", "正在调用 AI 分析", {"product_id": payload.product_id, "title": payload.title}))
     try:
-        product, analysis, intelligence = product_service.analyze_product(db, payload, current_user.id)
+        product, analysis, intelligence = product_service.analyze_product(
+            db,
+            payload,
+            auth_context.user_id,
+            workspace_id=auth_context.workspace_id,
+        )
     except AppError as exc:
         asyncio.run(
             task_status_service.update(
@@ -105,9 +110,9 @@ def list_products(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(db_session),
-    current_user=Depends(get_current_user),
+    auth_context=Depends(get_request_context),
 ):
-    items, total = product_service.list_products(db, search, skip, limit)
+    items, total = product_service.list_products(db, search, skip, limit, workspace_id=auth_context.workspace_id)
     return ProductListResponse(items=[ProductRead.model_validate(item) for item in items], total=total)
 
 
@@ -115,9 +120,9 @@ def list_products(
 def batch_delete_products(
     payload: ProductBatchDeleteRequest,
     db: Session = Depends(db_session),
-    current_user=Depends(get_current_user),
+    auth_context=Depends(get_request_context),
 ):
-    deleted_ids = product_service.batch_delete_products(db, payload.product_ids)
+    deleted_ids = product_service.batch_delete_products(db, payload.product_ids, workspace_id=auth_context.workspace_id)
     if not deleted_ids:
         return error_response("PRODUCT_NOT_FOUND", "商品不存在", "db", status.HTTP_404_NOT_FOUND)
     return ProductBatchDeleteResponse(ok=True, deleted_ids=deleted_ids)
@@ -127,9 +132,9 @@ def batch_delete_products(
 def get_product(
     product_id: int,
     db: Session = Depends(db_session),
-    current_user=Depends(get_current_user),
+    auth_context=Depends(get_request_context),
 ):
-    product = product_service.get_product(db, product_id)
+    product = product_service.get_product(db, product_id, workspace_id=auth_context.workspace_id)
     if not product:
         return error_response("PRODUCT_NOT_FOUND", "商品不存在", "db", status.HTTP_404_NOT_FOUND)
     return ProductRead.model_validate(product)
@@ -139,10 +144,10 @@ def get_product(
 def get_product_intelligence(
     product_id: int,
     db: Session = Depends(db_session),
-    current_user=Depends(get_current_user),
+    auth_context=Depends(get_request_context),
 ):
     try:
-        payload = product_intelligence_engine.get_or_create_intelligence(db, product_id)
+        payload = product_intelligence_engine.get_or_create_intelligence(db, product_id, workspace_id=auth_context.workspace_id)
     except AppError as exc:
         return error_response(exc.error_code, exc.message, exc.stage, exc.status_code)
     except Exception as exc:
@@ -154,9 +159,9 @@ def get_product_intelligence(
 def delete_product(
     product_id: int,
     db: Session = Depends(db_session),
-    current_user=Depends(get_current_user),
+    auth_context=Depends(get_request_context),
 ):
-    ok = product_service.delete_product(db, product_id)
+    ok = product_service.delete_product(db, product_id, workspace_id=auth_context.workspace_id)
     if not ok:
         return error_response("PRODUCT_NOT_FOUND", "商品不存在", "db", status.HTTP_404_NOT_FOUND)
     return {"ok": True}

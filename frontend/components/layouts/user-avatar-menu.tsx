@@ -5,8 +5,8 @@ import { Crown, LogOut, Settings, Shield, User as UserIcon } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ROUTES } from "@/config/routes";
-import { getCurrentUser } from "@/lib/api";
-import { clearToken, getToken } from "@/lib/auth";
+import { getCurrentUser, logout } from "@/lib/api";
+import { clearToken, getRefreshToken, getToken } from "@/lib/auth";
 import type { User } from "@/lib/types";
 
 function getInitials(user: User | null) {
@@ -68,9 +68,15 @@ export function UserAvatarMenu() {
     };
   }, []);
 
-  function handleLogout() {
+  async function handleLogout() {
     setOpen(false);
-    clearToken();
+    try {
+      await logout(getRefreshToken() || undefined);
+    } catch {
+      // 退出失败也要把本地状态清掉，避免卡住用户
+    } finally {
+      clearToken();
+    }
     window.location.assign(ROUTES.login);
   }
 
@@ -79,7 +85,12 @@ export function UserAvatarMenu() {
   }
 
   return (
-    <div ref={rootRef} className="relative hidden md:block">
+    <div
+      ref={rootRef}
+      className="relative hidden md:block"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
       <div className="relative">
         <button
           type="button"

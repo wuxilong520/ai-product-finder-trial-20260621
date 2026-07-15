@@ -19,8 +19,8 @@ export default async function SettingsPage() {
   const token = (await cookies()).get(TOKEN_KEY)?.value || "";
   const text = lang === "en"
     ? {
-        title: "Account Settings",
-        desc: "Manage store links, account details, and login password here without any technical settings.",
+        title: "Workspace Settings",
+        desc: "Manage your account, team, plan, and security in one clean place.",
         store: "Store Links",
         storeStatus: "Current Status",
         storeCount: "Store Count",
@@ -39,7 +39,7 @@ export default async function SettingsPage() {
       }
     : {
         title: "账户设置",
-        desc: "这里统一管理店铺绑定、账号信息和登录密码，不展示任何技术配置。",
+        desc: "这里统一管理账号、团队、套餐和安全，不展示技术配置。",
         store: "店铺绑定",
         storeStatus: "当前状态",
         storeCount: "店铺数量",
@@ -125,7 +125,7 @@ export default async function SettingsPage() {
             <SectionIntro
               eyebrow="商航AI · 用户中心"
               title={text.title}
-              description="这里不是技术后台，而是你的配置中心。你在这里看账号、套餐、工作区、API Key、店铺绑定和订单状态，再决定下一步怎么继续用商航AI。"
+              description={text.desc}
               action={<UpgradeEntry label="去充值 / 升级" />}
             />
             <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -284,6 +284,41 @@ export default async function SettingsPage() {
               <InfoTile label="账号创建时间" value={overview.user.created_at.replace("T", " ").slice(0, 19)} />
               <InfoTile label="工作区创建时间" value={overview.workspace?.created_at ? overview.workspace.created_at.replace("T", " ").slice(0, 19) : "未分配"} />
               <InfoTile label="店铺发布状态" value={overview.store_links.shopify.publish_text} />
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-3">
+          <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+            <CardHeader>
+              <CardTitle>团队</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <InfoTile label="当前角色" value={overview.user.role === "owner" ? "Owner" : overview.user.role === "admin" ? "Admin" : "Member"} />
+              <InfoTile label="当前工作区" value={overview.workspace?.name || "未找到工作区"} />
+              <InfoTile label="成员管理" value="当前以工作区为单位做权限隔离" />
+            </CardContent>
+          </Card>
+
+          <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+            <CardHeader>
+              <CardTitle>套餐</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <InfoTile label="当前套餐" value={overview.billing.plan_name} />
+              <InfoTile label="可用模型" value={allowedModels.join(" / ") || "未开放"} />
+              <InfoTile label="可用通道" value={allowedProviders.join(" / ") || "未开放"} />
+            </CardContent>
+          </Card>
+
+          <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+            <CardHeader>
+              <CardTitle>安全</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <InfoTile label="登录方式" value="密码 / 验证码 / 刷新令牌" />
+              <InfoTile label="失败限制" value="已启用" />
+              <InfoTile label="退出登录" value="支持" />
             </CardContent>
           </Card>
         </div>

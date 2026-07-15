@@ -1,10 +1,11 @@
 from collections.abc import Generator
 
-from fastapi import Depends, Header
+from fastapi import Depends, Header, Request
 from sqlalchemy.orm import Session
 
 from app.api_key.validator import api_key_validator
 from app.core.database import get_db
+from app.core.request_context import bind_user_context
 from app.core.runtime import AppError
 from app.core.security import decode_access_token
 from app.middleware.auth_middleware import RequestAuthContext
@@ -23,6 +24,7 @@ def db_session() -> Generator[Session, None, None]:
 
 def get_current_user(
     authorization: str | None = Header(default=None),
+    request: Request = None,
     db: Session = Depends(db_session),
 ) -> User:
     if not authorization or not authorization.startswith("Bearer "):
@@ -37,6 +39,8 @@ def get_current_user(
             raise AppError("AUTH_USER_INVALID", "用户不存在", "auth", 401)
         if not _is_user_active(user):
             raise AppError("AUTH_USER_BANNED", "你的账号已被封号，请联系团队处理", "auth", 403)
+        if request is not None:
+            request.state.user_id = user.id
         return user
 
     payload = decode_access_token(token)
@@ -49,6 +53,8 @@ def get_current_user(
         raise AppError("AUTH_USER_INVALID", "用户不存在", "auth", 401)
     if not _is_user_active(user):
         raise AppError("AUTH_USER_BANNED", "你的账号已被封号，请联系团队处理", "auth", 403)
+    if request is not None:
+        request.state.user_id = user.id
     return user
 
 
@@ -56,12 +62,14 @@ def get_request_context(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(db_session),
     authorization: str | None = Header(default=None),
+    request: Request = None,
 ) -> RequestAuthContext:
     return _build_request_context(
         current_user=current_user,
         db=db,
         authorization=authorization,
         consume_api_quota=True,
+        request=request,
     )
 
 
@@ -69,12 +77,14 @@ def get_request_context_no_quota(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(db_session),
     authorization: str | None = Header(default=None),
+    request: Request = None,
 ) -> RequestAuthContext:
     return _build_request_context(
         current_user=current_user,
         db=db,
         authorization=authorization,
         consume_api_quota=False,
+        request=request,
     )
 
 
@@ -84,8 +94,13 @@ def _build_request_context(
     db: Session,
     authorization: str | None,
     consume_api_quota: bool,
+    request: Request | None,
 ) -> RequestAuthContext:
     workspace = workspace_service.get_or_create_default(db, current_user)
+    if request is not None:
+        request.state.user_id = current_user.id
+        request.state.workspace_id = workspace.id
+    bind_user_context(user_id=current_user.id, workspace_id=workspace.id)
     api_key_id = None
     if authorization and authorization.startswith("Bearer cbp_"):
         raw_key = authorization.removeprefix("Bearer ").strip()

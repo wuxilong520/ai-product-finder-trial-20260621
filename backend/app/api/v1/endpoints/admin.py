@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 import os
+from pathlib import Path
 import resource
+import shutil
 import socket
 
 from fastapi import APIRouter, Body, Depends, Query
@@ -21,6 +23,7 @@ from app.core.startup_checks import collect_runtime_summary
 from app.models.data_governance import SyncJobRecord
 from app.models.request_metric import RequestMetricRecord
 from app.models.user import User
+from app.models.user_activity_log import UserActivityLog
 from app.quota.model import WorkspaceQuota
 from app.repositories.user import user_repository
 from app.workspace.model import Workspace
@@ -81,6 +84,35 @@ def _as_utc_datetime(value: datetime) -> datetime:
     if value.tzinfo is None:
         return value.replace(tzinfo=UTC)
     return value.astimezone(UTC)
+
+
+def _db_runtime_info() -> dict:
+    url = str(settings.database_url or "").strip()
+    if url.startswith("sqlite:///"):
+        db_path = Path(url.replace("sqlite:///", "", 1)).resolve()
+        exists = db_path.exists()
+        return {
+            "engine": "sqlite",
+            "path": str(db_path),
+            "exists": exists,
+            "size_mb": round((db_path.stat().st_size / 1024 / 1024), 2) if exists else 0,
+        }
+    return {
+        "engine": "postgresql" if "postgres" in url else "unknown",
+        "path": None,
+        "exists": True,
+        "size_mb": None,
+    }
+
+
+def _filesystem_status() -> dict:
+    disk = shutil.disk_usage("/")
+    return {
+        "disk_total_gb": round(disk.total / 1024 / 1024 / 1024, 2),
+        "disk_used_gb": round(disk.used / 1024 / 1024 / 1024, 2),
+        "disk_free_gb": round(disk.free / 1024 / 1024 / 1024, 2),
+        "log_file_size_mb": round((LOG_FILE.stat().st_size / 1024 / 1024), 2) if LOG_FILE.exists() else 0,
+    }
 
 
 @router.get("/admin/overview")
@@ -383,10 +415,16 @@ def get_admin_system_status(
             select(RequestMetricRecord).where(RequestMetricRecord.created_at >= since)
         )
     )
+    activity_count = db.scalar(
+        select(func.count()).select_from(UserActivityLog).where(UserActivityLog.created_at >= since)
+    ) or 0
     total_requests = len(metrics)
     avg_response_time = round(sum(item.duration_ms for item in metrics) / total_requests, 2) if total_requests else 0
     error_requests = sum(1 for item in metrics if item.status_code >= 500)
+    slow_requests = sum(1 for item in metrics if item.duration_ms >= settings.slow_api_threshold_ms)
     error_rate = round((error_requests / total_requests) * 100, 2) if total_requests else 0
+    db_info = _db_runtime_info()
+    fs_info = _filesystem_status()
 
     return {
         "ai_system": {
@@ -400,11 +438,18 @@ def get_admin_system_status(
             "error_rate_percent": error_rate,
             "fallback_count_24h": _parse_fallback_count(24),
             "request_count_24h": total_requests,
+            "slow_request_count_24h": slow_requests,
+            "activity_count_24h": activity_count,
         },
         "server_status": {
             "cpu_load_1m": round(os.getloadavg()[0], 2) if hasattr(os, "getloadavg") else 0,
             "memory_mb": round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, 2),
             "network_status": _network_status(),
+            **fs_info,
+        },
+        "database_status": {
+            **db_info,
+            "workspace_isolation": True,
         },
         "core_services": runtime["services"],
     }

@@ -21,6 +21,7 @@ from app.models.request_metric import RequestMetricRecord
 from app.models.supplier import Supplier, SupplierExtensionImport, SupplierPriceHistory, SupplierProduct, SupplyAnalysisHistory, SupplySupplierHistory
 from app.models.supplier_match import SupplierMatch
 from app.models.user import User
+from app.models.user_activity_log import UserActivityLog
 
 __all__ = [
     "AIAnalysisResult",
@@ -63,4 +64,5 @@ __all__ = [
     "SyncJobRecord",
     "TimestampMixin",
     "User",
+    "UserActivityLog",
 ]

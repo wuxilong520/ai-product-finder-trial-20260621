@@ -46,4 +46,7 @@ RUN chmod +x /app/start.sh
 
 EXPOSE 8000
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD curl -fsS http://127.0.0.1:8000/health >/dev/null || exit 1
+
 CMD ["/app/start.sh"]

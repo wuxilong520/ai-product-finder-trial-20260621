@@ -89,6 +89,9 @@ class Settings(BaseSettings):
     google_oauth_redirect_uri: str = os.getenv("GOOGLE_OAUTH_REDIRECT_URI", "")
     tiktok_oauth_redirect_uri: str = os.getenv("TIKTOK_OAUTH_REDIRECT_URI", "")
     token_encryption_key: str = os.getenv("TOKEN_ENCRYPTION_KEY", "")
+    api_rate_limit_per_minute: int = int(os.getenv("API_RATE_LIMIT_PER_MINUTE", "120"))
+    auth_rate_limit_per_minute: int = int(os.getenv("AUTH_RATE_LIMIT_PER_MINUTE", "20"))
+    slow_api_threshold_ms: int = int(os.getenv("SLOW_API_THRESHOLD_MS", "3000"))
 
     model_config = SettingsConfigDict(
         env_file=(str(PROJECT_ROOT / ".env"), str(BACKEND_DIR / ".env")),

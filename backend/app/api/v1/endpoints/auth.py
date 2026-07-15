@@ -1,6 +1,6 @@
 import os
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
@@ -100,13 +100,16 @@ def send_code(payload: SendCodeRequest, db: Session = Depends(db_session)):
 
 
 @router.post("/login", response_model=LoginResponse)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(db_session)):
+def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(db_session)):
     user = auth_service.authenticate_user(db, email=form_data.username, password=form_data.password)
     if not user:
         raise AppError("LOGIN_FAILED", "账号或密码错误", "auth", 401)
 
     tokens = auth_service.create_login_tokens(user)
     auth_service.issue_refresh_session(db, user, tokens["refresh_token"])
+    request.state.user_id = user.id
+    request.state.workspace_id = user.workspace_id
+    request.state.activity_action = "user_login"
     return LoginResponse(
         access_token=tokens["access_token"],
         refresh_token=tokens["refresh_token"],
@@ -116,10 +119,13 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
 
 @router.post("/login/code", response_model=LoginResponse)
-def login_with_code(payload: VerifyCodeLoginRequest, db: Session = Depends(db_session)):
+def login_with_code(request: Request, payload: VerifyCodeLoginRequest, db: Session = Depends(db_session)):
     user = auth_service.login_with_code(db, email=payload.email, code=payload.code)
     tokens = auth_service.create_login_tokens(user)
     auth_service.issue_refresh_session(db, user, tokens["refresh_token"])
+    request.state.user_id = user.id
+    request.state.workspace_id = user.workspace_id
+    request.state.activity_action = "user_login_code"
     return LoginResponse(
         access_token=tokens["access_token"],
         refresh_token=tokens["refresh_token"],
@@ -129,8 +135,11 @@ def login_with_code(payload: VerifyCodeLoginRequest, db: Session = Depends(db_se
 
 
 @router.post("/refresh", response_model=LoginResponse)
-def refresh_token(payload: TokenRefreshRequest, db: Session = Depends(db_session)):
+def refresh_token(request: Request, payload: TokenRefreshRequest, db: Session = Depends(db_session)):
     user, tokens = auth_service.refresh_login(db, payload.refresh_token)
+    request.state.user_id = user.id
+    request.state.workspace_id = user.workspace_id
+    request.state.activity_action = "user_refresh_token"
     return LoginResponse(
         access_token=tokens["access_token"],
         refresh_token=tokens["refresh_token"],
@@ -140,8 +149,9 @@ def refresh_token(payload: TokenRefreshRequest, db: Session = Depends(db_session
 
 
 @router.post("/logout")
-def logout(payload: LogoutRequest, db: Session = Depends(db_session)):
+def logout(request: Request, payload: LogoutRequest, db: Session = Depends(db_session)):
     auth_service.logout(db, payload.refresh_token)
+    request.state.activity_action = "user_logout"
     return {"success": True}
 
 

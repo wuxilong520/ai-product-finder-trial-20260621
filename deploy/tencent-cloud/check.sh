@@ -25,6 +25,16 @@ check_container_running() {
   fi
 }
 
+check_container_health() {
+  local name="$1"
+  local health
+  health="$(sudo docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "${name}" 2>/dev/null || true)"
+  if [ "${health}" != "healthy" ] && [ "${health}" != "none" ]; then
+    echo "容器健康检查未通过: ${name} -> ${health}"
+    exit 1
+  fi
+}
+
 echo "检查网络..."
 sudo docker network inspect "${NETWORK_NAME}" >/dev/null
 
@@ -32,6 +42,9 @@ echo "检查核心容器..."
 check_container_running "${BACKEND_CONTAINER}"
 check_container_running "${FRONTEND_CONTAINER}"
 check_container_running "${NGINX_CONTAINER}"
+check_container_health "${BACKEND_CONTAINER}"
+check_container_health "${FRONTEND_CONTAINER}"
+check_container_health "${NGINX_CONTAINER}"
 
 echo "检查是否还有旧版遗留容器..."
 legacy_containers="$( (sudo docker ps -a --format '{{.Names}} {{.Label "app"}}' | grep 'tencent-cloud_' || true) | grep -v "${APP_LABEL}" || true )"
@@ -50,6 +63,14 @@ if [ "${health_status}" != "200" ]; then
   exit 1
 fi
 cat "${health_tmp}"
+
+echo "检查 request id 回传..."
+request_headers="$(mktemp /tmp/tencent-health-headers.XXXXXX.txt)"
+curl -sS -D "${request_headers}" -o /dev/null http://127.0.0.1/health
+if ! grep -qi '^X-Request-ID:' "${request_headers}"; then
+  echo "后端未返回 X-Request-ID"
+  exit 1
+fi
 
 echo "检查前端登录页..."
 login_tmp="$(mktemp /tmp/tencent-login.XXXXXX.html)"

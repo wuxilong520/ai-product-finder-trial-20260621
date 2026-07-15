@@ -25,11 +25,16 @@ LOCK_FILE="/tmp/shanghang-ai-deploy.lock"
 ENABLE_HTTPS="${ENABLE_HTTPS:-false}"
 SSL_CERT_PATH="${SSL_CERT_PATH:-}"
 SSL_CERT_KEY_PATH="${SSL_CERT_KEY_PATH:-}"
+BACKEND_MEMORY_LIMIT="${BACKEND_MEMORY_LIMIT:-1024m}"
+FRONTEND_MEMORY_LIMIT="${FRONTEND_MEMORY_LIMIT:-512m}"
+BACKEND_CPU_LIMIT="${BACKEND_CPU_LIMIT:-1.5}"
+FRONTEND_CPU_LIMIT="${FRONTEND_CPU_LIMIT:-1.0}"
 NGINX_PORT_ARGS=(-p 80:80)
 NGINX_TEMPLATE_PATH="${SCRIPT_DIR}/nginx.http.conf"
 RENDERED_NGINX_DIR="${RUNTIME_DIR}/nginx"
 RENDERED_NGINX_CONF="${RENDERED_NGINX_DIR}/default.conf"
 NGINX_VOLUME_ARGS=(-v "${RENDERED_NGINX_CONF}:/etc/nginx/conf.d/default.conf:ro")
+BACKUP_SCRIPT="${SCRIPT_DIR}/backup.sh"
 
 configure_nginx_mode() {
   local enable_https_normalized
@@ -170,18 +175,21 @@ update_deploy_state() {
   fi
 }
 
-mkdir -p "${DB_BACKUP_DIR}"
-touch "${DB_FILE}"
-
-if [ -s "${DB_FILE}" ]; then
-  backup_file="${DB_BACKUP_DIR}/product_mvp_$(date +%Y%m%d_%H%M%S).db"
-  cp "${DB_FILE}" "${backup_file}"
-  echo "已备份数据库到 ${backup_file}"
-fi
-
 set -a
 . "${ENV_FILE}"
 set +a
+
+if [ -x "${BACKUP_SCRIPT}" ]; then
+  "${BACKUP_SCRIPT}"
+else
+  mkdir -p "${DB_BACKUP_DIR}"
+  touch "${DB_FILE}"
+  if [ -s "${DB_FILE}" ]; then
+    backup_file="${DB_BACKUP_DIR}/product_mvp_$(date +%Y%m%d_%H%M%S).db"
+    cp "${DB_FILE}" "${backup_file}"
+    echo "已备份数据库到 ${backup_file}"
+  fi
+fi
 
 configure_nginx_mode
 render_nginx_config
@@ -226,6 +234,8 @@ sudo docker run -d \
   --network "${NETWORK_NAME}" \
   --network-alias backend \
   --restart unless-stopped \
+  --memory "${BACKEND_MEMORY_LIMIT}" \
+  --cpus "${BACKEND_CPU_LIMIT}" \
   --label "app=${APP_LABEL}" \
   --label "role=backend" \
   --label "deploy_commit=${DEPLOY_COMMIT}" \
@@ -241,6 +251,8 @@ sudo docker run -d \
   --network "${NETWORK_NAME}" \
   --network-alias frontend \
   --restart unless-stopped \
+  --memory "${FRONTEND_MEMORY_LIMIT}" \
+  --cpus "${FRONTEND_CPU_LIMIT}" \
   --label "app=${APP_LABEL}" \
   --label "role=frontend" \
   --label "deploy_commit=${DEPLOY_COMMIT}" \

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 import json
 from pathlib import Path
 
@@ -13,6 +14,7 @@ class AuditLogger:
     def write(self, *, user_id: int | None, action: str, payload: dict) -> None:
         AUDIT_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
         entry = {
+            "timestamp": datetime.now(UTC).isoformat(),
             "user_id": user_id,
             "action": action,
             "payload": payload,

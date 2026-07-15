@@ -27,6 +27,7 @@ class ProcurementPoolItem(TimestampMixin, Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    workspace_id: Mapped[int | None] = mapped_column(ForeignKey("workspaces.id", ondelete="SET NULL"), nullable=True, index=True)
     product_group_id: Mapped[int | None] = mapped_column(ForeignKey("product_groups.id", ondelete="SET NULL"), index=True, nullable=True)
     keyword: Mapped[str] = mapped_column(String(255), index=True)
     category: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -49,6 +50,7 @@ class ProcurementSupplierItem(TimestampMixin, Base):
     __tablename__ = "procurement_supplier_items"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    workspace_id: Mapped[int | None] = mapped_column(ForeignKey("workspaces.id", ondelete="SET NULL"), nullable=True, index=True)
     pool_item_id: Mapped[int] = mapped_column(ForeignKey("procurement_pool_items.id", ondelete="CASCADE"), index=True, nullable=False)
     supplier_id: Mapped[int | None] = mapped_column(ForeignKey("suppliers.id", ondelete="SET NULL"), index=True, nullable=True)
     supplier_product_id: Mapped[int | None] = mapped_column(ForeignKey("supplier_products.id", ondelete="SET NULL"), index=True, nullable=True)

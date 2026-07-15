@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+import secrets
 
 import jwt
 from passlib.context import CryptContext
@@ -20,7 +21,15 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def create_access_token(subject: str | int, expires_delta: timedelta | None = None, extra_payload: dict | None = None) -> str:
     expire = datetime.now(UTC) + (expires_delta or timedelta(minutes=settings.access_token_expire_minutes))
-    payload = {"sub": str(subject), "exp": expire}
+    payload = {"sub": str(subject), "exp": expire, "jti": secrets.token_urlsafe(16)}
+    if extra_payload:
+        payload.update(extra_payload)
+    return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
+
+
+def create_refresh_token(subject: str | int, expires_delta: timedelta | None = None, extra_payload: dict | None = None) -> str:
+    expire = datetime.now(UTC) + (expires_delta or timedelta(days=30))
+    payload = {"sub": str(subject), "exp": expire, "token_type": "refresh", "jti": secrets.token_urlsafe(24)}
     if extra_payload:
         payload.update(extra_payload)
     return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)

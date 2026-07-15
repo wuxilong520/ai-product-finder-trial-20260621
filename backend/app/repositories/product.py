@@ -7,15 +7,24 @@ from app.models.product import Product, ProductImage, ProductKeyword, SourcingLi
 
 
 class ProductRepository:
-    def get_by_id(self, db: Session, product_id: int) -> Product | None:
-        return db.get(Product, product_id)
+    def get_by_id(self, db: Session, product_id: int, workspace_id: int | None = None) -> Product | None:
+        stmt = select(Product).where(Product.id == product_id)
+        if workspace_id is not None:
+            stmt = stmt.where(Product.workspace_id == workspace_id)
+        return db.scalar(stmt)
 
-    def get_by_source_url(self, db: Session, source_url: str) -> Product | None:
-        return db.scalar(select(Product).where(Product.source_url == source_url))
+    def get_by_source_url(self, db: Session, source_url: str, workspace_id: int | None = None) -> Product | None:
+        stmt = select(Product).where(Product.source_url == source_url)
+        if workspace_id is not None:
+            stmt = stmt.where(Product.workspace_id == workspace_id)
+        return db.scalar(stmt)
 
-    def list(self, db: Session, search: str | None, skip: int, limit: int) -> tuple[list[Product], int]:
+    def list(self, db: Session, search: str | None, skip: int, limit: int, workspace_id: int | None = None) -> tuple[list[Product], int]:
         stmt = select(Product).order_by(Product.created_at.desc())
         count_stmt = select(func.count(Product.id))
+        if workspace_id is not None:
+            stmt = stmt.where(Product.workspace_id == workspace_id)
+            count_stmt = count_stmt.where(Product.workspace_id == workspace_id)
 
         if search:
             keyword = f"%{search}%"

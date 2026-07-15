@@ -2,6 +2,7 @@ import asyncio
 
 from fastapi import APIRouter, Depends, status
 from fastapi import Query
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.api.deps import db_session, get_request_context
@@ -13,6 +14,66 @@ from app.sync.execution_bridge import execution_bridge
 
 
 router = APIRouter()
+
+
+def _accepted_task_response(*, task_id: int, message: str) -> JSONResponse:
+    return JSONResponse(
+        status_code=status.HTTP_202_ACCEPTED,
+        content={
+            "success": True,
+            "status": "pending",
+            "task_id": task_id,
+            "message": message,
+        },
+    )
+
+
+def _submit_market_task(
+    *,
+    db: Session,
+    auth_context,
+    keyword: str,
+    region: str,
+    category: str | None,
+    report_type: str,
+):
+    from app.services.market_intelligence_engine import market_intelligence_engine
+
+    return task_controller.submit_task(
+        db,
+        job_type="market",
+        job_key=f"{report_type}:{auth_context.workspace_id}:{auth_context.user_id}:{keyword.strip()}:{region}",
+        payload={
+            "keyword": keyword,
+            "region": region,
+            "category": category,
+            "report_type": report_type,
+            "workspace_id": auth_context.workspace_id,
+            "user_id": auth_context.user_id,
+        },
+        auth_context=auth_context,
+        runner_factory=lambda task_id, task_db: (
+            lambda: market_intelligence_engine.commercial_reality_report_async(
+                db=task_db,
+                keyword=keyword,
+                region=region,
+            )
+            if report_type == "market_commercial_reality"
+            else market_intelligence_engine.reality_report_async(
+                keyword=keyword,
+                region=region,
+                category=category,
+            )
+            if report_type == "market_reality"
+            else market_intelligence_engine.analyze_keyword_async(
+                task_db,
+                keyword,
+                region=region,
+                category=category,
+                user_id=auth_context.user_id,
+            )
+        ),
+    )
 
 
 @router.post("/market/analyze", response_model=MarketAnalyzeResponse)
@@ -63,13 +124,29 @@ def market_intelligence(
     try:
         from app.services.market_intelligence_engine import market_intelligence_engine
 
-        result = market_intelligence_engine.analyze_keyword(
-            db,
-            payload.keyword,
+        cached = market_intelligence_engine.get_cached_report(
+            report_type="market_intelligence",
+            keyword=payload.keyword,
             region=payload.region,
             category=payload.category,
             user_id=auth_context.user_id,
         )
+        if cached:
+            return MarketAnalyzeResponse(**cached)
+        task = _submit_market_task(
+            db=db,
+            auth_context=auth_context,
+            keyword=payload.keyword,
+            region=payload.region,
+            category=payload.category,
+            report_type="market_intelligence",
+        )
+        result_wrapper = sync_runtime_service.get_task_result(task["task_id"])
+        if not result_wrapper:
+            result_wrapper = asyncio.run(sync_runtime_service.wait_for_result(task["task_id"], timeout=4))
+        if not result_wrapper or result_wrapper.get("status") != "success":
+            return _accepted_task_response(task_id=task["task_id"], message="市场分析正在后台执行，请稍后查看任务结果。")
+        result = result_wrapper["result"]
     except AppError as exc:
         return error_response(exc.error_code, exc.message, exc.stage, exc.status_code)
     except Exception as exc:
@@ -257,15 +334,30 @@ def market_commercial_reality_report(
     db: Session = Depends(db_session),
     auth_context=Depends(get_request_context),
 ):
-    del auth_context
     try:
         from app.services.market_intelligence_engine import market_intelligence_engine
 
-        return market_intelligence_engine.commercial_reality_report(
-            db=db,
+        cached = market_intelligence_engine.get_cached_report(
+            report_type="market_commercial_reality",
             keyword=keyword,
             region=region,
         )
+        if cached:
+            return cached
+        task = _submit_market_task(
+            db=db,
+            auth_context=auth_context,
+            keyword=keyword,
+            region=region,
+            category=None,
+            report_type="market_commercial_reality",
+        )
+        result_wrapper = sync_runtime_service.get_task_result(task["task_id"])
+        if not result_wrapper:
+            result_wrapper = asyncio.run(sync_runtime_service.wait_for_result(task["task_id"], timeout=4))
+        if not result_wrapper or result_wrapper.get("status") != "success":
+            return _accepted_task_response(task_id=task["task_id"], message="商业市场报告正在后台生成，请稍后查看任务结果。")
+        return result_wrapper["result"]
     except AppError as exc:
         return error_response(exc.error_code, exc.message, exc.stage, exc.status_code)
     except Exception as exc:

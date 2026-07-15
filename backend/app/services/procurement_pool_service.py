@@ -80,7 +80,13 @@ class ProcurementPoolService:
         sort: str = "latest",
     ) -> dict:
         if keyword:
-            self.hydrate_from_existing_supply(db, user_id=user_id, keyword=keyword, category=category)
+            self.hydrate_from_existing_supply(
+                db,
+                user_id=user_id,
+                workspace_id=workspace_id,
+                keyword=keyword,
+                category=category,
+            )
         stmt: Select = select(ProcurementPoolItem).where(ProcurementPoolItem.user_id == user_id)
         if workspace_id is not None:
             stmt = stmt.where(ProcurementPoolItem.workspace_id == workspace_id)
@@ -126,35 +132,27 @@ class ProcurementPoolService:
         return created
 
     def get_pool_item(self, db: Session, *, user_id: int, pool_item_id: int, workspace_id: int | None = None) -> dict:
-        item = db.scalar(
+        stmt = (
             select(ProcurementPoolItem)
             .where(ProcurementPoolItem.user_id == user_id)
             .where(ProcurementPoolItem.id == pool_item_id)
         )
         if workspace_id is not None:
-            item = db.scalar(
-                select(ProcurementPoolItem)
-                .where(ProcurementPoolItem.user_id == user_id)
-                .where(ProcurementPoolItem.workspace_id == workspace_id)
-                .where(ProcurementPoolItem.id == pool_item_id)
-            )
+            stmt = stmt.where(ProcurementPoolItem.workspace_id == workspace_id)
+        item = db.scalar(stmt)
         if not item:
             raise AppError("PROCUREMENT_ITEM_NOT_FOUND", "采购池里没有这个商品。", "procurement", 404)
         return self._serialize_pool_item(db, item, include_suppliers=True, include_analysis=True)
 
     def favorite(self, db: Session, *, user_id: int, pool_item_id: int, action: str, workspace_id: int | None = None) -> dict:
-        item = db.scalar(
+        stmt = (
             select(ProcurementPoolItem)
             .where(ProcurementPoolItem.user_id == user_id)
             .where(ProcurementPoolItem.id == pool_item_id)
         )
         if workspace_id is not None:
-            item = db.scalar(
-                select(ProcurementPoolItem)
-                .where(ProcurementPoolItem.user_id == user_id)
-                .where(ProcurementPoolItem.workspace_id == workspace_id)
-                .where(ProcurementPoolItem.id == pool_item_id)
-            )
+            stmt = stmt.where(ProcurementPoolItem.workspace_id == workspace_id)
+        item = db.scalar(stmt)
         if not item:
             raise AppError("PROCUREMENT_ITEM_NOT_FOUND", "采购池里没有这个商品。", "procurement", 404)
         normalized = action.strip().upper()
@@ -172,30 +170,28 @@ class ProcurementPoolService:
 
     def compare(self, db: Session, *, user_id: int, pool_item_ids: list[int], workspace_id: int | None = None) -> dict:
         limited_ids = pool_item_ids[:5]
+        stmt = (
+            select(ProcurementPoolItem)
+            .where(ProcurementPoolItem.user_id == user_id)
+            .where(ProcurementPoolItem.id.in_(limited_ids))
+        )
+        if workspace_id is not None:
+            stmt = stmt.where(ProcurementPoolItem.workspace_id == workspace_id)
         items = list(
-            db.scalars(
-                select(ProcurementPoolItem)
-                .where(ProcurementPoolItem.user_id == user_id)
-                .where(ProcurementPoolItem.workspace_id == workspace_id if workspace_id is not None else True)
-                .where(ProcurementPoolItem.id.in_(limited_ids))
-            ).all()
+            db.scalars(stmt).all()
         )
         result = [self._serialize_pool_item(db, item, include_suppliers=True, include_analysis=True) for item in items]
         return {"items": result, "count": len(result)}
 
     def analyze_pool_item(self, db: Session, *, user_id: int, pool_item_id: int, workspace_id: int | None = None) -> dict:
-        item = db.scalar(
+        stmt = (
             select(ProcurementPoolItem)
             .where(ProcurementPoolItem.user_id == user_id)
             .where(ProcurementPoolItem.id == pool_item_id)
         )
         if workspace_id is not None:
-            item = db.scalar(
-                select(ProcurementPoolItem)
-                .where(ProcurementPoolItem.user_id == user_id)
-                .where(ProcurementPoolItem.workspace_id == workspace_id)
-                .where(ProcurementPoolItem.id == pool_item_id)
-            )
+            stmt = stmt.where(ProcurementPoolItem.workspace_id == workspace_id)
+        item = db.scalar(stmt)
         if not item:
             raise AppError("PROCUREMENT_ITEM_NOT_FOUND", "采购池里没有这个商品。", "procurement", 404)
         suppliers = list(
@@ -265,12 +261,19 @@ class ProcurementPoolService:
             .where(ProcurementPoolItem.user_id == user_id)
             .where(ProcurementPoolItem.product_group_id == group.id)
         )
+        if workspace_id is not None:
+            item = db.scalar(
+                select(ProcurementPoolItem)
+                .where(ProcurementPoolItem.user_id == user_id)
+                .where(ProcurementPoolItem.workspace_id == workspace_id)
+                .where(ProcurementPoolItem.product_group_id == group.id)
+            )
         created = False
         if not item:
             item = ProcurementPoolItem(
-            user_id=user_id,
-            workspace_id=workspace_id,
-            product_group_id=group.id,
+                user_id=user_id,
+                workspace_id=workspace_id,
+                product_group_id=group.id,
                 keyword=keyword,
                 category=category_override or supplier.product_category,
                 title=title,

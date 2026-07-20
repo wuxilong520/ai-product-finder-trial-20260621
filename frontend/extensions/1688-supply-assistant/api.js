@@ -40,7 +40,7 @@ async function importCurrentProcurement(apiBaseUrl, token, payload) {
   });
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data?.message || data?.detail || "加入采购池失败");
+    throw new Error(data?.message || data?.detail || "加入采购方案失败");
   }
   return data;
 }

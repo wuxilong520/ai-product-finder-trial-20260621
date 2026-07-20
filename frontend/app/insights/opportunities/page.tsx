@@ -94,7 +94,7 @@ export default async function InsightsOpportunitiesPage({
                 </div>
                 <div className="mt-4 text-base font-semibold text-white">{item.title_zh || item.title}</div>
                 <div className="mt-2 text-sm text-white/55">关键词：{item.keyword}</div>
-                <div className="mt-2 text-sm text-white/55">推荐结论：{item.recommendation}</div>
+                <div className="mt-2 text-sm text-white/55">AI进入建议：{item.recommendation}</div>
                 <div className="mt-4 text-sm leading-7 text-white/60">
                   {buildOpportunitySummary(item.recommendation_score, item.estimated_profit, item.category || category || "这个方向")}
                 </div>
@@ -137,7 +137,7 @@ export default async function InsightsOpportunitiesPage({
                     </div>
                     <div className="mt-4 grid gap-2 md:grid-cols-2">
                       <InfoLine label="机会评分" value={`${Math.round(item.recommendation_score)}/100`} />
-                      <InfoLine label="综合推荐" value={item.recommendation} />
+                      <InfoLine label="AI进入建议" value={item.recommendation} />
                       <InfoLine label="利润潜力" value={item.estimated_profit >= 0 ? "偏正向" : "偏弱"} />
                       <InfoLine
                         label="风险等级"

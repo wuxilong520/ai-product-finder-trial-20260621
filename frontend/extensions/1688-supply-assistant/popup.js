@@ -106,7 +106,7 @@ async function importCurrentProcurement() {
   }
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id || !tab.url || !/1688\.com/i.test(tab.url)) {
-    setMessage("请先打开1688商品详情页，再点加入采购池。", "error");
+    setMessage("请先打开1688商品详情页，再点同步到采购方案。", "error");
     return;
   }
   procurementButton.disabled = true;
@@ -116,11 +116,11 @@ async function importCurrentProcurement() {
     if (!response?.ok || !response?.payload) {
       throw new Error("当前页面没有读到完整商品信息，请确认已经打开商品详情页。");
     }
-    setMessage("正在加入商航采购池...");
+    setMessage("正在同步到商航AI采购方案...");
     const result = await window.ShanghangExtensionApi.importCurrentProcurement(apiBaseUrl, token, response.payload);
-    setMessage(`已加入采购池，商品ID：${result.pool_item_id}`, "success");
+    setMessage(`已同步到采购方案，商品ID：${result.pool_item_id}`, "success");
   } catch (error) {
-    setMessage(error instanceof Error ? error.message : "加入采购池失败", "error");
+    setMessage(error instanceof Error ? error.message : "同步到采购方案失败", "error");
   } finally {
     procurementButton.disabled = false;
   }

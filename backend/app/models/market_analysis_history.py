@@ -15,6 +15,7 @@ class MarketAnalysisHistory(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     keyword: Mapped[str] = mapped_column(String(255), index=True)
     region: Mapped[str] = mapped_column(String(50), index=True)
+    workspace_id: Mapped[int | None] = mapped_column(nullable=True, index=True)
     category: Mapped[str | None] = mapped_column(String(255), nullable=True)
     score: Mapped[float] = mapped_column(Float, nullable=False)
     trend: Mapped[float] = mapped_column(Float, nullable=False)

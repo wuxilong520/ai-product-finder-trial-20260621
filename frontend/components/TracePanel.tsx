@@ -34,7 +34,7 @@ export function TracePanel({ trace }: { trace: TaskTraceResponse["governance_tra
           <AuditInfo title="执行阶段" value={trace?.event_stage || "—"} />
           <AuditInfo title="工作区" value={trace?.workspace_id ?? "—"} />
           <AuditInfo title="用户编号" value={trace?.user_id ?? "—"} />
-          <AuditInfo title="接口凭证" value={trace?.api_key_id ?? "—"} />
+          <AuditInfo title="接口编号" value={trace?.api_key_id ?? "—"} />
         </div>
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">

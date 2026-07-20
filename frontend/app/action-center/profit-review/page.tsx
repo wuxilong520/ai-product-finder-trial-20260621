@@ -35,7 +35,7 @@ export default async function ProfitReviewPage() {
       title="利润决策 + 上架准备"
       description="这一步就是你最后拍板的地方：先看利润能不能成立，再看风险和执行等级，最后再决定要不要继续做 Shopify 上架准备。"
       badge="Profit & Publish"
-      notice="当前这页已经接上真实决策、上架草稿、发布前检查三条接口。当前唯一不能假装完成的地方，是 production_ready 没通过时，真实发布仍会被系统锁住。"
+      notice="当前这页已经接上真实决策、上架草稿、发布前检查三条接口。当前唯一不能假装完成的地方，是未满足生产发布条件时，真实发布仍会被系统锁住。"
       currentTaskId={currentTaskId}
       metrics={[
         { label: "最近任务数", value: `${tasks.length} 个` },
@@ -90,7 +90,7 @@ export default async function ProfitReviewPage() {
                   <div className="mt-4 space-y-2 text-sm text-white/65">
                     <div>利润估算：{formatMoney(truth?.profit)}</div>
                     <div>利润率：{truth?.profit_margin !== undefined ? `${Number(truth.profit_margin).toFixed(2)}%` : "—"}</div>
-                    <div>风险分：{formatPercent(decision?.risk_score)}</div>
+                    <div>风险指数：{formatPercent(decision?.risk_score)}</div>
                     <div>可信度：{formatPercent(decision?.confidence_score, "0-1")}</div>
                     <div>真值等级：{decision?.truth_level || truth?.truth_level || "—"}</div>
                   </div>

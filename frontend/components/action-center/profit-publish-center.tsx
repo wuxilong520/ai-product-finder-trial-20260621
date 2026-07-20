@@ -139,7 +139,7 @@ export function ProfitPublishCenter({ initialKeyword }: { initialKeyword?: strin
     <div className="space-y-5">
       <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
         <CardHeader>
-          <div className="text-xs uppercase tracking-[0.24em] text-white/40">商航AI · 利润决策 + 上架准备页</div>
+          <div className="text-xs uppercase tracking-[0.24em] text-white/40">商航AI · 利润判断 + 上架准备</div>
           <CardTitle>先确认这单到底赚不赚钱，再决定要不要继续推进上架</CardTitle>
           <p className="text-sm text-white/55">
             这一步不是一上来就发布，而是先把利润、风险、执行等级和发布条件看清楚，再决定要不要继续做 Shopify 上架准备。
@@ -150,7 +150,7 @@ export function ProfitPublishCenter({ initialKeyword }: { initialKeyword?: strin
           <StatusAlert
             status="warning"
             title="当前真实边界"
-            message="现在这页已经接上真实决策、上架草稿和发布前检查接口。但真实发布仍然受 production_ready 锁控制，锁没开时不会假装说已经可商用自动发布。"
+            message="现在这页已经接上真实决策、上架草稿和发布前检查接口。但真实发布仍然受生产发布条件控制，不满足时不会假装说已经可商用自动发布。"
           />
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <InfoTile label="当前商品" value={keyword || "未填写"} />
@@ -179,7 +179,7 @@ export function ProfitPublishCenter({ initialKeyword }: { initialKeyword?: strin
               </select>
             </label>
             <label className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white">
-              <div className="mb-2 text-white/55">策略模式</div>
+              <div className="mb-2 text-white/55">推进策略</div>
               <select value={strategyMode} onChange={(event) => setStrategyMode(event.target.value as StrategyMode)} className="w-full bg-transparent outline-none">
                 <option value="sourcing" className="bg-[#111827]">sourcing</option>
                 <option value="listing" className="bg-[#111827]">listing</option>
@@ -218,17 +218,17 @@ export function ProfitPublishCenter({ initialKeyword }: { initialKeyword?: strin
               {decision ? (
                 <>
                   <div className="flex flex-wrap gap-3">
-                    <Badge variant="brand">决策分 {roundScore(decision.decision_score)}</Badge>
+                    <Badge variant="brand">综合判断指数 {roundScore(decision.decision_score)}</Badge>
                     <StatusBadge status={decision.risk_level === "low" ? "success" : decision.risk_level === "medium" ? "warning" : "blocked"} label={`风险 ${decision.risk_level || "unknown"}`} />
                     <StatusBadge status={decision.execution_allowed ? "success" : "blocked"} label={decision.action_level || "未给出执行等级"} />
                   </div>
                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     <InfoTile label="真实利润估算" value={formatMoney(decision.real_profit_estimate)} />
-                    <InfoTile label="信任调整后分数" value={roundScore(decision.trust_adjusted_score)} />
+                    <InfoTile label="可信度调整后指数" value={roundScore(decision.trust_adjusted_score)} />
                     <InfoTile label="上架建议" value={decision.listing_recommendation || "—"} />
                     <InfoTile label="执行是否允许" value={decision.execution_allowed ? "允许" : "不允许"} />
                     <InfoTile label="执行阻断原因" value={decision.execution_block_reason || "当前没有阻断"} />
-                    <InfoTile label="策略模式" value={decision.strategy_mode || "—"} />
+                    <InfoTile label="推进策略" value={decision.strategy_mode || "—"} />
                   </div>
                   <div className="rounded-2xl border border-white/8 bg-black/10 p-4 text-sm leading-7 text-white/68">
                     {buildDecisionSummary(decision)}
@@ -238,7 +238,7 @@ export function ProfitPublishCenter({ initialKeyword }: { initialKeyword?: strin
                     <InfoTile label="可信数据状态" value={formatTrustLine(analysis?.trust_report)} />
                   </div>
                   <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                    <div className="text-sm font-medium text-white">AI 给出的下一步</div>
+                    <div className="text-sm font-medium text-white">AI给出的下一步</div>
                     <div className="mt-3 space-y-2 text-sm leading-7 text-white/65">
                       {(explain?.next_actions?.length ? explain.next_actions : decision.execution_steps || []).map((item) => (
                         <div key={item}>- {item}</div>
@@ -360,9 +360,9 @@ export function ProfitPublishCenter({ initialKeyword }: { initialKeyword?: strin
               <CardTitle>这一页当前能帮你做到哪里</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm leading-7 text-white/60">
-              <div>1. 已经能做：利润估算、风险判断、执行等级判断、Shopify 上架草稿生成、发布前检查。</div>
-              <div>2. 还不能乱说：已经真实自动发布成功。因为真实发布仍会被 production_ready 生产锁控制。</div>
-              <div>3. 现在最真实的闭环是：市场页 → 商品机会页 → 供应链匹配页 → 这一页做最后拍板和上架准备。</div>
+                <div>1. 已经能做：利润估算、风险判断、执行等级判断、Shopify 上架草稿生成、发布前检查。</div>
+                <div>2. 还不能乱说：已经真实自动发布成功。因为真实发布仍会被生产发布条件控制。</div>
+                <div>3. 现在最真实的闭环是：市场页 → 商品机会页 → 供应链匹配页 → 这一页做最后拍板和上架准备。</div>
             </CardContent>
           </Card>
 
@@ -371,8 +371,8 @@ export function ProfitPublishCenter({ initialKeyword }: { initialKeyword?: strin
               <CardTitle>生产锁状态</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <InfoTile label="product_mode" value={bootstrap?.product_mode || publishData?.product_mode || "当前还没拿到"} />
-              <InfoTile label="production_ready" value={bootstrap?.production_ready === undefined ? "当前还没拿到" : bootstrap.production_ready ? "true" : "false"} />
+              <InfoTile label="当前发布模式" value={bootstrap?.product_mode || publishData?.product_mode || "当前还没拿到"} />
+              <InfoTile label="是否满足正式发布条件" value={bootstrap?.production_ready === undefined ? "当前还没拿到" : bootstrap.production_ready ? "是" : "否"} />
               <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4 text-sm leading-7 text-white/65">
                 {(bootstrap?.blocking_items?.length ? bootstrap.blocking_items : publishData?.blocking_items || ["当前还没返回生产阻塞项"]).map((item) => (
                   <div key={item}>- {item}</div>

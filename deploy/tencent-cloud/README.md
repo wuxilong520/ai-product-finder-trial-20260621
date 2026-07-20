@@ -6,7 +6,8 @@
 
 - `frontend.Dockerfile`：前端镜像构建
 - `backend.Dockerfile`：后端镜像构建
-- `nginx.conf`：前后端反向代理
+- `nginx.conf`：HTTPS 标准反向代理模板
+- `nginx.http.conf`：HTTP 兜底模板
 - `.env.tencent.example`：腾讯云环境变量模板
 - `deploy.sh`：一键启动命令
 - `check.sh`：部署后真实自检命令
@@ -48,15 +49,18 @@ cp .env.tencent.example .env.tencent
 - `NEXT_PUBLIC_API_BASE_URL`
 - `NEXT_PUBLIC_WS_URL`
 
-## 三、修改域名
+## 三、修改域名与 HTTPS 开关
 
-你需要把 `nginx.conf` 里的：
+你需要在 `.env.tencent` 里改成真实值：
 
-- `your-domain.com`
-- `www.your-domain.com`
-- `api.your-domain.com`
+- `MAIN_HOST`
+- `ADMIN_HOST`
 
-全部改成你的真实域名。
+如果你已经有真实域名和证书，再继续填：
+
+- `ENABLE_HTTPS=true`
+- `SSL_CERT_PATH`
+- `SSL_CERT_KEY_PATH`
 
 ## 四、启动
 
@@ -74,6 +78,7 @@ chmod +x deploy.sh
 - 重新构建后端镜像
 - 重新构建前端镜像
 - 按固定容器名重启公网服务
+- 根据 `ENABLE_HTTPS` 自动选择 HTTP 或 HTTPS 网关模板
 - 自动执行真实自检
 
 这样可以避开旧版 `docker-compose` 在腾讯云机器上的兼容问题。
@@ -160,12 +165,12 @@ BUILD_BACKEND=0 ./deploy.sh
 
 ## 七、HTTPS 说明
 
-这份配置先走 `80` 端口。
+现在这套部署支持两种模式：
 
-如果你要正式公网使用，建议：
+- `ENABLE_HTTPS=false`：继续走当前 `80` 端口，适合只有 IP 的阶段
+- `ENABLE_HTTPS=true`：启用 `80 -> 443` 跳转，并加载你自己的证书
 
-- 用腾讯云负载均衡或 CDN 配 HTTPS
-- 或者你自己在 Nginx 上补证书配置
+所以现在没有域名和证书时，不会把现网打坏；以后有域名和证书时，再切到 HTTPS。
 
 ## 八、当前设计
 
@@ -180,7 +185,52 @@ BUILD_BACKEND=0 ./deploy.sh
 
 前端现在只保留业务页面。
 
-## 九、以后怎么自动同步
+## 九、现在唯一正确的同步主链路
+
+现在统一只认这一条：
+
+```text
+本地开发 -> Gitee 主仓 -> 腾讯云公网 -> GitHub 备份
+```
+
+也就是说：
+
+- `origin` = Gitee 主仓
+- 腾讯云服务器从 `origin` 拉最新代码
+- 腾讯云部署成功后，再把同一份代码推到 `github` 做备份
+
+### 本地标准发布动作
+
+以后本地不要再优先用旧脚本直传腾讯云。
+
+统一先执行：
+
+```bash
+./scripts/release-mainline.sh
+```
+
+这个脚本只做两件事：
+
+- 写入本次发布版本标记
+- 推送到 Gitee 主仓
+
+然后由腾讯云那边继续完成：
+
+- 拉 Gitee 最新代码
+- 部署公网
+- 同步 GitHub 备份
+
+### 手动双推脚本
+
+如果你只是想手动把两个 Git 仓库都推一遍，可以单独执行：
+
+```bash
+./scripts/push-all-remotes.sh
+```
+
+但这不是默认主发布链路。
+
+## 十、以后怎么自动同步
 
 仓库里已经预留了 GitHub Actions 自动部署文件：
 
@@ -202,10 +252,10 @@ BUILD_BACKEND=0 ./deploy.sh
 - 然后自动执行 `deploy/tencent-cloud/deploy.sh`
 - 最后自动执行 `deploy/tencent-cloud/check.sh`
 
-也就是说，后面要保持“仓库 + 公网”同步，标准动作就是：
+如果 GitHub Actions 没启用，但腾讯云已经配置了主仓自动部署，那么保持“仓库 + 公网”同步的标准动作就是：
 
 ```bash
 git add .
 git commit -m "你的更新说明"
-git push origin main
+./scripts/release-mainline.sh
 ```

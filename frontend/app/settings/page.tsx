@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 
 import { XBorderLayout } from "@/components/layouts/xborder-layout";
-import { Card, CardContent, CardHeader, CardTitle, InfoTile, KpiTile, SectionIntro } from "@/design-system/components";
+import { Card, CardContent, CardHeader, CardTitle, InfoTile, KpiTile, SectionIntro, StatusAlert } from "@/design-system/components";
 import { PlanAccessPanel } from "@/components/billing/plan-access-panel";
 import { PricingOrdersPanel } from "@/components/billing/pricing-orders-panel";
 import { UpgradeEntry } from "@/components/billing/upgrade-entry";
@@ -63,6 +63,7 @@ export default async function SettingsPage() {
 
   let overview;
   let apiKeys;
+  let loadError: string | null = null;
   try {
     [overview, apiKeys] = await Promise.all([
       getAccountOverview(token),
@@ -72,7 +73,59 @@ export default async function SettingsPage() {
     if (isAuthError(error)) {
       redirect(ROUTES.login);
     }
-    throw error;
+    loadError = error instanceof Error ? error.message : "账户中心暂时打不开";
+    overview = {
+      user: {
+        id: 0,
+        email: "暂未读取到",
+        username: "暂未读取到",
+        role: "member",
+        status: "unknown",
+        workspace_id: null,
+        is_active: true,
+        is_superuser: false,
+        created_at: new Date(0).toISOString(),
+        updated_at: new Date(0).toISOString(),
+      },
+      workspace: null,
+      billing: {
+        workspace_id: 0,
+        plan_name: "unknown",
+        status: "unknown",
+        updated_at: new Date(0).toISOString(),
+        allowed_ai_providers: [],
+        allowed_ai_models: [],
+        ai_policy_note: "账户中心接口暂时失败，下面展示的是保底页面。",
+        supports_custom_model: false,
+      },
+      recent_orders: [],
+      api_key_summary: {
+        total_keys: 0,
+        active_keys: 0,
+        latest_key_created_at: null,
+        latest_key_status: null,
+      },
+      store_links: {
+        shopify: {
+          store_base_url_configured: false,
+          admin_read_ready: false,
+          execution_mode: "unknown",
+          oauth_status: "unknown",
+          publish_ready: false,
+          status_text: "暂未读取到店铺状态",
+          publish_text: "暂未读取到发布状态",
+        },
+      },
+      payment_status: {
+        wechat_pay: {
+          configured: false,
+          manual_confirm_enabled: false,
+          checkout_ready: false,
+          status_text: "暂未读取到支付状态",
+        },
+      },
+    };
+    apiKeys = { items: [] };
   }
 
   const allowedModels = Array.isArray(overview.billing.allowed_ai_models) ? overview.billing.allowed_ai_models : [];
@@ -120,12 +173,13 @@ export default async function SettingsPage() {
   return (
     <XBorderLayout lang={lang} activePath="settings">
       <div className="space-y-6">
+        {loadError ? <StatusAlert status="warning" message={`账户中心接口暂时失败：${loadError}`} /> : null}
         <Card className="border-white/8 bg-[#121c2c] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
           <CardContent className="p-0">
             <SectionIntro
-              eyebrow="商航AI · 用户中心"
-              title={text.title}
-              description={text.desc}
+              eyebrow="商航AI · 账户与团队"
+              title="把账号、团队、套餐和安全放在一个清爽页面里"
+              description="这里不展示开发字段，只保留用户真正会看的账号信息、套餐状态、店铺连接和安全设置。"
               action={<UpgradeEntry label="去充值 / 升级" />}
             />
             <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">

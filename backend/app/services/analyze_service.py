@@ -5,7 +5,6 @@ from abc import ABC, abstractmethod
 from app.core.analysis_engine import analysis_engine
 from app.core.contracts import AnalyzeBundle, SupplyOffer
 from app.core.data_trust_layer import data_trust_layer
-from app.integration.client_manager import client_manager
 from app.core.analysis_orchestrator import analysis_orchestrator
 from app.services.explain_engine import explain_engine
 from app.services.profit_engine import profit_engine
@@ -22,7 +21,6 @@ class AnalyzeServiceBase(ABC):
 class AnalyzeService(AnalyzeServiceBase):
     def analyze(self, *, keyword: str, market: str, plan_name: str = "free") -> AnalyzeBundle:
         trace = trace_engine.start(keyword=keyword, market=market)
-        route = client_manager.resolve_route(market=market, channel="shopify")
         orchestrated_context = analysis_orchestrator.build_analysis_context(keyword=keyword, market=market)
         market_insight = orchestrated_context["market_insight"]
         market_trust = data_trust_layer.evaluate(
@@ -46,19 +44,19 @@ class AnalyzeService(AnalyzeServiceBase):
             payload=market_trust.model_dump(mode="json"),
         )
 
-        supply_adapter = route.supply_client
-        supply_offers = supply_adapter.search_supply(keyword=keyword, market=market)
+        supply_result = orchestrated_context.get("supply_intelligence", {})
+        supply_offers = self._supply_offers_from_intelligence(keyword=keyword, supply_result=supply_result)
         selected_offer = self._select_best_offer(supply_offers)
         supply_trust = data_trust_layer.evaluate(
             data=selected_offer.model_dump(mode="json"),
-            source_type=self._infer_source_type(selected_offer.source),
+            source_type=self._infer_source_type(str((supply_result.get("selected_supplier") or {}).get("data_source") or selected_offer.source)),
             freshness_score=self._freshness_from_supply(selected_offer.shipping_days),
             confidence_score=self._confidence_from_supply(selected_offer.rating, selected_offer.min_order_qty),
         )
         trace_engine.append(
             trace=trace,
             step="supply_search",
-            adapter=supply_adapter.adapter_name,
+            adapter="supply_intelligence_engine",
             message="已完成供应链搜索",
             payload={"offer_count": len(supply_offers)},
         )
@@ -71,12 +69,14 @@ class AnalyzeService(AnalyzeServiceBase):
         )
         platform_context = {
             key: value for key, value in orchestrated_context.items()
-            if key in {"shopify_data_source", "1688_data_source", "data_source_type", "data_trust_score", "platform_data"}
+            if key in {"shopify_data_source", "1688_data_source", "data_source_type", "data_trust_score", "platform_data", "supply_context", "cost_context", "supply_intelligence"}
         }
         profit = profit_engine.calculate(
             market_insight=market_insight,
             supply_offer=selected_offer,
             platform_data=platform_context.get('platform_data'),
+            supply_context=platform_context.get('supply_context'),
+            cost_context=platform_context.get('cost_context'),
         )
         trace_engine.append(
             trace=trace,
@@ -170,6 +170,9 @@ class AnalyzeService(AnalyzeServiceBase):
                     "overall": combined_trust.model_dump(mode="json"),
                 },
                 "market_intelligence": orchestrated_context.get("market_intelligence", {}),
+                "supply_intelligence": orchestrated_context.get("supply_intelligence", {}),
+                "supply_context": orchestrated_context.get("supply_context", {}),
+                "cost_context": orchestrated_context.get("cost_context", {}),
                 **platform_context,
             }
         })
@@ -177,6 +180,41 @@ class AnalyzeService(AnalyzeServiceBase):
     def _select_best_offer(self, offers: list[SupplyOffer]) -> SupplyOffer:
         ranked = sorted(offers, key=lambda item: (-item.rating, item.price, item.shipping_days))
         return ranked[0]
+
+    def _supply_offers_from_intelligence(self, *, keyword: str, supply_result: dict) -> list[SupplyOffer]:
+        items = supply_result.get("suppliers", [])
+        offers: list[SupplyOffer] = []
+        for item in items[:8]:
+            offers.append(
+                SupplyOffer(
+                    source=str(item.get("data_source") or "mock"),
+                    supplier_id=str(item.get("name") or ""),
+                    supplier_name=str(item.get("name") or ""),
+                    keyword=keyword,
+                    product_title=str(item.get("product_title") or keyword),
+                    price=float(item.get("price_mid") or 0),
+                    min_order_qty=int(item.get("min_order_quantity") or 0),
+                    rating=round(float(item.get("supplier_score") or 0) / 20, 2),
+                    shipping_days=7 if str(item.get("platform") or "") == "1688" else 10,
+                    currency=str(item.get("currency") or "CNY"),
+                )
+            )
+        if offers:
+            return offers
+        return [
+            SupplyOffer(
+                source="mock",
+                supplier_id="mock-supplier",
+                supplier_name="mock-supplier",
+                keyword=keyword,
+                product_title=keyword,
+                price=0.0,
+                min_order_qty=999,
+                rating=1.0,
+                shipping_days=15,
+                currency="CNY",
+            )
+        ]
 
     def _build_pre_decision(self, *, keyword: str, market: str, profit, analysis_outcome) -> object:
         from app.core.contracts import DecisionRecord

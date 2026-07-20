@@ -13,15 +13,21 @@ from app.repositories.product_intelligence import product_intelligence_repositor
 
 
 class ProductIntelligenceEngine:
-    def get_or_create_intelligence(self, db: Session, product_id: int) -> dict:
-        product = product_repository.get_by_id(db, product_id)
+    def get_or_create_intelligence(self, db: Session, product_id: int, workspace_id: int | None = None) -> dict:
+        try:
+            product = product_repository.get_by_id(db, product_id, workspace_id=workspace_id)
+        except Exception as exc:
+            raise AppError("PRODUCT_QUERY_FAILED", f"读取商品失败：{exc}", "db", 500) from exc
         if not product:
             raise AppError("PRODUCT_NOT_FOUND", "商品不存在", "db", 404)
 
         latest_analysis = self._get_latest_analysis(product)
         latest_crawl = self._get_latest_crawl(product)
         payload = self._build_scores(product, latest_analysis, latest_crawl)
-        product_intelligence_repository.upsert(db, product_id=product.id, **payload)
+        try:
+            product_intelligence_repository.upsert(db, product_id=product.id, **payload)
+        except Exception as exc:
+            raise AppError("PRODUCT_INTELLIGENCE_SAVE_FAILED", f"保存商品情报失败：{exc}", "db", 500) from exc
         return payload
 
     def _get_latest_analysis(self, product: Product) -> AIAnalysisResult | None:

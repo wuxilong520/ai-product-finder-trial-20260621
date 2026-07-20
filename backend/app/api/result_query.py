@@ -32,6 +32,15 @@ def get_task_status(
     return task_controller.get_task_status(db, task_id)
 
 
+@router.get("/tasks/{task_id}")
+def get_task_status_compat(
+    task_id: int,
+    db: Session = Depends(db_session),
+    auth_context=Depends(get_request_context),
+):
+    return get_task_status(task_id=task_id, db=db, auth_context=auth_context)
+
+
 @router.get("/tasks/{task_id}/result")
 def get_task_result(
     task_id: int,

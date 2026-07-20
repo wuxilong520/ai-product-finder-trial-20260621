@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { Button, MinimalField, StatusAlert, Tabs, TabsContent, TabsList, TabsTrigger } from "@/design-system/components";
 import { ROUTES } from "@/config/routes";
-import { getToken, setToken } from "@/lib/auth";
+import { getToken, setRefreshToken, setToken } from "@/lib/auth";
 import { Language, t } from "@/lib/i18n";
 import { login, loginWithCode, sendAuthCode } from "@/lib/api";
 
@@ -29,6 +29,7 @@ export function LoginForm({ lang }: { lang: Language }) {
 
   async function finishLogin(result: Awaited<ReturnType<typeof login>>) {
     setToken(result.access_token);
+    setRefreshToken(result.refresh_token);
     const savedToken = getToken();
     if (!savedToken) {
       throw new Error(text.loginSaveFailed);
@@ -81,7 +82,8 @@ export function LoginForm({ lang }: { lang: Language }) {
       setChallengeToken("");
       setChallengeQuestion("");
       setChallengeAnswer("");
-      setMessage(result.message || "验证码已发送");
+      const devHint = result.dev_code ? ` 当前开发环境验证码：${result.dev_code}` : "";
+      setMessage(`${result.message || "验证码已发送"}${devHint}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "发送验证码失败");
     } finally {

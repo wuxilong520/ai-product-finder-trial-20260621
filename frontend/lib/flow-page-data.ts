@@ -15,11 +15,22 @@ export async function loadFlowPageData() {
     redirect(ROUTES.login);
   }
 
-  const products = await getProducts("", token).catch((error) => {
-    if (isAuthError(error)) {
-      redirect(ROUTES.login);
-    }
-    throw error;
+  let productsError: string | null = null;
+  const products = await safeLoad(
+    async () => {
+      try {
+        return await getProducts("", token);
+      } catch (error) {
+        if (isAuthError(error)) {
+          redirect(ROUTES.login);
+        }
+        throw error;
+      }
+    },
+    { items: [], total: 0 }
+  ).catch((error) => {
+    productsError = error instanceof Error ? error.message : "商品数据暂时不可用";
+    return { items: [], total: 0 };
   });
 
   const [tasks, sources] = await Promise.all([
@@ -33,5 +44,6 @@ export async function loadFlowPageData() {
     products,
     tasks,
     sources,
+    productsError,
   };
 }

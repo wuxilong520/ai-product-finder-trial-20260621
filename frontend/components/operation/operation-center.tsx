@@ -28,7 +28,7 @@ export function OperationCenter({ lang }: { lang: Language }) {
         steps: "Execution Steps",
       }
     : {
-        badge: "商业执行",
+        badge: "每日工作台",
         flow: "执行推进流程",
         queueTitle: "待推进商品",
         launched: "已上架",
@@ -119,8 +119,8 @@ export function OperationCenter({ lang }: { lang: Language }) {
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <ActionCard title="发现今日机会" description="先看今天最值得推进的商品机会。" href={ROUTES.insightsOpportunities} label="去机会页" badge="今日优先" />
-          <ActionCard title="进入采购池" description="继续筛真实商品、成本、利润和风险。" href={ROUTES.actionProcurement} label="去采购池" />
-          <ActionCard title="查看供应商" description="继续比较供应商评分、MOQ 和采购建议。" href={ROUTES.actionSuppliers} label="去供应链页" />
+          <ActionCard title="进入采购方案" description="继续筛真实商品、成本、利润和风险。" href={ROUTES.actionProcurement} label="去采购方案" />
+          <ActionCard title="查看供应商" description="继续比较供应稳定性、MOQ 和采购建议。" href={ROUTES.actionSuppliers} label="去供应链页" />
           <ActionCard title="看 AI 分析任务" description="打开最近任务，直接看结论和下一步建议。" href={ROUTES.tasks} label="去任务页" />
         </div>
 
@@ -200,7 +200,7 @@ export function OperationCenter({ lang }: { lang: Language }) {
                       <div>
                         <div className="text-sm font-medium text-white">{item.title_zh || item.title}</div>
                         <div className="mt-2 text-sm leading-7 text-white/60">
-                          建议先看 {item.recommendation}，当前推荐分 {Math.round(item.recommendation_score)}，利润预估 {item.estimated_profit}。
+                          建议先看 {item.recommendation}，当前机会指数 {Math.round(item.recommendation_score)}，利润预估 {item.estimated_profit}。
                         </div>
                       </div>
                     </div>
@@ -219,7 +219,7 @@ export function OperationCenter({ lang }: { lang: Language }) {
                     <div key={`risk-${item.product_id}`} className="rounded-[16px] border border-amber-400/20 bg-amber-400/10 px-4 py-4 text-sm text-amber-100">
                       <div className="flex items-start gap-3">
                         <AlertTriangle className="mt-0.5 h-4 w-4" />
-                        <div>{item.title_zh || item.title} 当前推荐分偏低，建议先观察，不要急着推进。</div>
+                        <div>{item.title_zh || item.title} 当前机会指数偏低，建议先观察，不要急着推进。</div>
                       </div>
                     </div>
                   ))

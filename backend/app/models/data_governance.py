@@ -1,4 +1,6 @@
-from sqlalchemy import JSON, Integer, String, Text
+from datetime import datetime
+
+from sqlalchemy import JSON, DateTime, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -27,8 +29,11 @@ class SyncJobRecord(TimestampMixin, Base):
     workspace_id: Mapped[int | None] = mapped_column(nullable=True, index=True)
     api_key_id: Mapped[int | None] = mapped_column(nullable=True, index=True)
     job_type: Mapped[str] = mapped_column(String(30), nullable=False, index=True)
+    platform: Mapped[str | None] = mapped_column(String(30), nullable=True, index=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending", index=True)
     retry_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
     result_payload: Mapped[dict | None] = mapped_column(json_field, nullable=True)
 

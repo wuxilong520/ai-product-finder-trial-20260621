@@ -6,6 +6,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from app.adapters.execution.base import ExecutionAdapterBase
+from app.adapters.platform.shopify_adapter import ShopifyPlatformAdapter
 from app.core.config import settings
 from app.core.contracts import ListingDraft, OAuthSession, PublishReceipt
 from app.core.runtime import log_info
@@ -15,8 +16,15 @@ class ShopifyExecutionAdapter(ExecutionAdapterBase):
     adapter_name = "shopify_admin_execution"
     supported_channels = ("shopify",)
 
+    def __init__(self) -> None:
+        self.platform_adapter = ShopifyPlatformAdapter()
+
     def _get_mode(self) -> str:
-        return (os.getenv("SHOPIFY_EXECUTION_MODE") or "mock").strip().lower()
+        return (
+            os.getenv("SHOPIFY_EXECUTION_MODE")
+            or getattr(settings, "shopify_execution_mode", "")
+            or "mock"
+        ).strip().lower()
 
     def _shop_domain(self, shop_domain: str) -> str:
         raw_domain = str(shop_domain or "").strip()
@@ -37,10 +45,10 @@ class ShopifyExecutionAdapter(ExecutionAdapterBase):
         token = str(access_token or settings.shopify_admin_access_token or "").strip()
         if token:
             return token
-        api_secret = str(settings.shopify_api_secret or "").strip()
-        if api_secret:
-            return api_secret
-        raise ValueError("SHOPIFY_ADMIN_TOKEN_MISSING")
+        try:
+            return self.platform_adapter.get_admin_access_token()
+        except Exception as exc:
+            raise ValueError("SHOPIFY_ADMIN_TOKEN_MISSING") from exc
 
     def _headers(self, *, access_token: str | None = None) -> dict[str, str]:
         return {
@@ -130,7 +138,7 @@ class ShopifyExecutionAdapter(ExecutionAdapterBase):
             authorize_url=(
                 f"https://{normalized_domain}/admin/oauth/authorize"
                 f"?client_id={client_id}"
-                f"&scope=write_products,read_products"
+                f"&scope=write_products,read_products,read_orders"
                 f"&redirect_uri={redirect_uri}"
                 f"&state={state}"
             ),

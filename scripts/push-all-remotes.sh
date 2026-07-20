@@ -8,6 +8,10 @@ BRANCH="main"
 
 cd "$REPO_DIR"
 
+echo "这是手动双推脚本，不是默认主发布链路。"
+echo "默认请先用 ./scripts/release-mainline.sh"
+echo
+
 echo "1) 推送到国内主仓（Gitee / origin）..."
 git push "$PRIMARY_REMOTE" "$BRANCH"
 

@@ -55,6 +55,35 @@ export function TabsTrigger({
   );
 }
 
+export function LightTabsList({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("inline-flex h-11 items-center rounded-2xl border border-[#F3E8D8] bg-[#FFFDF8] p-1 shadow-[0_10px_24px_rgba(15,23,42,0.05)]", className)} {...props} />;
+}
+
+export function LightTabsTrigger({
+  className,
+  value,
+  children,
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { value: string }) {
+  const context = React.useContext(TabsContext);
+  if (!context) return null;
+  const active = context.value === value;
+  return (
+    <button
+      type="button"
+      onClick={() => context.setValue(value)}
+      className={cn(
+        "inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200",
+        active
+          ? "bg-[linear-gradient(135deg,#FB923C,#F97316)] text-white shadow-[0_14px_30px_rgba(249,115,22,0.22)]"
+          : "text-[#94A3B8] hover:bg-[#FFF7ED] hover:text-[#475569]",
+        className
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function TabsContent({
   className,
   value,

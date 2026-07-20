@@ -18,6 +18,7 @@ export default async function SettingsSecurityPage() {
     <XBorderLayout lang={lang} activePath="settings">
       <div className="space-y-6">
         <Card className="border-white/8 bg-[#121c2c] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+          <div className="text-xs uppercase tracking-[0.24em] text-white/40">商航AI · 密码与安全</div>
           <h1 className="text-3xl font-semibold tracking-tight text-white">密码与安全</h1>
           <p className="mt-2 text-sm leading-7 text-white/60">
             这里现在直接给你可用的安全入口：密码登录、邮箱验证码登录、忘记密码。

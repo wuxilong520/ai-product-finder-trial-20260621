@@ -97,12 +97,12 @@ export function UserAvatarMenu() {
           aria-expanded={open}
           aria-haspopup="menu"
           onClick={() => setOpen((current) => !current)}
-          className="flex h-11 items-center gap-3 rounded-full border border-white/10 bg-[#111A2E] pl-3 pr-4 text-white/80 transition hover:border-white/20 hover:bg-white/[0.06]"
+          className="flex h-12 items-center gap-3 rounded-full border border-white/10 bg-[#111A2E] pl-3 pr-4 text-white/82 transition hover:border-white/20 hover:bg-white/[0.06]"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[linear-gradient(135deg,#4F7CFF,#6C5CE7)] text-sm font-semibold text-white">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[linear-gradient(135deg,#4F7CFF,#6C5CE7)] text-sm font-semibold text-white shadow-[0_0_0_4px_rgba(79,124,255,0.10)]">
             {getInitials(user)}
           </div>
-          <div className="max-w-[120px] truncate text-sm">{displayName}</div>
+          <div className="max-w-[140px] truncate text-sm font-medium">{displayName}</div>
         </button>
 
         <div
@@ -110,10 +110,10 @@ export function UserAvatarMenu() {
             open ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0"
           }`}
         >
-          <div className="rounded-2xl border border-white/8 bg-white/[0.04] p-4">
-            <div className="text-sm font-semibold text-white">{displayName}</div>
-            <div className="mt-1 truncate text-xs text-white/45">{displayEmail}</div>
-          </div>
+            <div className="rounded-2xl border border-white/8 bg-white/[0.04] p-4">
+              <div className="text-sm font-semibold text-white">{displayName}</div>
+              <div className="mt-1 truncate text-xs text-white/45">{displayEmail}</div>
+            </div>
 
           <div className="mt-3 space-y-2">
             <Link

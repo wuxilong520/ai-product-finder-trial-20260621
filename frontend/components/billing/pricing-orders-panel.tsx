@@ -35,8 +35,8 @@ function buildPaymentNotice(
   if (targetOrder.status === "pending") {
     return {
       status: "warning" as const,
-      title: "这个支付链接已经失效",
-      message: `订单 #${targetOrder.id} 目前还是待支付。你刚刚打开的大概率是修复前生成的旧链接，请直接点下方“重新发起支付宝支付”。`,
+      title: "订单还没支付完成",
+      message: `订单 #${targetOrder.id} 目前还是待支付，请直接点下方按钮重新发起支付。`,
     };
   }
   return {
@@ -70,15 +70,10 @@ export function PricingOrdersPanel({
       return;
     }
     setError("");
-    setLoadingKey(`${order.id}:${order.provider_name || "alipay"}`);
+    setLoadingKey(`${order.id}:${order.provider_name || "wechat_pay"}`);
     try {
-      const providerName = order.provider_name === "wechat_pay" ? "wechat_pay" : "alipay";
+      const providerName = "wechat_pay";
       const result = await createBillingCheckoutOrder(order.plan_name, providerName, token);
-      const payUrl = typeof result.payment_payload?.pay_url === "string" ? result.payment_payload.pay_url : "";
-      if (providerName === "alipay" && result.payment_ready && payUrl) {
-        window.location.href = payUrl;
-        return;
-      }
       window.location.href = "/pricing";
     } catch (err) {
       setError(err instanceof Error ? err.message : "重新发起支付失败");
@@ -111,10 +106,10 @@ export function PricingOrdersPanel({
                 {item.status !== "paid" ? (
                   <Button
                     variant={getStatusTone(item.status) === "error" ? "secondary" : "primary"}
-                    disabled={loadingKey === `${item.id}:${item.provider_name || "alipay"}`}
+                    disabled={loadingKey === `${item.id}:${item.provider_name || "wechat_pay"}`}
                     onClick={() => void handleRetry(item)}
                   >
-                    {loadingKey === `${item.id}:${item.provider_name || "alipay"}` ? "跳转中..." : "重新发起支付宝支付"}
+                    {loadingKey === `${item.id}:${item.provider_name || "wechat_pay"}` ? "处理中..." : "重新发起支付"}
                   </Button>
                 ) : null}
               </div>

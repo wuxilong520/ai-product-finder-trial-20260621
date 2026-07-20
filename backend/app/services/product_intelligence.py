@@ -1,18 +1,19 @@
 from __future__ import annotations
 
 import json
-import os
 import re
-import time
 from typing import Any
 from urllib.parse import urlparse
 
-from app.core.config import settings
+from sqlalchemy.orm import Session
+
+from app.core.ai_engine import ai_engine
 from app.core.runtime import AppError, log_info
-from app.services.ai_client import build_ai_client
+from app.services.ai_model_policy import ai_model_policy_service
 
 
 def analyze_product_intelligence(
+    db: Session,
     *,
     title: str,
     price: str | float | None,
@@ -21,10 +22,8 @@ def analyze_product_intelligence(
     review_count: str | int | None,
     source_url: str,
     sales: str | None = None,
+    workspace_id: int | None = None,
 ) -> dict:
-    model_name = os.getenv("OPENAI_MODEL") or settings.openai_model or "gpt-4o-mini"
-    client = build_ai_client()
-
     payload = {
         "title": title or "",
         "price": _normalize_price_text(price),
@@ -61,35 +60,24 @@ def analyze_product_intelligence(
 商品数据：
 {json.dumps(payload, ensure_ascii=False)}
 """
-
-    last_error: Exception | None = None
-    for attempt in range(1, 3):
-        try:
-            response = client.chat.completions.create(
-                model=model_name,
-                response_format={"type": "json_object"},
-                messages=[
-                    {"role": "system", "content": "你是跨境电商选品分析助手，只返回 JSON。"},
-                    {"role": "user", "content": prompt},
-                ],
-            )
-            output_text = response.choices[0].message.content or "{}"
-            result = _normalize_ai_intelligence_result(json.loads(output_text))
-            log_info(
-                "PRODUCT_INTELLIGENCE_OK | "
-                f"title={title} | model={model_name} | score={result['product_score']} | rec={result['recommendation']}"
-            )
-            return result
-        except AppError:
-            raise
-        except Exception as exc:
-            last_error = exc
-            log_info(f"PRODUCT_INTELLIGENCE_RETRY | title={title} | attempt={attempt} | error={exc}")
-            if attempt < 2:
-                time.sleep(1.5)
-
-    reason = str(last_error) if last_error else "未知 AI 错误"
-    raise AppError("AI_CALL_FAILED", reason, "ai", 502) from last_error
+    result = ai_engine.complete_result(
+        task_name="product_intelligence",
+        system_prompt="你是跨境电商选品分析助手，只返回 JSON。",
+        user_prompt=prompt,
+        context=payload,
+        allowed_provider_ids=ai_model_policy_service.get_allowed_provider_ids(db, workspace_id=workspace_id),
+        allowed_model_names=ai_model_policy_service.get_allowed_model_names(db, workspace_id=workspace_id),
+        use_live_gateway=True,
+    )
+    normalized = _normalize_ai_intelligence_result(result["payload"])
+    normalized["provider_id"] = result["provider_id"]
+    normalized["provider_name"] = result["provider_name"]
+    normalized["model_name"] = result["model_name"]
+    log_info(
+        "PRODUCT_INTELLIGENCE_OK | "
+        f"title={title} | provider={result['provider_id']} | model={result['model_name']} | score={normalized['product_score']} | rec={normalized['recommendation']}"
+    )
+    return normalized
 
 
 def _normalize_ai_intelligence_result(payload: dict[str, Any]) -> dict[str, Any]:

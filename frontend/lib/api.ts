@@ -1,6 +1,7 @@
 import {
   AnalyzeFullResponse,
   AnalyzeResponse,
+  AsyncTaskAcceptedResponse,
   BusinessTruthRecommendResponse,
   CrawlResult,
   DecisionV1Payload,
@@ -95,6 +96,13 @@ export function isBannedError(error: unknown) {
     return false;
   }
   return /封号|封禁|banned/i.test(error.message);
+}
+
+export function isQuotaError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+  return /quota|接口次数已经用完|任务次数已经用完|QUOTA_/i.test(error.message);
 }
 
 function buildAuthHeaders(token?: string) {
@@ -351,7 +359,7 @@ export async function getProcurementPool(
     cache: "no-store",
   }, 30000);
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, "读取采购池失败"));
+    throw new Error(await readErrorMessage(response, "读取采购方案失败"));
   }
   return response.json();
 }
@@ -365,7 +373,7 @@ export async function getProcurementProduct(id: number | string, token?: string)
     cache: "no-store",
   }, 30000);
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, "读取采购池商品失败"));
+    throw new Error(await readErrorMessage(response, "读取采购方案商品失败"));
   }
   return response.json();
 }
@@ -384,7 +392,7 @@ export async function importProcurementPayload(
     body: JSON.stringify(payload),
   }, 30000);
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, "加入采购池失败"));
+    throw new Error(await readErrorMessage(response, "加入采购方案失败"));
   }
   return response.json();
 }
@@ -398,7 +406,7 @@ export async function analyzeProcurementItem(id: number | string, token?: string
     },
   }, 30000);
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, "采购池AI分析失败"));
+    throw new Error(await readErrorMessage(response, "采购方案AI分析失败"));
   }
   return response.json();
 }
@@ -421,7 +429,7 @@ export async function favoriteProcurementItem(
     }),
   }, 15000);
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, "采购池操作失败"));
+    throw new Error(await readErrorMessage(response, "采购方案操作失败"));
   }
   return response.json();
 }
@@ -437,7 +445,7 @@ export async function compareProcurementItems(ids: Array<number | string>, token
     cache: "no-store",
   }, 30000);
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, "采购池比较失败"));
+    throw new Error(await readErrorMessage(response, "采购方案比较失败"));
   }
   return response.json();
 }
@@ -538,7 +546,7 @@ export async function extractPublicProduct(url: string): Promise<PublicExtractRe
   return response.json();
 }
 
-export async function analyzeProduct(productId: number, token?: string): Promise<AnalyzeResponse> {
+export async function analyzeProduct(productId: number, token?: string): Promise<AnalyzeResponse | AsyncTaskAcceptedResponse> {
   ensureApiBase();
   const response = await fetch(`${API_V1}/products/analyze`, {
     method: "POST",
@@ -730,7 +738,7 @@ export async function runPublishV1(payload: PublishV1Payload, token?: string): P
   return data.data;
 }
 
-export async function analyzeTitle(title: string, token?: string): Promise<AnalyzeResponse> {
+export async function analyzeTitle(title: string, token?: string): Promise<AnalyzeResponse | AsyncTaskAcceptedResponse> {
   ensureApiBase();
   const response = await fetch(`${API_V1}/products/analyze`, {
     method: "POST",

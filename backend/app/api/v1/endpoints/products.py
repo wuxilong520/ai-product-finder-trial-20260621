@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Query, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 import asyncio
 
@@ -25,6 +26,18 @@ from app.services.task_status import task_status_service
 
 
 router = APIRouter()
+
+
+def _accepted_task_response(*, task_id: int, message: str):
+    return JSONResponse(
+        status_code=status.HTTP_202_ACCEPTED,
+        content={
+            "success": True,
+            "status": "pending",
+            "task_id": task_id,
+            "message": message,
+        },
+    )
 
 
 @router.post(
@@ -56,52 +69,23 @@ async def crawl_product(
     return CrawlResponse(**result.model_dump())
 
 
-@router.post("/analyze", response_model=AnalyzeResponse)
+@router.post("/analyze")
 def analyze_product(
     payload: AnalyzeRequest,
     db: Session = Depends(db_session),
     auth_context=Depends(get_request_context),
 ):
-    asyncio.run(task_status_service.update("analyze", "pending", "分析任务已创建", {"product_id": payload.product_id, "title": payload.title}))
-    asyncio.run(task_status_service.update("analyze", "running", "正在调用 AI 分析", {"product_id": payload.product_id, "title": payload.title}))
     try:
-        product, analysis, intelligence = product_service.analyze_product(
-            db,
-            payload,
-            auth_context.user_id,
-            workspace_id=auth_context.workspace_id,
+        task = product_service.submit_analyze_task(
+            db=db,
+            payload=payload,
+            auth_context=auth_context,
         )
     except AppError as exc:
-        asyncio.run(
-            task_status_service.update(
-                "analyze",
-                "error",
-                "分析失败",
-                {"product_id": payload.product_id, "title": payload.title, "stage": exc.stage},
-                exc.message,
-            )
-        )
         return error_response(exc.error_code, exc.message, exc.stage, exc.status_code)
     except Exception as exc:
-        asyncio.run(
-            task_status_service.update(
-                "analyze",
-                "error",
-                "分析失败",
-                {"product_id": payload.product_id, "title": payload.title},
-                str(exc),
-            )
-        )
-        return error_response("AI_CALL_FAILED", str(exc), "ai", status.HTTP_502_BAD_GATEWAY)
-    asyncio.run(
-        task_status_service.update(
-            "analyze",
-            "success",
-            "分析完成",
-            {"product_id": product.id, "title": product.title},
-        )
-    )
-    return AnalyzeResponse(product=ProductRead.model_validate(product), analysis=analysis, intelligence=intelligence)
+        return error_response("PRODUCT_ANALYZE_SUBMIT_FAILED", str(exc), "task", status.HTTP_500_INTERNAL_SERVER_ERROR)
+    return _accepted_task_response(task_id=task["task_id"], message="商品分析正在后台执行，请稍后查看任务结果。")
 
 
 @router.get("", response_model=ProductListResponse)
@@ -147,11 +131,14 @@ def get_product_intelligence(
     auth_context=Depends(get_request_context),
 ):
     try:
+        product = product_service.get_product(db, product_id, workspace_id=auth_context.workspace_id)
+        if not product:
+            return error_response("PRODUCT_NOT_FOUND", "商品不存在或不属于当前工作区", "db", status.HTTP_404_NOT_FOUND)
         payload = product_intelligence_engine.get_or_create_intelligence(db, product_id, workspace_id=auth_context.workspace_id)
     except AppError as exc:
         return error_response(exc.error_code, exc.message, exc.stage, exc.status_code)
     except Exception as exc:
-        return error_response("PRODUCT_INTELLIGENCE_FAILED", str(exc), "intelligence", status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return error_response("PRODUCT_INTELLIGENCE_FAILED", "商品情报生成失败，请稍后重试", "intelligence", status.HTTP_500_INTERNAL_SERVER_ERROR)
     return ProductIntelligenceEngineResponse(**payload)
 
 

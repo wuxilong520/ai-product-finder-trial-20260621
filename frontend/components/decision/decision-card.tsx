@@ -47,12 +47,12 @@ export function DecisionCard({ productId, lang = "zh" }: { productId: number; la
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-4">
         <div>
-          <CardTitle>{text.decisionTitle}</CardTitle>
-          <p className="mt-2 text-sm text-app-text-muted">{text.decisionDesc}</p>
+          <CardTitle>AI进入建议</CardTitle>
+          <p className="mt-2 text-sm text-app-text-muted">把市场、供应、利润和风险放在一起，给你一个更直接的推进建议。</p>
         </div>
         <Badge variant="brand" className="px-4 py-2 text-sm font-medium">
           <BrainCircuit className="h-4 w-4" />
-          {text.decisionBadge}
+          AI判断
         </Badge>
       </CardHeader>
       <CardContent>
@@ -66,7 +66,7 @@ export function DecisionCard({ productId, lang = "zh" }: { productId: number; la
         ) : data ? (
           <div className="space-y-5">
             <div className="flex flex-wrap gap-3">
-              <Badge variant="brand" className="px-4 py-2 text-sm font-medium">{text.decisionFinalScore} {Math.round(data.final_score)} / 100</Badge>
+              <Badge variant="brand" className="px-4 py-2 text-sm font-medium">综合判断指数 {Math.round(data.final_score)} / 100</Badge>
               <StatusBadge status={toLevelStatus(data.recommendation_level)} label={`${data.recommendation_level} ${text.decisionLevel}`} />
               <StatusBadge status={toRecommendationStatus(data.recommendation)} label={toRecommendationLabel(data.recommendation, text)} />
             </div>

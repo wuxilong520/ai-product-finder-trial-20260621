@@ -42,7 +42,7 @@ export function ProcurementCenter({
       setItems(result.items);
     } catch (err) {
       setItems([]);
-      setError(err instanceof Error ? err.message : "读取采购池失败");
+      setError(err instanceof Error ? err.message : "读取采购方案失败");
     } finally {
       setLoading(false);
     }
@@ -110,10 +110,10 @@ export function ProcurementCenter({
     <div className="space-y-5">
       <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
         <CardHeader>
-          <div className="text-xs uppercase tracking-[0.24em] text-white/40">商航AI · 采购池</div>
-          <CardTitle>先把真实货源收进采购池，再由你自己决定要分析哪一个</CardTitle>
+          <div className="text-xs uppercase tracking-[0.24em] text-white/40">商航AI · 智能采购方案</div>
+          <CardTitle>先把真实候选商品收进采购方案，再由你决定先推进哪一个</CardTitle>
           <p className="text-sm text-white/55">
-            这里不是AI替你下单。它只负责把真实导入的货源、供应商竞争情况、利润空间和风险放在一起，帮你少走弯路。
+            这里不是替你下单，而是把真实商品、供应方案、利润空间和风险放在一起，方便你做采购判断。
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -126,10 +126,10 @@ export function ProcurementCenter({
           <div className="flex gap-3">
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
-              <Input value={keyword} onChange={(event) => setKeyword(event.target.value)} className="pl-9" placeholder="输入你想采购的商品，例如 wireless earbuds" />
+              <Input value={keyword} onChange={(event) => setKeyword(event.target.value)} className="pl-9" placeholder="输入你想继续采购判断的商品，例如 wireless earbuds" />
             </div>
             <Button type="button" onClick={() => void loadPool()} disabled={loading}>
-              {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />读取中...</> : "读取采购池"}
+              {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />读取中...</> : "读取采购方案"}
             </Button>
           </div>
           <div className="grid gap-3 md:grid-cols-5">
@@ -153,7 +153,7 @@ export function ProcurementCenter({
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <Input value={maxPrice} onChange={(event) => setMaxPrice(event.target.value)} placeholder="价格筛选：最高成本" />
             <Input value={minProfit} onChange={(event) => setMinProfit(event.target.value)} placeholder="利润筛选：最低利润" />
-            <Input value={minSupplierScore} onChange={(event) => setMinSupplierScore(event.target.value)} placeholder="供应评分：最低分" />
+            <Input value={minSupplierScore} onChange={(event) => setMinSupplierScore(event.target.value)} placeholder="供应稳定性：最低分" />
             <select
               value={riskFilter}
               onChange={(event) => setRiskFilter(event.target.value)}
@@ -166,12 +166,12 @@ export function ProcurementCenter({
             </select>
           </div>
           <div className="rounded-2xl border border-[#4F7CFF]/20 bg-[#4F7CFF]/10 px-4 py-3 text-sm leading-7 text-[#D8E3FF]">
-            当前采购池只吃真实来源：现有供应链数据库 + 1688插件主动导入。没有后台偷偷爬1688，也没有伪造20个假商品来充数。
+            当前这页只使用真实来源：现有供应链数据库 + 1688 插件主动导入。没有后台偷偷爬 1688，也没有伪造商品来充数。
           </div>
           {error ? <div className="rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">{error}</div> : null}
           <div className="flex flex-wrap gap-3">
             <Link href={ROUTES.actionSuppliers} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10">
-              去供应链页生成1688连接码
+              去供应方案页生成 1688 连接码
             </Link>
             <Link href={compareHref} className={`rounded-2xl px-4 py-2 text-sm transition ${selected.length ? "border border-[#4F7CFF]/20 bg-[#4F7CFF]/10 text-[#D8E3FF]" : "pointer-events-none border border-white/10 bg-white/5 text-white/35"}`}>
               比较已选商品
@@ -212,8 +212,8 @@ export function ProcurementCenter({
                 </div>
                 <div className="grid gap-3 md:grid-cols-3">
                   <InfoTile label="利润预估" value={formatMoney(item.estimated_profit)} />
-                  <InfoTile label="市场分" value={`${item.market_score.toFixed(1)}`} />
-                  <InfoTile label="供应商分" value={`${item.supplier_score.toFixed(1)}`} />
+                  <InfoTile label="市场机会指数" value={`${item.market_score.toFixed(1)}`} />
+                  <InfoTile label="供应稳定性" value={`${item.supplier_score.toFixed(1)}`} />
                 </div>
                 {item.suppliers?.length ? (
                   <div className="rounded-2xl border border-white/8 bg-black/10 p-4 text-sm text-white/72">
@@ -222,11 +222,11 @@ export function ProcurementCenter({
                 ) : null}
                 {item.analysis ? (
                   <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4 text-sm text-emerald-100">
-                    AI分析结果：{item.analysis.recommendation} · 综合分 {item.analysis.product_score.toFixed(1)} · {item.analysis.reason.join(" / ")}
+                    AI进入建议：{item.analysis.recommendation} · 综合判断 {item.analysis.product_score.toFixed(1)} · {item.analysis.reason.join(" / ")}
                   </div>
                 ) : (
                   <div className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-white/60">
-                    还没跑AI分析。只有你点击“AI分析”后，系统才会对这个商品做市场、利润、风险综合判断。
+                    还没生成 AI 商业判断。你点击“AI分析”后，系统才会把市场、利润、风险放到一起判断。
                   </div>
                 )}
                 <div className="flex flex-wrap gap-3">
@@ -246,11 +246,11 @@ export function ProcurementCenter({
             </Card>
           );
         }) : (
-          <Card className="border-white/8 bg-[#121c2c] xl:col-span-2">
-            <CardContent className="py-10">
-              <EmptyState
-                title={items.length ? "当前筛选后没有商品" : "当前还没有采购池商品"}
-                text={items.length ? "你可以放宽价格、利润、供应评分或风险筛选条件。" : "先去1688插件导入，或者直接用关键词读取已有真实供应链数据。"}
+            <Card className="border-white/8 bg-[#121c2c] xl:col-span-2">
+              <CardContent className="py-10">
+                <EmptyState
+                title={items.length ? "当前筛选后没有商品" : "当前还没有采购候选商品"}
+                text={items.length ? "你可以放宽价格、利润、供应稳定性或风险筛选条件。" : "先去 1688 插件导入，或者直接用关键词读取已有真实供应链数据。"}
               />
             </CardContent>
           </Card>

@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { Button, MinimalField, Modal, ModalBody, ModalDescription, ModalFooter, ModalHeader, ModalTitle, StatusAlert } from "@/design-system/components";
 import { ROUTES } from "@/config/routes";
-import { setToken } from "@/lib/auth";
+import { setRefreshToken, setToken } from "@/lib/auth";
 import { Language } from "@/lib/i18n";
 import { login, registerUser, sendAuthCode } from "@/lib/api";
 
@@ -38,8 +38,9 @@ export function RegisterForm({ lang: _lang }: { lang: Language }) {
       setChallengeToken("");
       setChallengeQuestion("");
       setChallengeAnswer("");
-      setMessage(result.message || "验证码已发送");
-    } catch (err) {
+      const devHint = result.dev_code ? ` 当前开发环境验证码：${result.dev_code}` : "";
+      setMessage(`${result.message || "验证码已发送"}${devHint}`);
+        } catch (err) {
       setError(err instanceof Error ? err.message : "发送验证码失败");
     } finally {
       setSendingCode(false);
@@ -54,6 +55,7 @@ export function RegisterForm({ lang: _lang }: { lang: Language }) {
       await registerUser(email, password, code, fullName);
       const loginResult = await login(email, password);
       setToken(loginResult.access_token);
+      setRefreshToken(loginResult.refresh_token);
       window.location.assign(ROUTES.home);
     } catch (err) {
       setError(err instanceof Error ? err.message : "注册失败");

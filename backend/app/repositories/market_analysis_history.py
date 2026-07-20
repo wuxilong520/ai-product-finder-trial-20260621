@@ -10,6 +10,7 @@ class MarketAnalysisHistoryRepository:
         *,
         keyword: str,
         region: str,
+        workspace_id: int | None = None,
     ) -> MarketAnalysisHistory | None:
         return (
             db.query(MarketAnalysisHistory)
@@ -17,6 +18,7 @@ class MarketAnalysisHistoryRepository:
                 MarketAnalysisHistory.keyword == keyword,
                 MarketAnalysisHistory.region == region,
             )
+            .filter(MarketAnalysisHistory.workspace_id == workspace_id if workspace_id is not None else True)
             .order_by(MarketAnalysisHistory.created_at.desc(), MarketAnalysisHistory.id.desc())
             .first()
         )
@@ -39,10 +41,12 @@ class MarketAnalysisHistoryRepository:
         change_rate: float | None,
         trend_direction: str | None,
         snapshot: dict,
+        workspace_id: int | None = None,
     ) -> MarketAnalysisHistory:
         record = MarketAnalysisHistory(
             keyword=keyword,
             region=region,
+            workspace_id=workspace_id,
             category=category,
             score=score,
             trend=trend,

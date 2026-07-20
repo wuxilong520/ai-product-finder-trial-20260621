@@ -35,21 +35,21 @@ export default async function ProductComparePage() {
     <TaskDrivenPageShell
       lang={lang}
       activePath="products"
-      title="商品对比"
-      description="这里先用最近任务里已经生成的决策结果做横向对照，帮助你快速比较哪一轮商品判断更值得继续。"
-      badge="Product Compare"
-      notice="当前是任务级对比，不是假装已经接入了所有真实商品平台。真正多商品实时横向比，要等最后的平台真实接入。"
+      title="商品判断对比"
+      description="这里用最近任务里已经生成的真实判断结果做横向对照，帮助你快速比较哪一轮商品更值得继续。"
+      badge="商品对比"
+      notice="当前是任务级对比，不假装已经接入所有真实商品平台。真正多商品实时横向比，还要等剩余平台继续接通。"
       currentTaskId={currentTaskId}
       metrics={[
         { label: "最近任务数", value: `${tasks.length} 个` },
         { label: "最近市场匹配", value: formatPercent(decision?.market_fit_score) },
         { label: "最近供应匹配", value: formatPercent(decision?.supplier_fit_score) },
-        { label: "最近利润分", value: formatPercent(decision?.profit_score) },
+        { label: "最近利润空间", value: formatPercent(decision?.profit_score) },
       ]}
       highlights={[
         {
-          title: "看最新商品判断",
-          description: "进入最新任务详情，能直接看到这轮商品为什么推荐或不推荐。",
+          title: "看最新分析报告",
+          description: "进入最新任务详情，直接看这轮商品为什么值得做或不值得做。",
           href: currentTaskId ? taskDetailRoute(currentTaskId) : ROUTES.tasks,
           hrefLabel: "查看最新任务",
         },
@@ -60,10 +60,10 @@ export default async function ProductComparePage() {
           hrefLabel: "发起新任务",
         },
         {
-          title: "查看全部商品资产",
-          description: "如果你已经沉淀了一批商品，可以回商品库继续整理。",
+          title: "查看全部商品榜单",
+          description: "如果你已经沉淀了一批商品，可以回商品榜单继续整理。",
           href: ROUTES.products,
-          hrefLabel: "进入商品库",
+          hrefLabel: "进入商品榜单",
         },
       ]}
     >
@@ -83,7 +83,7 @@ export default async function ProductComparePage() {
                   <div>结论：{item.recommendation}</div>
                   <div>市场匹配：{formatPercent(item.marketFit)}</div>
                   <div>供应匹配：{formatPercent(item.supplierFit)}</div>
-                  <div>利润分：{formatPercent(item.profitScore)}</div>
+                  <div>利润空间：{formatPercent(item.profitScore)}</div>
                 </div>
               </div>
             ))

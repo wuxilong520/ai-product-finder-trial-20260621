@@ -43,3 +43,4 @@ FULL_AUDIT_REPORT.md
 E2E_PRODUCT_VERIFICATION_REPORT.md
 UI_SYNC_REPORT.md
 tmp_db_compare/
+.release-version

@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 class BillingCheckoutRequest(BaseModel):
     plan_name: str = Field(..., min_length=1, description="要购买的套餐")
-    provider_name: str = Field(..., min_length=1, description="支付方式：alipay 或 wechat_pay")
+    provider_name: str = Field(..., min_length=1, description="支付方式：wechat_pay")
 
 
 class BillingOrderRead(BaseModel):

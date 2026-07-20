@@ -8,6 +8,7 @@ from app.repositories.decision_recommendation import decision_recommendation_rep
 from app.repositories.product import product_repository
 from app.services.product_intelligence_engine import product_intelligence_engine
 from app.services.data_hub import data_hub
+from app.core.execution_control_layer import execution_control_layer
 
 
 class DecisionEngine:
@@ -50,6 +51,17 @@ class DecisionEngine:
         recommendation, level = self._recommendation(final_score)
         reasons = list(decision.reasoning)
 
+        data_trust = {
+            "trust_level": round(float(getattr(decision, "confidence_score", 0.0)), 4),
+            "is_mock": str(getattr(decision, "source_type", "estimated")) != "real",
+        }
+        decision_shell = type("LegacyDecisionShell", (), {
+            "data_trust": data_trust,
+            "risk_level": "high" if risk_score >= 70 else "medium" if risk_score >= 45 else "low",
+            "confidence_score": int(round(float(getattr(decision, "confidence_score", 0.0)) * 100)),
+            "trust_adjusted_score": final_score,
+        })()
+        execution_result = execution_control_layer.evaluate(decision_shell)
         payload = {
             "workspace_id": task_input.get("workspace_id") if task_input else None,
             "user_id": task_input.get("user_id") if task_input else None,
@@ -73,6 +85,11 @@ class DecisionEngine:
             "reasons": reasons,
             "policy": policy.__dict__ if policy else {},
             "provider_routing": router.routing_metadata,
+            "action_level": execution_result["action_level"],
+            "execution_allowed": execution_result["execution_allowed"],
+            "execution_block_reason": execution_result["execution_block_reason"],
+            "platform_execution_status": "blocked" if not execution_result["execution_allowed"] else "watching",
+            "execution_queue_status": "idle",
         }
         persistable_payload = {
             key: value
@@ -85,6 +102,11 @@ class DecisionEngine:
                 "truth_level",
                 "confidence_score",
                 "freshness_score",
+                "action_level",
+                "execution_allowed",
+                "execution_block_reason",
+                "platform_execution_status",
+                "execution_queue_status",
                 "workspace_id",
                 "user_id",
                 "api_key_id",

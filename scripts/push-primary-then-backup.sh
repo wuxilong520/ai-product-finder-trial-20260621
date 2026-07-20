@@ -5,4 +5,4 @@ REPO_DIR="/Users/Admin/Documents/商品上传/publish_repo"
 
 cd "$REPO_DIR"
 
-./scripts/push-all-remotes.sh
+./scripts/release-mainline.sh

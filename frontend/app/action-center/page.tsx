@@ -10,7 +10,7 @@ export default async function ActionCenterPage() {
         title: "Action Center",
         desc: "Handle AI picks, procurement pool, profit review, supplier suggestions, price comparisons, and execution status in one place.",
         top10: "Top 10 Picks",
-        procurement: "Procurement Pool",
+        procurement: "Sourcing Plan",
         profit: "Profit Review",
         supplier: "Supplier Suggestions",
         compare: "Price Compare",
@@ -22,12 +22,12 @@ export default async function ActionCenterPage() {
         closed: "Closed loop",
       }
     : {
-        title: "商业执行",
-        desc: "这里统一处理 AI 推荐商品、采购池、利润分析、供应商推荐、价格对比和执行状态。",
+        title: "每日工作台",
+        desc: "这里统一处理今日机会、采购方案、利润判断、供应方案和 AI 任务。",
         top10: "推荐商品TOP10",
-        procurement: "采购池",
-        profit: "利润分析",
-        supplier: "供应商推荐",
+        procurement: "采购方案",
+        profit: "利润判断",
+        supplier: "供应方案",
         compare: "价格对比",
         queue: "执行队列",
         single: "统一入口",
@@ -43,13 +43,13 @@ export default async function ActionCenterPage() {
         <Card className="border-white/6 bg-[#111A2E]">
           <CardContent className="p-6">
             <SectionIntro
-              eyebrow="商航AI · Daily Action Center"
-              title="把今天要做的事集中到一个地方"
+              eyebrow="商航AI · 每日工作台"
+              title="把今天要推进的商品、采购和 AI 任务集中到一个地方"
               description="这里是用户每天进入后最该看的工作首页。你会先看到今日机会、采购建议、风险提醒、AI任务和快捷入口，而不是技术信息。"
             />
             <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-6">
               <KpiTile label={text.top10} value={text.single} hint="今天优先看的机会" />
-              <KpiTile label={text.procurement} value={text.linked} hint="采购池商品继续筛选" />
+              <KpiTile label={text.procurement} value={text.linked} hint="候选货源继续筛选" />
               <KpiTile label={text.profit} value={text.linked} hint="继续看利润决策" />
               <KpiTile label={text.supplier} value={text.real} hint="继续比真实供应商" />
               <KpiTile label={text.compare} value={text.direct} hint="直接比较商品差异" />

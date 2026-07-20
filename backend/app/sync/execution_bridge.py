@@ -20,30 +20,27 @@ class ExecutionBridge:
         policy = policy_engine.build(payload)
         router = provider_router.build(policy)
         if job_type == "market":
-            legacy_result = market_intelligence_engine.analyze_keyword(db, payload["keyword"])
-            orchestrated = analysis_orchestrator.build_market_context(
-                keyword=payload["keyword"],
-                market=payload.get("market", "global"),
-            )
-            market_result = orchestrated["market_intelligence"]
-            market_intelligence = market_result["market_intelligence"]
-            result = {
-                **legacy_result,
-                "market_score": market_result.get("market_score"),
-                "competition_level": market_intelligence.get("competition_level"),
-                "market_saturation": market_intelligence.get("market_saturation"),
-                "entry_barrier": market_intelligence.get("entry_barrier"),
-                "confidence": market_result.get("confidence"),
-                "risk_flags": market_result.get("risk_flags", []),
-                "is_mock": market_intelligence.get("is_mock"),
-                "mock_penalty": market_intelligence.get("mock_penalty"),
-                "reasoning": market_result.get("reasoning"),
-                "platform_signals": market_intelligence.get("platform_signals"),
-                "keyword_cluster": market_intelligence.get("keyword_cluster"),
-                "platform_compatibility": market_intelligence.get("platform_compatibility"),
-                "data_source_map": market_intelligence.get("data_source_map"),
-                "source": "market_intelligence_engine",
-            }
+            report_type = str(payload.get("report_type") or "market_intelligence").strip().lower()
+            if report_type == "market_commercial_reality":
+                result = market_intelligence_engine.commercial_reality_report(
+                    db=db,
+                    keyword=payload["keyword"],
+                    region=payload.get("region", payload.get("market", "global")),
+                )
+            elif report_type == "market_reality":
+                result = market_intelligence_engine.reality_report(
+                    keyword=payload["keyword"],
+                    region=payload.get("region", payload.get("market", "global")),
+                    category=payload.get("category"),
+                )
+            else:
+                result = market_intelligence_engine.analyze_keyword(
+                    db,
+                    payload["keyword"],
+                    region=payload.get("region", payload.get("market", "global")),
+                    category=payload.get("category"),
+                    user_id=payload.get("user_id"),
+                )
         elif job_type == "supplier":
             result = supplier_matching_engine.match(db, payload["keyword"])
         elif job_type == "decision":

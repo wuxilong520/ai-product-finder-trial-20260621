@@ -33,6 +33,9 @@ export type SendCodeResponse = {
   success: boolean;
   message: string;
   challenge?: AuthChallenge | null;
+  delivery_mode?: string | null;
+  config_status?: string | null;
+  dev_code?: string | null;
 };
 
 export type CrawlResult = {
@@ -727,6 +730,13 @@ export type AnalyzeResponse = {
   product: Product;
   analysis: AnalyzeResult;
   intelligence: ProductIntelligenceResult;
+};
+
+export type AsyncTaskAcceptedResponse = {
+  success: boolean;
+  status: string;
+  task_id: number;
+  message: string;
 };
 
 export type AnalyzeFullResponse =

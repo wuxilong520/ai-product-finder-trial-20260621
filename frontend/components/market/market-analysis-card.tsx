@@ -85,7 +85,7 @@ export function MarketAnalysisCard({ lang = "zh", initialKeyword }: { lang?: Lan
             <div className="flex flex-wrap items-center gap-3">
               <Badge variant="brand" className="px-4 py-2 text-sm font-medium">
                 <TrendingUp className="h-4 w-4" />
-                市场智能层
+                趋势判断
               </Badge>
               {result ? (
                 <StatusBadge status={toStatus(result.recommendation)} label={toRecommendationLabel(result.recommendation)} />
@@ -132,7 +132,7 @@ export function MarketAnalysisCard({ lang = "zh", initialKeyword }: { lang?: Lan
               <MetricInfoTile label="趋势强度" value={formatScore(result.trend_score)} icon={<TrendingUp className="h-4 w-4" />} />
               <MetricInfoTile label="竞争强度" value={levelText(competitionLevel)} icon={<BarChart3 className="h-4 w-4" />} />
               <MetricInfoTile label="市场饱和度" value={formatScore(marketSaturation)} icon={<BarChart3 className="h-4 w-4" />} />
-              <MetricInfoTile label="市场结论" value={result.recommendation} icon={<ShoppingBag className="h-4 w-4" />} />
+              <MetricInfoTile label="AI进入建议" value={result.recommendation} icon={<ShoppingBag className="h-4 w-4" />} />
             </div>
 
             <Card className="border-white/8 bg-white/5">
@@ -156,7 +156,7 @@ export function MarketAnalysisCard({ lang = "zh", initialKeyword }: { lang?: Lan
                   />
                   <ActionHintCard
                     title="如果你想直接比货"
-                    desc="可以继续去供应链页看 1688 报价、评分、MOQ 和发货周期。"
+                    desc="可以继续去供应链页看 1688 报价、供应稳定性、MOQ 和发货周期。"
                   />
                 </div>
               </CardContent>
@@ -168,11 +168,11 @@ export function MarketAnalysisCard({ lang = "zh", initialKeyword }: { lang?: Lan
                   <CardTitle className="text-lg">市场进入判断</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-3">
-                  <InfoTile label="市场机会分" value={formatScore(marketScore)} />
-                  <InfoTile label="推荐分" value={formatScore(result.recommendation_score)} />
+                  <InfoTile label="方向机会指数" value={formatScore(marketScore)} />
+                  <InfoTile label="进入建议指数" value={formatScore(result.recommendation_score)} />
                   <InfoTile label="进入难度" value={levelText(result.entry_barrier)} />
                   <InfoTile label="当前类目" value={result.category || text.marketUnknownCategory} />
-                  <InfoTile label="可信度" value={confidencePercent != null ? `${confidencePercent} / 100` : "当前没有返回"} />
+                  <InfoTile label="数据可信度" value={confidencePercent != null ? `${confidencePercent} / 100` : "当前没有返回"} />
                 </CardContent>
               </Card>
 
@@ -234,7 +234,7 @@ export function MarketAnalysisCard({ lang = "zh", initialKeyword }: { lang?: Lan
                     如果某个来源没有拿到真实数据，系统应该降低可信度，而不是假装数据已经完整。
                   </div>
                   <div className="rounded-2xl border border-white/8 bg-black/10 p-4">
-                    你看这页时，重点不是记住每个分数，而是先判断：这个方向要不要继续进入采购池和供应链阶段。
+                    你看这页时，重点不是记住每个分数，而是先判断：这个方向要不要继续进入采购方案和供应链阶段。
                   </div>
                 </CardContent>
               </Card>
@@ -248,13 +248,13 @@ export function MarketAnalysisCard({ lang = "zh", initialKeyword }: { lang?: Lan
                     href={`${ROUTES.actionProcurement}${currentKeyword ? `?keyword=${encodeURIComponent(currentKeyword)}` : ""}`}
                     className="block rounded-2xl border border-[#4F7CFF]/20 bg-[#4F7CFF]/10 p-4 text-sm font-medium text-[#D8E3FF] transition hover:bg-[#4F7CFF]/16"
                   >
-                    加入采购池
+                    放入智能采购方案
                   </Link>
                   <Link
                     href={`${ROUTES.insightsOpportunities}${currentKeyword ? `?keyword=${encodeURIComponent(currentKeyword)}` : ""}`}
                     className="block rounded-2xl border border-white/10 bg-white/5 p-4 text-sm font-medium text-white/80 transition hover:bg-white/10"
                   >
-                    继续看商业机会
+                    继续看商品榜单
                   </Link>
                   <Link
                     href={`${ROUTES.actionSuppliers}${currentKeyword ? `?keyword=${encodeURIComponent(currentKeyword)}` : ""}`}
@@ -316,7 +316,7 @@ export function MarketAnalysisCard({ lang = "zh", initialKeyword }: { lang?: Lan
                           <Badge variant="brand">{supplier.platform}</Badge>
                           <StatusBadge
                             status={supplier.match_score >= 70 ? "success" : supplier.match_score >= 45 ? "warning" : "blocked"}
-                            label={`匹配分 ${Math.round(supplier.match_score)}`}
+                            label={`适配度 ${Math.round(supplier.match_score)}`}
                           />
                         </div>
                         <div className="flex items-center gap-2 text-sm text-app-brand-secondary">

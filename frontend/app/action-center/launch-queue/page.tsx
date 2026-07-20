@@ -54,9 +54,9 @@ export default async function LaunchQueuePage() {
     <TaskDrivenPageShell
       lang={lang}
       activePath="action"
-      title="Shopify执行页"
+      title="店铺执行状态"
       description="这页就是第 8 页：专门看 Shopify 发布执行层。你在这里确认的不是分析结果，而是这条商品到底有没有进入队列、有没有被拦截、有没有拿到执行回执。"
-      badge="Execution Page"
+      badge="Store Execution"
       notice="这里不假装说已经真实全自动发货。当前展示的，是系统真实记录到的执行层结果：被拦截、待授权、进入队列、返回回执，都会老老实实展示。"
       currentTaskId={currentTaskId}
       metrics={[

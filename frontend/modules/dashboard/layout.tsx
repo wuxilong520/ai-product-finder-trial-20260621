@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Bell, ChevronDown, ChevronRight, Crown, Home, LineChart, Search, Settings, ShoppingBag, WalletCards } from "lucide-react";
+import { Bell, ChevronRight, Crown } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { FeatureGateModal } from "@/components/billing/feature-gate-modal";
@@ -14,6 +14,7 @@ import { Language } from "@/lib/i18n";
 import { PRODUCT_VERSION, PRODUCT_VERSION_NOTE } from "@/lib/product-version";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { topNavCopy, BRAND_NAME, BRAND_TAGLINE } from "@/lib/business-copy";
 
 type LayoutActivePath = "home" | "products" | "insights" | "action" | "settings";
 
@@ -29,20 +30,14 @@ type TopNavKey = LayoutActivePath;
 function getLayoutText(lang: Language) {
   if (lang === "en") {
     return {
-      topNavItems: [
-        { key: "home", label: "Home", href: ROUTES.home, icon: Home },
-        { key: "products", label: "Products", href: ROUTES.products, icon: ShoppingBag },
-        { key: "insights", label: "Insights", href: ROUTES.insights, icon: LineChart },
-        { key: "action", label: "Action Center", href: ROUTES.actionCenter, icon: WalletCards },
-        { key: "settings", label: "Account", href: ROUTES.settings, icon: Settings },
-      ] as const,
+      topNavItems: topNavCopy,
       sideNavMap: {
         products: {
         title: "Products",
         items: [
           { label: "Product List", hint: "Browse all products", href: ROUTES.products },
           { label: "Product Detail", hint: "Review one product", href: ROUTES.products },
-          { label: "Product Compare", hint: "Compare side by side", href: ROUTES.productCompare },
+          { label: "Product Comparison", hint: "Compare side by side", href: ROUTES.productCompare },
         ],
       },
       insights: {
@@ -61,7 +56,7 @@ function getLayoutText(lang: Language) {
           { label: "Top 10 Picks", hint: "See priority picks", href: ROUTES.actionTopPicks },
           { label: "Profit Review", hint: "Check margin room", href: ROUTES.actionProfit },
           { label: "Supplier Picks", hint: "Review source options", href: ROUTES.actionSuppliers },
-          { label: "Procurement Pool", hint: "Compare sourcing options", href: ROUTES.actionProcurement },
+          { label: "Sourcing Plan", hint: "Compare sourcing options", href: ROUTES.actionProcurement },
           { label: "Price Compare", hint: "Compare price ranges", href: ROUTES.actionPriceCompare },
           { label: "Shopify Execution", hint: "Track publish status", href: ROUTES.actionLaunchQueue },
         ],
@@ -75,23 +70,15 @@ function getLayoutText(lang: Language) {
         ],
       },
       } as Record<Exclude<TopNavKey, "home">, { title: string; items: Array<{ label: string; hint: string; href: string }> }>,
-      productName: "AI Commerce Platform",
-      productDesc: "AI Business Decision Platform",
-      searchPlaceholder: "Search products",
-      allSites: "All sites",
+      productName: BRAND_NAME,
+      productDesc: BRAND_TAGLINE,
       currentModule: "Current module",
       sideGuide: "Page navigation",
     };
   }
 
   return {
-    topNavItems: [
-      { key: "home", label: "首页", href: ROUTES.home, icon: Home },
-      { key: "products", label: "商品库", href: ROUTES.products, icon: ShoppingBag },
-      { key: "insights", label: "市场洞察", href: ROUTES.insights, icon: LineChart },
-      { key: "action", label: "商业执行", href: ROUTES.actionCenter, icon: WalletCards },
-      { key: "settings", label: "账户", href: ROUTES.settings, icon: Settings },
-    ] as const,
+    topNavItems: topNavCopy,
     sideNavMap: {
       products: {
         title: "商品库",
@@ -112,14 +99,14 @@ function getLayoutText(lang: Language) {
         ],
       },
       action: {
-        title: "商业执行",
+        title: "每日工作台",
         items: [
           { label: "推荐商品TOP10", hint: "查看优先推荐", href: ROUTES.actionTopPicks },
           { label: "利润分析", hint: "查看利润空间", href: ROUTES.actionProfit },
           { label: "供应商推荐", hint: "查看可合作货源", href: ROUTES.actionSuppliers },
-          { label: "采购池", hint: "查看采购候选商品", href: ROUTES.actionProcurement },
+          { label: "采购方案", hint: "查看候选货源方案", href: ROUTES.actionProcurement },
           { label: "价格对比", hint: "比较价格区间", href: ROUTES.actionPriceCompare },
-          { label: "Shopify执行页", hint: "查看发布状态", href: ROUTES.actionLaunchQueue },
+          { label: "店铺执行", hint: "查看发布状态", href: ROUTES.actionLaunchQueue },
         ],
       },
       settings: {
@@ -131,10 +118,8 @@ function getLayoutText(lang: Language) {
         ],
       },
     } as Record<Exclude<TopNavKey, "home">, { title: string; items: Array<{ label: string; hint: string; href: string }> }>,
-    productName: "商航AI",
-    productDesc: "AI驱动的跨境商业决策系统",
-    searchPlaceholder: "搜索商品",
-    allSites: "全部站点",
+    productName: BRAND_NAME,
+    productDesc: BRAND_TAGLINE,
     currentModule: "当前模块",
     sideGuide: "页面内功能导航",
   };
@@ -147,6 +132,9 @@ function getTopNavKey(pathname: string | null | undefined): TopNavKey {
   if (pathname.startsWith("/tasks")) return "action";
   if (pathname.startsWith("/create")) return "action";
   if (pathname.startsWith("/action-center")) return "action";
+  if (pathname.startsWith("/dashboard/opportunity")) return "action";
+  if (pathname.startsWith("/dashboard/product")) return "action";
+  if (pathname.startsWith("/dashboard/execution")) return "action";
   if (pathname.startsWith("/settings")) return "settings";
   return "home";
 }
@@ -171,50 +159,41 @@ export function NewDashboardLayout({ children, rightRail, lang }: DashboardLayou
         requiredPlan="free 也可访问，当前先做入口收口"
         confirmLabel="先去看套餐"
       />
-      <header className="fixed inset-x-0 top-0 z-40 h-16 border-b border-white/6 bg-[rgba(11,18,32,0.88)] backdrop-blur-xl">
-        <div className="flex h-full items-center justify-between gap-6 px-4 md:px-6 xl:px-8">
+      <header className="fixed inset-x-0 top-0 z-40 h-20 border-b border-white/6 bg-[rgba(11,18,32,0.92)] backdrop-blur-xl">
+        <div className="grid h-full grid-cols-[auto_1fr_auto] items-center gap-6 px-4 md:px-6 xl:px-8">
           <div className="flex min-w-0 items-center gap-4">
             <BrandLockup size="sm" />
           </div>
 
-          <nav className="hidden min-w-0 items-center gap-1 overflow-x-auto lg:flex">
+          <nav className="hidden min-w-0 items-center justify-center gap-2 overflow-x-auto lg:flex">
             {topNavItems.map((item) => {
-              const Icon = item.icon;
-              const active = topNavKey === item.key;
+              const active = topNavKey === getTopNavKey(item.href);
               return (
                 <Link
-                  key={item.key}
+                  key={item.label}
                   href={item.href}
                   className={cn(
-                    "flex min-w-[92px] items-center justify-center gap-2 rounded-full px-3 py-2 text-sm transition",
-                    active ? "bg-[#4F7CFF]/14 text-[#4F7CFF]" : "text-white/45 hover:bg-white/[0.03] hover:text-white/80"
+                    "flex min-w-[108px] items-center justify-center rounded-full px-4 py-3 text-sm font-medium transition",
+                    active ? "bg-[#4F7CFF]/14 text-[#8FB3FF]" : "text-white/52 hover:bg-white/[0.03] hover:text-white/86"
                   )}
                 >
-                  <Icon className="h-4 w-4" />
                   <span>{item.label}</span>
                 </Link>
               );
             })}
           </nav>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden items-center gap-3 rounded-full border border-white/10 bg-[#111A2E] px-4 py-2 text-sm text-white/65 xl:flex">
-              <Search className="h-4 w-4 text-white/35" />
-              <span>{layoutText.searchPlaceholder}</span>
-              <span className="text-white/25">|</span>
-              <span>{layoutText.allSites}</span>
-              <ChevronDown className="h-4 w-4 text-white/35" />
-            </div>
-            <div className="hidden rounded-full border border-white/10 bg-white/[0.02] p-1.5 md:block">
-              <LanguageToggle lang={lang} />
-            </div>
+          <div className="flex items-center gap-3 justify-self-end">
             <Link
               href={ROUTES.pricing}
-              className="hidden items-center gap-2 rounded-full border border-[#4F7CFF]/20 bg-[#4F7CFF]/10 px-4 py-2 text-sm text-[#D8E3FF] transition hover:bg-[#4F7CFF]/20 lg:flex"
+              className="hidden items-center gap-2 rounded-full border border-[#4F7CFF]/20 bg-[#4F7CFF]/10 px-4 py-2 text-sm text-[#D8E3FF] transition hover:bg-[#4F7CFF]/20 xl:flex"
             >
               <Crown className="h-4 w-4" />
               <span>升级 / 充值</span>
             </Link>
+            <div className="hidden rounded-full border border-white/10 bg-white/[0.02] p-1.5 md:block">
+              <LanguageToggle lang={lang} />
+            </div>
             <UserAvatarMenu />
             <button
               type="button"
@@ -228,7 +207,7 @@ export function NewDashboardLayout({ children, rightRail, lang }: DashboardLayou
         </div>
       </header>
 
-      <div className="flex min-h-screen pt-16">
+      <div className="flex min-h-screen pt-20">
         {showSideNav && sideNav ? (
           <aside className="hidden w-[260px] shrink-0 border-r border-white/6 bg-[#0B1220] lg:block">
             <div className="h-full overflow-y-auto px-4 py-6">
@@ -264,7 +243,7 @@ export function NewDashboardLayout({ children, rightRail, lang }: DashboardLayou
         ) : null}
 
         <div className="min-w-0 flex-1 bg-[radial-gradient(circle_at_top,rgba(79,124,255,0.10),transparent_24%),linear-gradient(180deg,#0B1220,#0B1220)]">
-          <div className="flex min-h-[calc(100vh-64px)] gap-6 px-4 py-6 md:px-6 xl:px-8">
+          <div className="flex min-h-[calc(100vh-80px)] gap-6 px-4 py-6 md:px-6 xl:px-8">
             <main className="min-w-0 flex-1">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/6 bg-white/[0.02] px-4 py-3 text-sm text-white/55">
                 <div>当前版本：V{PRODUCT_VERSION}</div>

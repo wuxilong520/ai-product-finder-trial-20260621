@@ -6,10 +6,10 @@ import { TaskDetailStatusResponse } from "@/lib/types";
 export function TaskStatus({ task }: { task: TaskDetailStatusResponse }) {
   const progress = task.progress ?? 0;
   const steps = [
-    "Fetching market data...",
-    "Matching suppliers...",
-    "Calculating cost...",
-    "Generating decision...",
+    "正在读取市场信号...",
+    "正在匹配供应方案...",
+    "正在计算成本和利润...",
+    "正在生成 AI 建议...",
   ];
   const currentStep =
     task.current_step ||
@@ -45,7 +45,7 @@ export function TaskStatus({ task }: { task: TaskDetailStatusResponse }) {
 
         {task.status === "running" || task.status === "pending" ? (
           <div className="rounded-2xl border border-[#4F7CFF]/20 bg-[#4F7CFF]/10 px-4 py-3 text-sm text-[#CFE0FF]">
-            <div>系统正在处理市场、供应、成本和决策步骤。</div>
+            <div>系统正在处理市场、供应、利润和决策步骤。</div>
             <div className="mt-2 text-xs text-[#DCE8FF]">{currentStep}</div>
           </div>
         ) : null}

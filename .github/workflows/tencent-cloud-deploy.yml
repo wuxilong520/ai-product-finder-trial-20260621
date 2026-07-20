@@ -30,6 +30,7 @@ jobs:
       - name: Package release bundle
         run: |
           set -euo pipefail
+          git rev-parse --short HEAD > .release-version
           BUNDLE_PATH="${RUNNER_TEMP}/release.tgz"
           tar \
             --exclude=.git \

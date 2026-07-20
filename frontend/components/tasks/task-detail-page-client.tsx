@@ -162,7 +162,7 @@ function BusinessOpportunityPanel({ data }: { data: TaskFullResponse }) {
           status={market ? "已生成" : "待补"}
           lines={[
             `市场建议：${showValue(market?.recommendation)}`,
-            `市场分：${showValue(market?.market_score)}`,
+            `市场机会指数：${showValue(market?.market_score)}`,
           ]}
         />
         <FlowCard
@@ -208,7 +208,7 @@ function BusinessOpportunityPanel({ data }: { data: TaskFullResponse }) {
             ["竞争等级", showValue(marketDetail?.competition_level)],
             ["市场饱和度", showValue(marketDetail?.market_saturation)],
             ["进入门槛", showValue(marketDetail?.entry_barrier)],
-            ["是否 mock", marketDetail?.is_mock ? "是" : "否"],
+            ["是否为模拟数据", marketDetail?.is_mock ? "是" : "否"],
           ]}
         />
         <DetailCard

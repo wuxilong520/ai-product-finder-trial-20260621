@@ -8,7 +8,7 @@ export function ExplainPanel({ explain }: { explain: TaskExplainResponse["explai
     <Card className="border-white/8 bg-[#111A2E] p-6">
       <div className="space-y-5">
         <div>
-          <div className="text-xs uppercase tracking-[0.24em] text-white/40">决策解释</div>
+          <div className="text-xs uppercase tracking-[0.24em] text-white/40">AI判断说明</div>
           <h3 className="mt-2 text-xl font-semibold text-white">为什么系统给了这个建议</h3>
         </div>
 
@@ -22,7 +22,7 @@ export function ExplainPanel({ explain }: { explain: TaskExplainResponse["explai
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <Info title="任务编号" value={String(explain?.task_id ?? "—")} />
           <Info title="商品编号" value={String(explain?.product_id ?? "—")} />
-          <Info title="接口凭证" value={String(explain?.api_key_id ?? "—")} />
+          <Info title="接口编号" value={String(explain?.api_key_id ?? "—")} />
           <Info title="链路节点数" value={String(explain?.data_lineage?.length ?? 0)} />
         </div>
 
@@ -30,7 +30,7 @@ export function ExplainPanel({ explain }: { explain: TaskExplainResponse["explai
         <Section title="供应候选" content={explain?.supplier_sources || []} />
         <Section title="成本结构" content={explain?.cost_breakdown || {}} />
         <Section title="风险提示" content={explain?.risk_factors || {}} />
-        <Section title="策略路由" content={explain?.provider_routing || {}} />
+        <Section title="来源路径" content={explain?.provider_routing || {}} />
 
         <div className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-white/70">
           推荐原因：

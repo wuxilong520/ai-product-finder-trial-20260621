@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-import json
-import os
-import time
 from typing import Any
 
-from app.core.runtime import AppError, log_info
-from app.core.config import settings
-from app.services.ai_client import build_ai_client
+from sqlalchemy.orm import Session
+
+from app.core.runtime import log_info
+from app.core.ai_engine import ai_engine
+from app.services.ai_model_policy import ai_model_policy_service
 
 
-def analyze_title_with_ai(title: str) -> dict:
-    model_name = os.getenv("OPENAI_MODEL") or settings.openai_model or "gpt-4o-mini"
-    client = build_ai_client()
+def analyze_title_with_ai(db: Session, title: str, *, workspace_id: int | None = None) -> dict:
     prompt = f"""
 你是跨境电商选品助理。请根据商品标题输出 JSON，不要输出任何解释。
 
@@ -26,30 +23,24 @@ def analyze_title_with_ai(title: str) -> dict:
   "sourcing_keywords": ["适合拿货搜索词1", "适合拿货搜索词2"]
 }}
 """
-
-    last_error: Exception | None = None
-    for attempt in range(1, 3):
-        try:
-            response = client.chat.completions.create(
-                model=model_name,
-                response_format={"type": "json_object"},
-                messages=[
-                    {"role": "system", "content": "你是跨境电商选品助理，只返回 JSON。"},
-                    {"role": "user", "content": prompt},
-                ],
-            )
-            output_text = response.choices[0].message.content or "{}"
-            result = _normalize_analysis_result(json.loads(output_text))
-            log_info(f"AI_OK | title={title} | model={model_name} | title_zh={result['title_zh']}")
-            return result
-        except Exception as exc:
-            last_error = exc
-            log_info(f"AI_RETRY | title={title} | attempt={attempt} | error={exc}")
-            if attempt < 2:
-                time.sleep(1.5)
-
-    reason = str(last_error) if last_error else "未知 AI 错误"
-    raise AppError("AI_CALL_FAILED", reason, "ai", 502) from last_error
+    result = ai_engine.complete_result(
+        task_name="analyze_title",
+        system_prompt="你是跨境电商选品助理，只返回 JSON。",
+        user_prompt=prompt,
+        context={"title": title, "workspace_id": workspace_id},
+        allowed_provider_ids=ai_model_policy_service.get_allowed_provider_ids(db, workspace_id=workspace_id),
+        allowed_model_names=ai_model_policy_service.get_allowed_model_names(db, workspace_id=workspace_id),
+        use_live_gateway=True,
+    )
+    normalized = _normalize_analysis_result(result["payload"])
+    normalized["provider_id"] = result["provider_id"]
+    normalized["provider_name"] = result["provider_name"]
+    normalized["model_name"] = result["model_name"]
+    log_info(
+        "AI_OK | "
+        f"title={title} | provider={result['provider_id']} | model={result['model_name']} | title_zh={normalized['title_zh']}"
+    )
+    return normalized
 
 
 def _normalize_analysis_result(payload: dict[str, Any]) -> dict[str, Any]:

@@ -5,20 +5,86 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.runtime import AppError, log_info
+from app.middleware.auth_middleware import RequestAuthContext
 from app.models.product import Product
 from app.repositories.analysis import analysis_repository
 from app.repositories.crawl_run import crawl_run_repository
 from app.repositories.platform import platform_repository
 from app.repositories.product import product_repository
-from app.schemas.product import AnalyzeRequest, AnalyzeResult, CrawlResult, ProductIntelligenceResult
+from app.schemas.product import AnalyzeRequest, AnalyzeResponse, AnalyzeResult, CrawlResult, ProductIntelligenceResult, ProductRead
 from app.services.ai import analyze_title_with_ai
 from app.services.crawler import build_source_links, crawl_product, detect_platform, to_crawl_result
 from app.services.product_extractor import extract_public_product_page
+from app.services.task_controller import task_controller
 from app.services.product_intelligence import analyze_product_intelligence
 from app.services.task_status import task_status_service
 
 
 class ProductService:
+    def submit_analyze_task(
+        self,
+        *,
+        db: Session,
+        payload: AnalyzeRequest,
+        auth_context: RequestAuthContext,
+    ) -> dict:
+        job_identity = str(payload.product_id) if payload.product_id is not None else str(payload.title or "").strip()
+        if not job_identity:
+            raise AppError("PRODUCT_ANALYZE_INPUT_REQUIRED", "至少要提供商品 ID 或标题", "task", 422)
+        return task_controller.submit_task(
+            db,
+            job_type="product_analyze",
+            job_key=f"product_analyze:{auth_context.workspace_id}:{auth_context.user_id}:{job_identity}",
+            payload={
+                "product_id": payload.product_id,
+                "title": payload.title,
+                "user_id": auth_context.user_id,
+                "workspace_id": auth_context.workspace_id,
+            },
+            auth_context=auth_context,
+            runner_factory=lambda task_id, task_db: lambda: self.run_analyze_task(
+                task_db,
+                payload,
+                auth_context.user_id,
+                workspace_id=auth_context.workspace_id,
+                task_id=task_id,
+            ),
+        )
+
+    def run_analyze_task(
+        self,
+        db: Session,
+        payload: AnalyzeRequest,
+        user_id: int | None,
+        *,
+        workspace_id: int | None = None,
+        task_id: int | None = None,
+    ) -> dict:
+        if task_id is not None:
+            asyncio.run(task_status_service.update("analyze", "pending", "分析任务已创建", {"task_id": task_id, "product_id": payload.product_id, "title": payload.title}))
+            asyncio.run(task_status_service.update("analyze", "running", "正在调用 AI 分析", {"task_id": task_id, "product_id": payload.product_id, "title": payload.title}))
+        product, analysis, intelligence = self.analyze_product(
+            db,
+            payload,
+            user_id,
+            workspace_id=workspace_id,
+        )
+        result = AnalyzeResponse(
+            product=ProductRead.model_validate(product),
+            analysis=analysis,
+            intelligence=intelligence,
+        ).model_dump(mode="json")
+        if task_id is not None:
+            asyncio.run(
+                task_status_service.update(
+                    "analyze",
+                    "success",
+                    "分析完成",
+                    {"task_id": task_id, "product_id": product.id, "title": product.title},
+                )
+            )
+        return result
+
     async def crawl_and_save(self, db: Session, url: str, user_id: int, workspace_id: int | None = None) -> CrawlResult:
         await task_status_service.update("crawl", "pending", "采集任务已创建", {"url": url})
         await task_status_service.update("crawl", "running", "正在采集商品页面", {"url": url})

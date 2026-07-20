@@ -15,6 +15,7 @@ class BusinessOpportunityHistory(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     keyword: Mapped[str] = mapped_column(String(255), index=True)
     market: Mapped[str] = mapped_column(String(50), index=True)
+    workspace_id: Mapped[int | None] = mapped_column(nullable=True, index=True)
     market_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     supplier_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     profit_margin: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)

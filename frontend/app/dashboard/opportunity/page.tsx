@@ -59,7 +59,7 @@ export default async function OpportunityDashboardPage() {
         ) : null}
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <KpiTile label="市场评分" value={metricValue(opportunity?.market_score)} hint={opportunity ? `需求 ${opportunity.market_signal.demand_score} / 趋势 ${opportunity.market_signal.trend_direction}` : "等待实时市场结果"} />
+          <KpiTile label="市场机会指数" value={metricValue(opportunity?.market_score)} hint={opportunity ? `需求 ${opportunity.market_signal.demand_score} / 趋势 ${opportunity.market_signal.trend_direction}` : "等待实时市场结果"} />
           <KpiTile label="利润空间" value={opportunity ? `${opportunity.profit_margin.toFixed(2)}%` : "暂未返回"} hint={opportunity ? `预估售价 ${opportunity.profit_signal.expected_price}` : "等待利润结果"} />
           <KpiTile label="供应难度" value={metricValue(opportunity?.supplier_score)} hint={opportunity ? `来源 ${opportunity.supplier_signal.supplier_source}` : "等待供应链结果"} />
           <KpiTile label="机会总分" value={metricValue(opportunity?.opportunity_score)} hint={opportunity ? `可信度 ${(opportunity.confidence * 100).toFixed(0)}%` : "等待机会总分"} />
@@ -93,7 +93,7 @@ export default async function OpportunityDashboardPage() {
               <SectionCard
                 title="2. 供应链确认"
                 rows={[
-                  ["供应商评分", metricValue(opportunity?.supplier_signal.supplier_score)],
+                  ["供应稳定性", metricValue(opportunity?.supplier_signal.supplier_score)],
                   ["供货来源", opportunity?.supplier_signal.supplier_source || "等待结果"],
                   ["拿货成本", metricValue(opportunity?.supplier_signal.product_cost)],
                   ["起订量 MOQ", metricValue(opportunity?.supplier_signal.MOQ)],

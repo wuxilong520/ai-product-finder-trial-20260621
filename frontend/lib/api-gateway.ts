@@ -36,6 +36,7 @@ export {
   importSupplyExtensionPayload,
   isAuthError,
   isBannedError,
+  isQuotaError,
   isNewDashboardEnabled,
   login,
   matchSuppliers,

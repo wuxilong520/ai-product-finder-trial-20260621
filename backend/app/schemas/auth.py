@@ -70,6 +70,9 @@ class SendCodeResponse(BaseModel):
     success: bool
     message: str
     challenge: AuthChallengeResponse | None = None
+    delivery_mode: str | None = None
+    config_status: str | None = None
+    dev_code: str | None = None
 
 
 class UserRead(BaseModel):

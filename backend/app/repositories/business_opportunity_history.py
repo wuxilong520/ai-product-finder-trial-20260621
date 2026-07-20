@@ -11,6 +11,7 @@ class BusinessOpportunityHistoryRepository:
         *,
         keyword: str,
         market: str,
+        workspace_id: int | None = None,
         market_score: float,
         supplier_score: float,
         profit_margin: float,
@@ -25,6 +26,7 @@ class BusinessOpportunityHistoryRepository:
         record = BusinessOpportunityHistory(
             keyword=keyword,
             market=market,
+            workspace_id=workspace_id,
             market_score=market_score,
             supplier_score=supplier_score,
             profit_margin=profit_margin,
@@ -41,21 +43,25 @@ class BusinessOpportunityHistoryRepository:
         db.refresh(record)
         return record
 
-    def latest(self, db: Session, *, keyword: str, market: str) -> BusinessOpportunityHistory | None:
+    def latest(self, db: Session, *, keyword: str, market: str, workspace_id: int | None = None) -> BusinessOpportunityHistory | None:
         stmt = (
             select(BusinessOpportunityHistory)
             .where(BusinessOpportunityHistory.keyword == keyword)
             .where(BusinessOpportunityHistory.market == market)
             .order_by(BusinessOpportunityHistory.created_at.desc(), BusinessOpportunityHistory.id.desc())
         )
+        if workspace_id is not None:
+            stmt = stmt.where(BusinessOpportunityHistory.workspace_id == workspace_id)
         return db.scalar(stmt)
 
-    def list_recent(self, db: Session, *, limit: int = 50) -> list[BusinessOpportunityHistory]:
+    def list_recent(self, db: Session, *, limit: int = 50, workspace_id: int | None = None) -> list[BusinessOpportunityHistory]:
         stmt = (
             select(BusinessOpportunityHistory)
             .order_by(BusinessOpportunityHistory.created_at.desc(), BusinessOpportunityHistory.id.desc())
             .limit(limit)
         )
+        if workspace_id is not None:
+            stmt = stmt.where(BusinessOpportunityHistory.workspace_id == workspace_id)
         return list(db.scalars(stmt))
 
     def update_actual_result(

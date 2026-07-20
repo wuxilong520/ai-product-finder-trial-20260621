@@ -10,6 +10,16 @@ from app.core.runtime import AppError, log_info
 from app.core.production_detector import production_detector
 
 
+def _shopify_oauth_env_snapshot() -> dict[str, str]:
+    return {
+        "SHOPIFY_CLIENT_ID": str(settings.shopify_client_id or "").strip(),
+        "SHOPIFY_CLIENT_SECRET": str(settings.shopify_client_secret or "").strip(),
+        "SHOPIFY_APP_URL": str(settings.shopify_app_url or "").strip(),
+        "SHOPIFY_OAUTH_REDIRECT_URI": str(settings.shopify_oauth_redirect_uri or "").strip(),
+        "TOKEN_ENCRYPTION_KEY": str(settings.token_encryption_key or "").strip(),
+    }
+
+
 def validate_startup_env() -> dict:
     missing = settings.missing_backend_env()
     if missing:
@@ -44,6 +54,24 @@ def validate_startup_env() -> dict:
             raise AppError("PRODUCTION_ADMIN_INVALID", "生产环境管理员密码不能使用默认值", "env", 500)
         if not settings.cors_origins():
             raise AppError("PRODUCTION_CORS_INVALID", "生产环境必须配置 FRONTEND_ORIGIN", "env", 500)
+        shopify_env = _shopify_oauth_env_snapshot()
+        shopify_core_fields = (
+            "SHOPIFY_CLIENT_ID",
+            "SHOPIFY_CLIENT_SECRET",
+            "SHOPIFY_APP_URL",
+            "SHOPIFY_OAUTH_REDIRECT_URI",
+        )
+        shopify_has_any_value = any(shopify_env[field] for field in shopify_core_fields)
+        shopify_missing_fields = [field for field, value in shopify_env.items() if not value]
+        if shopify_has_any_value and shopify_missing_fields:
+            raise AppError(
+                "PRODUCTION_SHOPIFY_OAUTH_INVALID",
+                f"生产环境 Shopify OAuth 配置不完整，缺少：{', '.join(shopify_missing_fields)}",
+                "env",
+                500,
+            )
+        if not shopify_has_any_value:
+            log_info("STARTUP_OPTIONAL_FEATURE_DISABLED | feature=shopify_oauth | reason=missing_env")
 
     return {
         "app_env": settings.app_env,
@@ -53,6 +81,7 @@ def validate_startup_env() -> dict:
         "ws_url": settings.ws_url,
         "next_public_api_base_url": settings.next_public_api_base_url,
         "next_public_ws_url": settings.next_public_ws_url,
+        "shopify_oauth_ready": all(_shopify_oauth_env_snapshot().values()),
     }
 
 
@@ -106,6 +135,7 @@ def collect_runtime_summary() -> dict:
         "next_public_api_base_url": bool(settings.next_public_api_base_url),
         "next_public_ws_url": bool(settings.next_public_ws_url),
         "cors_origins": settings.cors_origins(),
+        "shopify_oauth_ready": all(_shopify_oauth_env_snapshot().values()),
     }
     services = {
         "database": check_database_health(),

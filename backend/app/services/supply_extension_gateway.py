@@ -37,6 +37,7 @@ class SupplyExtensionGateway:
         data_connection_repository.upsert(
             db,
             user_id=user_id,
+            workspace_id=workspace_id,
             platform=self.platform,
             status="PENDING",
             encrypted_access_token="",
@@ -78,6 +79,7 @@ class SupplyExtensionGateway:
         data_connection_repository.upsert(
             db,
             user_id=connection.user_id,
+            workspace_id=(connection.connection_meta or {}).get("workspace_id"),
             platform=self.platform,
             status="CONNECTED",
             encrypted_access_token=encrypt_token(token),
@@ -123,6 +125,7 @@ class SupplyExtensionGateway:
         imported = supply_import_service.import_records(db, records=[normalized_record], source_type="browser_extension")
         import_record = SupplierExtensionImport(
             user_id=user_id,
+            workspace_id=workspace_id,
             source="1688_extension",
             product_title=payload.title.strip(),
             supplier_name=payload.supplier.name.strip(),

@@ -46,8 +46,8 @@ export function ProductIntelligencePanel({ productId, lang }: { productId: numbe
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle>{text.productIntelTitle}</CardTitle>
-          <p className="mt-2 text-sm text-app-text-muted">{text.productIntelDesc}</p>
+          <CardTitle>单品商业判断</CardTitle>
+          <p className="mt-2 text-sm text-app-text-muted">把这个商品的市场热度、竞争、利润和风险压缩成一张好读的判断卡。</p>
         </div>
         <Badge variant="brand" className="px-3 py-2 text-sm">
           <BrainCircuit className="h-4 w-4" />
@@ -66,7 +66,7 @@ export function ProductIntelligencePanel({ productId, lang }: { productId: numbe
           <div className="space-y-5">
             <div className="flex flex-wrap gap-3">
               <Badge variant="brand" className="px-4 py-2 text-sm font-medium">
-                {text.productIntelScore} {Math.round(data.recommendation_score)} / 100
+                机会指数 {Math.round(data.recommendation_score)} / 100
               </Badge>
               <StatusBadge status={toStatus(data.recommendation)} label={toRecommendationLabel(data.recommendation, text)} />
             </div>

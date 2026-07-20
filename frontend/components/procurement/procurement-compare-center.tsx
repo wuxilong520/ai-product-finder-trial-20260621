@@ -29,16 +29,16 @@ export function ProcurementCompareCenter({ ids }: { ids: number[] }) {
   return (
     <Card className="border-white/8 bg-[#121c2c] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
       <CardHeader>
-        <CardTitle>采购池商品比较</CardTitle>
-        <p className="text-sm text-white/55">最多同时比较 5 个商品，这里只展示真实采购池里已经存在的数据。</p>
+        <CardTitle>智能采购方案对比</CardTitle>
+        <p className="text-sm text-white/55">最多同时比较 5 个商品，这里只展示真实采购候选数据。</p>
       </CardHeader>
       <CardContent>
         {error ? <div className="rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">{error}</div> : null}
         {!ids.length ? (
           <EmptyState
             title="你还没选中要比较的商品"
-            text="先去采购池勾选 2 到 5 个商品，再回来做采购成本、利润和风险对比。"
-            action={<Button asChild><Link href={ROUTES.actionProcurement}>回采购池选择商品</Link></Button>}
+            text="先去采购方案页勾选 2 到 5 个商品，再回来做采购成本、利润和风险对比。"
+            action={<Button asChild><Link href={ROUTES.actionProcurement}>回采购方案选择商品</Link></Button>}
           />
         ) : items.length ? (
           <div className="grid gap-4 xl:grid-cols-3">
@@ -54,10 +54,10 @@ export function ProcurementCompareCenter({ ids }: { ids: number[] }) {
                 <div className="mt-4 grid gap-3">
                   <InfoTile label="采购成本" value={`¥${item.min_price.toFixed(2)}`} />
                   <InfoTile label="供应商数量" value={`${item.supplier_count}`} />
-                  <InfoTile label="利润预测" value={`¥${item.estimated_profit.toFixed(2)}`} />
-                  <InfoTile label="市场评分" value={item.market_score.toFixed(1)} />
+                  <InfoTile label="利润空间预测" value={`¥${item.estimated_profit.toFixed(2)}`} />
+                  <InfoTile label="市场机会指数" value={item.market_score.toFixed(1)} />
                   <InfoTile label="风险等级" value={item.risk_level} />
-                  <InfoTile label="AI建议" value={item.analysis?.recommendation || "待分析"} />
+                  <InfoTile label="AI进入建议" value={item.analysis?.recommendation || "待分析"} />
                 </div>
               </div>
             ))}

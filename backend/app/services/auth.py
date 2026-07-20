@@ -132,9 +132,12 @@ class AuthService:
         )
         delivery_result = email_service.send_verification_code(email, code, purpose)
         return {
-            "success": True,
+            "success": bool(delivery_result.get("success", True)),
             "message": delivery_result.get("message", f"验证码已发送到 {email}"),
             "challenge": None,
+            "delivery_mode": delivery_result.get("delivery_mode"),
+            "config_status": delivery_result.get("config_status"),
+            "dev_code": delivery_result.get("dev_code"),
         }
 
     def verify_code(self, db: Session, email: str, code: str, purpose: str):

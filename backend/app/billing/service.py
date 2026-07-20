@@ -5,10 +5,10 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.billing.alipay_gateway import alipay_gateway
 from app.billing.plan import PLANS
 from app.billing.subscription import WorkspaceSubscription
-from app.core.config import settings
+from app.core.audit_logger import audit_logger
+from app.core.config_center import config_center
 from app.core.runtime import AppError
 from app.quota.service import quota_service
 from app.repositories.billing_order import billing_order_repository
@@ -20,37 +20,22 @@ class BillingService:
         return f"SHAI{workspace_id}{order_id}{stamp}"
 
     def _build_payment_payload(self, *, order, provider_name: str, plan: dict):
-        has_alipay_callback = bool(settings.alipay_notify_url) or bool(settings.backend_url)
-        has_alipay_return = bool(settings.alipay_return_url) or bool(settings.frontend_url)
-        is_alipay_ready = (
-            bool(settings.alipay_app_id)
-            and bool(settings.alipay_private_key)
-            and bool(settings.alipay_public_key)
-            and has_alipay_callback
-            and has_alipay_return
+        payment_config = config_center.payment()
+        is_wechat_ready = (
+            bool(payment_config["wechat_pay_app_id"])
+            and bool(payment_config["wechat_pay_mch_id"])
+            and bool(payment_config["wechat_pay_api_v3_key"])
+            and bool(payment_config["wechat_pay_private_key"])
         )
-        is_wechat_ready = bool(settings.wechat_pay_app_id) and bool(settings.wechat_pay_mch_id) and bool(settings.wechat_pay_api_v3_key) and bool(settings.wechat_pay_private_key)
-        ready = is_alipay_ready if provider_name == "alipay" else is_wechat_ready
-        pay_url = None
-        if ready and provider_name == "alipay":
-            notify_url = settings.alipay_notify_url or f"{settings.backend_url.rstrip('/')}{settings.api_v1_prefix}/billing/alipay/notify"
-            return_url = settings.alipay_return_url or f"{settings.frontend_url.rstrip('/')}/pricing?payment=success&order_id={order.id}"
-            pay_url = alipay_gateway.build_page_pay_url(
-                external_order_id=order.external_order_id or "",
-                amount_cents=order.amount_cents,
-                subject=f"商航AI {order.plan_name} 套餐",
-                return_url=return_url,
-                notify_url=notify_url,
-            )
-        return ready, {
+        return is_wechat_ready, {
             "provider_name": provider_name,
             "order_id": order.id,
             "plan_name": order.plan_name,
             "amount_cents": order.amount_cents,
             "currency": order.currency,
             "display_price": plan["display_price"],
-            "status": "ready" if ready else "pending_config",
-            "pay_url": pay_url,
+            "status": "ready" if is_wechat_ready else "pending_config",
+            "pay_url": None,
             "qr_code_url": None,
         }
 
@@ -91,8 +76,8 @@ class BillingService:
     ):
         if plan_name not in PLANS:
             raise AppError("PLAN_NOT_FOUND", "没有找到这个套餐", "billing", 404)
-        if provider_name not in {"alipay", "wechat_pay"}:
-            raise AppError("PAYMENT_PROVIDER_INVALID", "暂时只支持支付宝和微信支付", "billing", 400)
+        if provider_name != "wechat_pay":
+            raise AppError("PAYMENT_PROVIDER_INVALID", "当前只保留微信支付通道", "billing", 400)
         if plan_name == "free":
             raise AppError("FREE_PLAN_NOT_PAYABLE", "免费版不需要购买", "billing", 400)
 
@@ -106,7 +91,7 @@ class BillingService:
             currency="CNY",
             provider_name=provider_name,
             status="pending",
-            note=f"等待{provider_name}支付参数配置完成后发起真实扣款",
+            note="等待微信支付参数配置完成后发起真实扣款",
         )
         order = billing_order_repository.update_status(
             db,
@@ -115,25 +100,26 @@ class BillingService:
             external_order_id=self._build_external_order_id(order_id=order.id, workspace_id=workspace_id),
         )
         payment_ready, payment_payload = self._build_payment_payload(order=order, provider_name=provider_name, plan=plan)
+        audit_logger.write(
+            user_id=user_id,
+            action="payment_order_created",
+            payload={
+                "workspace_id": workspace_id,
+                "order_id": order.id,
+                "plan_name": plan_name,
+                "provider_name": provider_name,
+                "status": order.status,
+            },
+        )
         return order, payment_ready, payment_payload
 
     def mark_order_paid(self, db: Session, *, order_id: int):
-        order = billing_order_repository.get_by_id(db, order_id)
-        if not order:
-            raise AppError("ORDER_NOT_FOUND", "没有找到这个订单", "billing", 404)
-        billing_order_repository.update_status(
-            db,
-            record=order,
-            status="paid",
-            note="订单已确认支付，套餐已生效",
+        raise AppError(
+            "PAYMENT_CONFIRM_DISABLED",
+            "禁止直接修改订单为已支付。现在只能通过微信支付回调更新订单状态。",
+            "billing",
+            403,
         )
-        subscription = self.get_or_create_subscription(db, workspace_id=order.workspace_id)
-        subscription.plan_name = order.plan_name
-        subscription.status = "active"
-        db.add(subscription)
-        db.commit()
-        self.apply_plan_quota(db, workspace_id=order.workspace_id)
-        return order
 
     def mark_order_paid_by_external_id(
         self,
@@ -151,7 +137,7 @@ class BillingService:
             db,
             record=order,
             status="paid",
-            note=note or "支付宝异步通知确认成功",
+            note=note or "微信支付异步通知确认成功",
         )
         subscription = self.get_or_create_subscription(db, workspace_id=order.workspace_id)
         subscription.plan_name = order.plan_name
@@ -159,6 +145,16 @@ class BillingService:
         db.add(subscription)
         db.commit()
         self.apply_plan_quota(db, workspace_id=order.workspace_id)
+        audit_logger.write(
+            user_id=order.user_id,
+            action="payment_order_paid",
+            payload={
+                "workspace_id": order.workspace_id,
+                "order_id": order.id,
+                "external_order_id": external_order_id,
+                "plan_name": order.plan_name,
+            },
+        )
         return order
 
     def mark_order_failed(self, db: Session, *, order_id: int, note: str | None = None):
